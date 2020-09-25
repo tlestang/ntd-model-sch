@@ -206,14 +206,11 @@ def SCH_Simulation(paramFileName, demogName, numReps=None):
     if numReps is None:
         numReps = params['numReps']
 
-    print("oops1")
     # run the simulations
     results = Parallel(n_jobs=num_cores)(delayed(doRealization)(params, i) for i in range(numReps))
-    print("oops2")
 
     # process the output
     output = extractHostData(results)
-    print("oops3")
 
     # transform the output to data frame
     df = getPrevalence(output, params, numReps)
