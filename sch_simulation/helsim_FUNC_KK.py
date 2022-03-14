@@ -88,23 +88,32 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
 
     chemoTimings2 = np.array([parameters['treatStart2'] + x * parameters['treatInterval2']
     for x in range(np.int(parameters['nRounds2']))])
+    
+    VaccineTimings = np.array([parameters['VaccTreatStart'] + x * parameters['treatIntervalVacc']
+    for x in range(np.int(parameters['nRoundsVacc']))])
 
     params = {'numReps': np.int(parameters['repNum']),
               'maxTime': parameters['nYears'],
               'N': np.int(parameters['nHosts']),
               'R0': parameters['R0'],
               'lambda': parameters['lambda'],
+              'v2': parameters['v2lambda'], # vacc par
               'gamma': parameters['gamma'],
               'k': parameters['k'],
               'sigma': parameters['sigma'],
+              'v1':parameters['v1sigma'], # vacc par
               'LDecayRate': parameters['ReservoirDecayRate'],
               'DrugEfficacy': parameters['drugEff'],
               'contactAgeBreaks': parameters['contactAgeBreaks'],
               'contactRates': parameters['betaValues'],
+              'v3': parameters['v3betaValues'],  # vacc par
               'rho': parameters['rhoValues'],
               'treatmentAgeBreaks': parameters['treatmentBreaks'],
+              'VaccTreatmentBreaks': parameters['VaccTreatmentBreaks'], # vacc par
               'coverage1': parameters['coverage1'],
               'coverage2': parameters['coverage2'],
+              'VaccCoverage':parameters['VaccCoverage'], #vacc par
+              #'VaccEfficacy':parameters['vaccEff'], #vacc par
               'treatInterval1': parameters['treatInterval1'],
               'treatInterval2': parameters['treatInterval2'],
               'treatStart1': parameters['treatStart1'],
@@ -113,10 +122,16 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'nRounds2': np.int(parameters['nRounds2']),
               'chemoTimings1': chemoTimings1,
               'chemoTimings2': chemoTimings2,
+              'VaccineTimings' : VaccineTimings,
               'outTimings': parameters['outputEvents'],
               'propNeverCompliers': 0.0,
               'highBurdenBreaks': parameters['highBurdenBreaks'],
               'highBurdenValues': parameters['highBurdenValues'],
+              'VaccDecayRate': parameters['VaccDecayRate'],
+              'VaccTreatStart':parameters['VaccTreatStart'],
+              'nRoundsVacc':parameters['nRoundsVacc'],
+              'treatIntervalVacc':parameters['treatIntervalVacc'],
+              
               'demogType': demogName,
               'hostMuData': demographies[demogName + '_hostMuData'],
               'muBreaks': np.append(0, demographies[demogName + '_upperBoundData']),
@@ -171,7 +186,10 @@ def configure(params):
 
     params['contactAgeGroupBreaks'] = np.append(params['contactAgeBreaks'][:-1], params['maxHostAge'])
     params['treatmentAgeGroupBreaks'] = np.append(params['treatmentAgeBreaks'][:-1], params['maxHostAge'] + dT)
-
+    
+    constructedVaccBreaks = np.append(params['VaccTreatmentBreaks'], params['VaccTreatmentBreaks'] + 1)
+    a = np.append(-dT, constructedVaccBreaks)
+    params['VaccTreatmentAgeGroupBreaks'] = np.append(a, params['maxHostAge'] + dT)
     if params['outTimings'][-1] != params['maxTime']:
         params['outTimings'] = np.append(params['outTimings'], params['maxTime'])
 
@@ -198,7 +216,7 @@ def setupSD(params):
     '''
 
     si = np.random.gamma(size=params['N'], scale=1 / params['k'], shape=params['k'])
-
+    sv = [1] * params['N']
     lifeSpans = getLifeSpans(params['N'], params)
     trialBirthDates = - lifeSpans * np.random.uniform(low=0, high=1, size=params['N'])
     trialDeathDates = trialBirthDates + lifeSpans
@@ -227,14 +245,19 @@ def setupSD(params):
     worms = dict(total=wTotal, female=np.random.binomial(n=wTotal, p=0.5, size=params['N']))
 
     stableFreeLiving = params['equiData']['L_stable'] * 2
-
+    
+    VaccTreatmentAgeGroupIndices = pd.cut(x = -demography['birthDate'], bins = params['VaccTreatmentBreaks'])
+    
     SD = {'si': si,
+          'sv': sv,
           'worms': worms,
           'freeLiving': stableFreeLiving,
           'demography': demography,
           'contactAgeGroupIndices': contactAgeGroupIndices,
           'treatmentAgeGroupIndices': treatmentAgeGroupIndices,
+          'VaccTreatmentAgeGroupIndices':VaccTreatmentAgeGroupIndices,
           'adherenceFactors': np.random.uniform(low=0, high=1, size=params['N']),
+          'vaccinatedFactors': np.random.uniform(low=1, high=2, size=params['N']),
           'compliers': np.random.uniform(low=0, high=1, size=params['N']) > params['propNeverCompliers'],
           'attendanceRecord': [],
           'ageAtChemo': [],
@@ -246,7 +269,7 @@ def calcRates(params, SD):
 
     '''
     This function calculates the event rates; the events are
-    new worms and worms death.
+    new worms, worms death and vaccination recovery rates.
 
     Parameters
     ----------
@@ -262,15 +285,41 @@ def calcRates(params, SD):
     '''
 
     hostInfRates = SD['freeLiving'] * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
-    deathRate = params['sigma'] * np.sum(SD['worms']['total'])
+    deathRate = params['sigma'] * np.sum(SD['worms']['total'] * params['v1'][SD['sv']])
+    hostVaccDecayRates = params['VaccDecay'][SD['sv']]
+    return np.append(hostInfRates, hostVaccDecayRates, deathRate)
 
-    return np.append(hostInfRates, deathRate)
 
-def doEvent(rates, SD):
+def calcRates2(params, SD):
+
+    '''
+    This function calculates the event rates; the events are
+    new worms, worms death and vaccination recovery rates.
+    Each of these types of events happen to individual hosts.
+
+    Parameters
+    ----------
+    params: dict
+        dictionary containing the parameter names and values;
+
+    SD: dict
+        dictionary containing the equilibrium parameter values;
+
+    Returns
+    -------
+    array of event rates;
+    '''
+        
+    hostInfRates = SD['freeLiving'] * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
+    deathRate = params['sigma'] * SD['worms']['total'] * params['v1'][SD['sv']]
+    hostVaccDecayRates = params['VaccDecay'][SD['sv']]
+    return np.append(hostInfRates, hostVaccDecayRates, deathRate)
+
+def doEvent(rates, params, SD):
 
     '''
     This function enacts the event; the events are
-    new worms and worms death.
+    new worms, worms death and vaccine recoveries
 
     Parameters
     ----------
@@ -291,22 +340,97 @@ def doEvent(rates, SD):
 
     if event == len(rates) - 1: # worm death event
 
-        deathIndex = np.argmax(np.random.uniform(low=0, high=1, size=1) * np.sum(SD['worms']['total']) < np.cumsum(SD['worms']['total']))
+        deathIndex = np.argmax(np.random.uniform(low=0, high=1, size=1) * np.sum(SD['worms']['total'] * params['v1'][SD['sv']]) < np.cumsum(SD['worms']['total']* params['v1'][SD['sv']]))
 
         SD['worms']['total'][deathIndex] -= 1
 
         if np.random.uniform(low=0, high=1, size=1) < SD['worms']['female'][deathIndex] / SD['worms']['total'][deathIndex]:
             SD['worms']['female'][deathIndex] -= 1
-
-    else: # new worm event
-
-        SD['worms']['total'][event] += 1
-
-        if np.random.uniform(low=0, high=1, size=1) < 0.5:
-            SD['worms']['female'][event] += 1
+    
+    if event <= params['N']:
+        if np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][event]]:
+            SD['worms']['total'][event] += 1
+            if np.random.uniform(low=0, high=1, size=1) < 0.5:
+                SD['worms']['female'][event] += 1
+    elif event <= 2*params['N']:
+        hostIndex = event - pars['N']
+        SD['sv'][hostIndex] = 1
 
     return SD
 
+
+
+def doEvent2(rates, params, SD):
+
+    '''
+    This function enacts the event; the events are
+    new worms, worms death and vaccine recoveries
+
+    Parameters
+    ----------
+    rates: float
+        array of event rates;
+
+    SD: dict
+        dictionary containing the initial equilibrium parameter values;
+
+    Returns
+    -------
+    SD: dict
+        dictionary containing the updated equilibrium parameter values;
+    '''
+    
+    event = np.argmax(np.random.uniform(low=0, high=1, size=1) * np.sum(rates) < np.cumsum(rates))
+    eventType = ((event - 1) // params['N']) + 1
+    hostIndex = ((event - 1) % params['N']) + 1
+    
+    if eventType == 1:
+        np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][event]]
+        SD['worms']['total'][event] += 1
+        if np.random.uniform(low=0, high=1, size=1) < 0.5:
+            SD['worms']['female'][event] += 1
+
+    if eventType == 2:
+        SD['sv'][hostIndex] = 1
+        
+    if eventType == 3:
+        if np.random.uniform(low=0, high=1, size=1) < SD['worms']['female'][hostIndex]/SD['worms']['total'][hostIndex]:
+            SD['worms']['female'][hostIndex] -= 1
+        SD['worms']['total'][hostIndex] -= 1
+        
+    return SD
+    
+    
+def doRegular(params, SD, t, dt):
+    '''
+    This function runs processes that happen regularly.
+    These processes are reincarnating whicever hosts have recently died and
+    updating the free living worm population
+
+    Parameters
+    ----------
+    rates: float
+        array of event rates;
+
+    SD: dict
+        dictionary containing the initial equilibrium parameter values;
+    
+    t:  int
+        time point;
+    
+    dt: float
+        time interval;
+    Returns
+    -------
+    SD: dict
+        dictionary containing the updated equilibrium parameter values;
+    '''
+    
+    
+    SD = doDeath(params, SD, t)
+    SD = doFreeLive(params, SD, dt)
+    return SD
+    
 def doFreeLive(params, SD, dt):
 
     '''
@@ -340,7 +464,7 @@ def doFreeLive(params, SD, dt):
     elif params['reproFuncName'] == 'epgMonog':
         productivefemaleworms = np.minimum(SD['worms']['total'] - SD['worms']['female'], SD['worms']['female'])
 
-    eggOutputPerHost = params['lambda'] * productivefemaleworms * np.exp(-productivefemaleworms * params['gamma'])
+    eggOutputPerHost = params['lambda'] * productivefemaleworms * np.exp(-productivefemaleworms * params['gamma']) * params['v2'][SD['sv']] # vaccine related fecundity
     eggsProdRate = 2 * params['psi'] * np.sum(eggOutputPerHost * params['rho'][SD['contactAgeGroupIndices']]) / params['N']
     expFactor = np.exp(-params['LDecayRate'] * dt)
     SD['freeLiving'] = SD['freeLiving'] * expFactor + eggsProdRate * (1 - expFactor) / params['LDecayRate']
@@ -380,7 +504,7 @@ def doDeath(params, SD, t):
 
         # they also need new force of infections (FOIs)
         SD['si'][theDead] = np.random.gamma(size=len(theDead), scale=1 / params['k'], shape=params['k'])
-
+        SD['sv'] = 1
         # kill all their worms
         SD['worms']['total'][theDead] = 0
         SD['worms']['female'][theDead] = 0
@@ -394,11 +518,13 @@ def doDeath(params, SD, t):
     # update the contact age categories
     SD['contactAgeGroupIndices'] = pd.cut(x=t - SD['demography']['birthDate'], bins=params['contactAgeGroupBreaks'],
     labels=np.arange(0, len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
+    
 
     # update the treatment age categories
     SD['treatmentAgeGroupIndices'] = pd.cut(x=t - SD['demography']['birthDate'], bins=params['treatmentAgeGroupBreaks'],
     labels=np.arange(0, len(params['treatmentAgeGroupBreaks']) - 1)).to_numpy()
-
+    SD['VaccTreatmentAgeGroupIndices'] = pd.cut(x=t - SD['demography']['birthDate'], bins=params['VaccTreatmentAgeGroupBreaks'],
+    labels=np.arange(0, len(params['VaccTreatmentAgeGroupBreaks']) - 1)).to_numpy()
     return SD
 
 def doChemo(params, SD, t, coverage):
@@ -449,6 +575,47 @@ def doChemo(params, SD, t, coverage):
 
     return SD
 
+
+
+def doVaccine(params, SD, VaccCoverage):
+    '''
+    Vaccine function.
+
+    Parameters
+    ----------
+    params: dict
+        dictionary containing the parameter names and values;
+
+    SD: dict
+        dictionary containing the initial equilibrium parameter values;
+
+    t: int
+        time step;
+
+    VaccCoverage: array
+        coverage fractions;
+
+    Returns
+    -------
+    SD: dict
+        dictionary containing the updated equilibrium parameter values;
+    '''
+    temp = (SD['VaccTreatmentAgeGroupIndices'] + 1 ) // 2
+    vaccinate = np.random.uniform(low=0, high=1, size=params['N']) < VaccCoverage[temp]
+    
+    indicesToVaccinate = np.arange(0, len(params['VaccTreatmentBreaks']) - 1) * 2
+    Hosts4Vaccination = []
+    for i in SD['VaccTreatmentAgeGroupIndices']:
+        Hosts4Vaccination.append(i in indicesToVaccinate)
+    
+    vaccNow = np.logical_and(Hosts4Vaccination, vaccinate)
+    SD['sv'][vaccNow] = 2
+    SD['vaccCount'] += sum(Hosts4Vaccination) + sum(vaccinate)
+    
+    return SD
+    
+    
+    
 def getPsi(params):
 
     '''
@@ -604,14 +771,7 @@ def getEquilibrium(params):
 
     stableProfile = L_stable * Q
 
-    return dict(stableProfile=stableProfile,
-                ageValues=modelAges,
-                hostSurvival=hostSurvivalCurve,
-                L_stable=L_stable,
-                L_breakpoint=L_break,
-                K_values=K_values,
-                L_values=test_L,
-                FOIMultiplier=FOIMultiplier)
+    return dict(stableProfile=stableProfile, ageValues=modelAges,hostSurvival=hostSurvivalCurve,L_stable=L_stable,L_breakpoint=L_break,K_values=K_values,L_values=test_L,FOIMultiplier=FOIMultiplier)
 
 def extractHostData(results):
 
@@ -711,13 +871,13 @@ def getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples=2, Unfer
     array of mean egg counts;
     '''
 
-    meanEggsByHost = getSetOfEggCounts(villageList['wormsOverTime'][:, timeIndex],
-        villageList['femaleWormsOverTime'][:, timeIndex], params, Unfertilized) / nSamples
+    meanEggsByHost = getSetOfEggCounts(villageList['wormsOverTime'][:, timeIndex], 
+                                       villageList['femaleWormsOverTime'][:, timeIndex], params, Unfertilized) / nSamples
 
     for i in range(1, nSamples):
 
         meanEggsByHost += getSetOfEggCounts(villageList['wormsOverTime'][:, timeIndex],
-        villageList['femaleWormsOverTime'][:, timeIndex], params, Unfertilized) / nSamples
+                                            villageList['femaleWormsOverTime'][:, timeIndex], params, Unfertilized) / nSamples
 
     return meanEggsByHost
 
