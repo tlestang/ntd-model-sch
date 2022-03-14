@@ -59,7 +59,7 @@ v3betaValues	1 0	impact of vaccine on contact rates  Assume contact rate under v
 VaccTreatmentBreaks	5 10 15		age range of vaccinated group.  ## KK: these are the lower bounds of ranges with width 1. THEY MUST BE > 1 YEAR APART!!
 #VaccCoverage	0 0.85 0 0.6 0 0.45		Vaccine coverage of the age groups KK
 VaccCoverage	0.60 0.70 0.45		Vaccine coverage of the age groups KK
-vaccDecayRate	0 0.2			vacc decay rate. rate of vaccine decay = 1/duration of vaccine   A vector with value 0 in state 1 and the vacc decay rate for state 2. KK.
+VaccDecayRate	0 0.2			vacc decay rate. rate of vaccine decay = 1/duration of vaccine   A vector with value 0 in state 1 and the vacc decay rate for state 2. KK.
 VaccTreatStart	50.1				##Vaccine administration year start KK 
 nRoundsVacc	15					##number of vaccine rounds KK 
 treatIntervalVacc	1			##KK 
