@@ -286,7 +286,7 @@ def calcRates(params, SD):
 
     hostInfRates = SD['freeLiving'] * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
     deathRate = params['sigma'] * np.sum(SD['worms']['total'] * params['v1'][SD['sv']])
-    hostVaccDecayRates = params['VaccDecay'][SD['sv']]
+    hostVaccDecayRates = params['VaccDecayRate'][SD['sv']]
     return np.append(hostInfRates, hostVaccDecayRates, deathRate)
 
 
@@ -312,7 +312,7 @@ def calcRates2(params, SD):
         
     hostInfRates = SD['freeLiving'] * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
     deathRate = params['sigma'] * SD['worms']['total'] * params['v1'][SD['sv']]
-    hostVaccDecayRates = params['VaccDecay'][SD['sv']]
+    hostVaccDecayRates = params['VaccDecayRate'][SD['sv']]
     return np.append(hostInfRates, hostVaccDecayRates, deathRate)
 
 def doEvent(rates, params, SD):
