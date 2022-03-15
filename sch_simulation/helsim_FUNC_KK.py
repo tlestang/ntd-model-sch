@@ -357,7 +357,7 @@ def doEvent(rates, params, SD):
             if np.random.uniform(low=0, high=1, size=1) < 0.5:
                 SD['worms']['female'][event] += 1
     elif event <= 2*params['N']:
-        hostIndex = event - pars['N']
+        hostIndex = event - params['N']
         SD['sv'][hostIndex] = 0
 
     return SD
