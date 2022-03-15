@@ -103,7 +103,8 @@ def doRealization(params, i):
 
     # run stochastic algorithm
     while t < maxTime:
-
+        if t%1 == 1:
+            print(t)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
 
@@ -115,11 +116,13 @@ def doRealization(params, i):
 
         else:
 
+
             dt = np.random.exponential(scale=1 / sumRates, size=1)[0]
 
         if t + dt < nextStep:
 
             t += dt
+   
 
             simData = doEvent2(rates, params, simData)
 
@@ -160,7 +163,7 @@ def doRealization(params, i):
             if timeBarrier >= nextVaccineTime:
 
                 simData = doDeath(params, simData, t)
-                simData = doChemo(params, simData, t, params['VaccCoverage'])
+                simData = doVaccine(params, simData, t, params['VaccCoverage'])
                 currentVaccineTimings[nextVaccineIndex] = maxTime + 10
                 nextVaccineIndex = np.argmin(currentVaccineTimings)
                 nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
