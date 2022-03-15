@@ -103,8 +103,7 @@ def doRealization(params, i):
 
     # run stochastic algorithm
     while t < maxTime:
-        if t%1 == 1:
-            print(t)
+
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
 
@@ -216,7 +215,7 @@ def SCH_Simulation(paramFileName, demogName, numReps=None):
     df: data frame
         data frame with simulation results;
     '''
-    num_cores = 1
+
     # initialize the parameters
     params = loadParameters(paramFileName, demogName)
 
