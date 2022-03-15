@@ -1,13 +1,14 @@
 from joblib import Parallel, delayed
 import multiprocessing
+import pandas as pd
+import numpy as np
 import copy
 
 from sch_simulation.helsim_FUNC_KK import *
-
 num_cores = multiprocessing.cpu_count()
 
-def loadParameters(paramFileName, demogName):
 
+def loadParameters(paramFileName, demogName):
     '''
     This function loads all the parameters from the input text
     files and organizes them in a dictionary.
@@ -38,8 +39,8 @@ def loadParameters(paramFileName, demogName):
 
     return params
 
-def doRealization(params, i):
 
+def doRealization(params, i):
     '''
     This function generates a single simulation path.
 
@@ -80,26 +81,30 @@ def doRealization(params, i):
     ageingInt = 1 / 52
     nextAgeTime = 1 / 52
     maxStep = 1 / 52
-    
+
     # time at which individuals receive next chemotherapy
     currentchemoTiming1 = copy.deepcopy(params['chemoTimings1'])
     currentchemoTiming2 = copy.deepcopy(params['chemoTimings2'])
 
+    currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
+
     nextChemoIndex1 = np.argmin(currentchemoTiming1)
     nextChemoIndex2 = np.argmin(currentchemoTiming2)
+    nextVaccineIndex = np.argmin(currentVaccineTimings)
 
     nextChemoTime1 = currentchemoTiming1[nextChemoIndex1]
     nextChemoTime2 = currentchemoTiming2[nextChemoIndex2]
-
+    nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
     # next event
-    nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime1, nextChemoTime2, nextAgeTime])
+    nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime1,
+                      nextChemoTime2, nextAgeTime, nextVaccineTime])
 
-    results = [] # initialise empty list to store results
+    results = []  # initialise empty list to store results
 
     # run stochastic algorithm
     while t < maxTime:
 
-        rates = calcRates(params, simData)
+        rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
 
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
@@ -116,7 +121,7 @@ def doRealization(params, i):
 
             t += dt
 
-            simData = doEvent(rates, simData)
+            simData = doEvent2(rates, params, simData)
 
         else:
 
@@ -152,6 +157,14 @@ def doRealization(params, i):
                 nextChemoIndex2 = np.argmin(currentchemoTiming2)
                 nextChemoTime2 = currentchemoTiming2[nextChemoIndex2]
 
+            if timeBarrier >= nextVaccineTime:
+
+                simData = doDeath(params, simData, t)
+                simData = doChemo(params, simData, t, params['VaccCoverage'])
+                currentVaccineTimings[nextVaccineIndex] = maxTime + 10
+                nextVaccineIndex = np.argmin(currentVaccineTimings)
+                nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
+
             if timeBarrier >= nextOutTime:
 
                 results.append(dict(
@@ -159,26 +172,28 @@ def doRealization(params, i):
                     time=t,
                     worms=copy.deepcopy(simData['worms']),
                     hosts=copy.deepcopy(simData['demography']),
-                    # freeLiving=copy.deepcopy(simData['freeLiving']),
-                    # adherenceFactors=copy.deepcopy(simData['adherenceFactors']),
-                    # compliers=copy.deepcopy(simData['compliers'])
+                    vaccState=copy.deepcopy(simData['sv']),
+                    freeLiving=copy.deepcopy(simData['freeLiving']),
+                    adherenceFactors=copy.deepcopy(
+                        simData['adherenceFactors']),
+                    compliers=copy.deepcopy(simData['compliers'])
                 ))
-
                 outTimes[nextOutIndex] = maxTime + 10
                 nextOutIndex = np.argmin(outTimes)
                 nextOutTime = outTimes[nextOutIndex]
 
-            nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime1, nextChemoTime2, nextAgeTime])
+            nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime1,
+                              nextChemoTime2, nextVaccineTime, nextAgeTime])
 
-    results.append(dict(# attendanceRecord=np.array(simData['attendanceRecord']),
-                        # ageAtChemo=np.array(simData['ageAtChemo']),
-                        # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
-                   ))
+    results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
+        # ageAtChemo=np.array(simData['ageAtChemo']),
+        # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
+    ))
 
     return results
 
-def SCH_Simulation(paramFileName, demogName, numReps=None):
 
+def SCH_Simulation(paramFileName, demogName, numReps=None):
     '''
     This function generates multiple simulation paths.
 
@@ -198,7 +213,7 @@ def SCH_Simulation(paramFileName, demogName, numReps=None):
     df: data frame
         data frame with simulation results;
     '''
-
+    num_cores = 1
     # initialize the parameters
     params = loadParameters(paramFileName, demogName)
 
@@ -207,7 +222,8 @@ def SCH_Simulation(paramFileName, demogName, numReps=None):
         numReps = params['numReps']
 
     # run the simulations
-    results = Parallel(n_jobs=num_cores)(delayed(doRealization)(params, i) for i in range(numReps))
+    results = Parallel(n_jobs=num_cores)(
+        delayed(doRealization)(params, i) for i in range(numReps))
 
     # process the output
     output = extractHostData(results)
