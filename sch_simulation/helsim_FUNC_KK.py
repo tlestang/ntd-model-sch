@@ -604,7 +604,7 @@ def doVaccine(params, SD, t, VaccCoverage):
     SD: dict
         dictionary containing the updated equilibrium parameter values;
     '''
-    temp = temp = ((SD['VaccTreatmentAgeGroupIndices'] + 1 ) // 2) - 1
+    temp  = ((SD['VaccTreatmentAgeGroupIndices'] + 1 ) // 2) - 1
     vaccinate = np.random.uniform(low=0, high=1, size=params['N']) < VaccCoverage[temp]
     
     indicesToVaccinate = np.arange(0, len(params['VaccTreatmentBreaks']) - 1) * 2
