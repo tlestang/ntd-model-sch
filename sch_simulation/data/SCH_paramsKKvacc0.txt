@@ -1,0 +1,65 @@
+#### Mansoni parameter values. # used for schisto policy paper
+
+### Model running parameters.
+repNum	300		Number of repetitions
+nYears	70		Number of years to run
+nHosts	500		Size of definitive host population (N)
+#outputEvents	10 50 50.5 51 51.5 52 52.5 53 53.5 54 54.5 55 55.5 56 56.5 57 57.5 58 58.5 59 59.5 60 60.5 61 61.5 62 62.5 63 63.5 64 64.5 65 65.5 66 66.5 67 67.5 68 68.5 69 69.5 70 100	output events. 
+outputEvents	10 50 50.1 50.2 50.3 50.4 50.5 50.6 50.7 50.8 50.9 51 51.1 51.2 51.3 51.4 51.5 51.6 51.7 51.8 51.9 52 52.1 52.2 52.3 52.4 52.5 52.6 52.7 52.8 52.9 53 53.1 53.2 53.3 53.4 53.5 53.6 53.7 53.8 53.9 54 54.1 54.2 54.3 54.4 54.5 54.6 54.7 54.8 54.9 55 55.1 55.2 55.3 55.4 55.5 55.6 55.7 55.8 55.9 56 56.1 56.2 56.3 56.4 56.5 56.6 56.7 56.8 56.9 57 57.1 57.2 57.3 57.4 57.5 57.6 57.7 57.8 57.9 58 58.1 58.2 58.3 58.4 58.5 58.6 58.7 58.8 58.9 59 59.1 59.2 59.3 59.4 59.5 59.6 59.7 59.8 59.9 60 60.1 60.2 60.3 60.4 60.5 60.6 60.7 60.8 60.9 61 61.1 61.2 61.3 61.4 61.5 61.6 61.7 61.8 61.9 62 62.1 62.2 62.3 62.4 62.5 62.6 62.7 62.8 62.9 63 63.1 63.2 63.3 63.4 63.5 63.6 63.7 63.8 63.9 64 64.1 64.2 64.3 64.4 64.5 64.6 64.7 64.8 64.9 65 65.1 65.2 65.3 65.4 65.5 65.6 65.7 65.8 65.9 66 66.1 66.2 66.3 66.4 66.5 66.6 66.7 66.8 66.9 67 67.1 67.2 67.3 67.4 67.5 67.6 67.7 67.8 67.9 68 68.1 68.2 68.3 68.4 68.5 68.6 68.7 68.8 68.9 69 69.1 69.2 69.3 69.4 69.5 69.6 69.7 69.8 69.9 70 100	output events. 
+#outputEvents	10 50 50.1 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68  69 70
+#outputEvents	50 51.05 55 60 70 100 200 300 400	output events. 
+### Social structure
+contactAgeBreaks	0 5 10 16 80		Contact age group breaks (minus sign necessary to include zero age) anderson et al 2016 chp Iietune
+#contactAgeBreaks  0 5 12 20 80    Contact age group breaks (minus sign necessary to include zero age) wrong was in policy paper
+betaValues	0.032 0.162 1 0.06				Relative contact rates (Beta) anderson et al 2016 chp Iietune
+#rhoValues	1 1 1 1				Rho, contribution to the reservoir by contact age group. 
+rhoValues	0.032 0.162 1 0.06				Rho, contribution to the reservoir by contact age group. 
+
+### Epidemiological parameters. 
+#k	0.24			Shape parameter of assumed negative binomial distribution of worms amongst host (k). THIS VALUE PLUCKED OUT OF THE AIR. -anderson et al 2016 chp -used for papers
+k	0.24
+lambda	0.14		Eggs per gram (lambda) [Value from Chan = 7.0] ### 0.14 value from de Vlas/Cheever. 
+R0	5			Basic reproductive number (R0)   ## 2.85
+ReservoirDecayRate	5	Reservoir decay rate (decay rate of eggs in the environment)
+sigma	0.1754386	Worm death rate (sigma) i.e. 1/worm_life_span, same for all development stages
+gamma	0.0007	Exponential density dependence of parasite adult stage (gamma) This value probably comes from Cheever.-anderson et al 2016 chp 
+
+### Sexual reproduction styles. 
+reproFuncName	epgMonog	## name of function for reproduction (a string).  [Deterministic] ## epgPerPerson   epgFertility	epgMonog
+StochSR	TRUE		## Turn SR on or off in the stochastic model. 	[Stochastic]  ## FALSE
+
+## Treatment parameters. 
+treatmentBreaks	0 2 5 15 80		Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
+#treatmentBreaks	0 5 12 20 80
+coverage	0 0 0 0		Coverages: Infants; Pre-SAC; SAC; Adults
+drugEff	0.86					Drug efficacy
+#treatStart	100.05				Treatment year start; Treatment year end; Frequency of treatment by year. ADDED A BIT TO ENSURE OUTPUT FIRST. was 100.05
+nRounds	5					Number of treatment rounds. 
+treatInterval	2			interval between treatments in years. 
+treatInterval1	3
+treatInterval2	1
+treatStart1	50.1
+treatStart2	501
+nRounds1	15
+nRounds2	5
+coverage1	0 0 0 0
+coverage2	0 0 0 0
+## Output age classes. 
+outputBreaks	0 2 5 15 80		## What are the output age classes? 
+
+## High worm burden.  DUMMY VALUES DUMMY VALUES DUMMY VALUES DUMMY VALUES DUMMY VALUES 
+highBurdenBreaks	0 5 10 100	## Three categories here. 
+highBurdenValues	10 15 20	## Corresponding values. 
+
+
+##vaccine parameter
+v1sigma	1 1	impact of vaccine on worm death rate KK. Assume worm death rate is v1*sigma.
+v2lambda	1 0	impact of vaccine on eggs per gram   Fraction of eggs produced when vaccinated. KK
+v3betaValues	1 0	impact of vaccine on contact rates  Assume contact rate under vaccination is times v3. KK 
+VaccTreatmentBreaks	5 10 15		age range of vaccinated group.  ## KK: these are the lower bounds of ranges with width 1. THEY MUST BE > 1 YEAR APART!!
+#VaccCoverage	0 0.85 0 0.6 0 0.45		Vaccine coverage of the age groups KK
+VaccCoverage	0 0 0		Vaccine coverage of the age groups KK
+VaccDecayRate	0 0.2			vacc decay rate. rate of vaccine decay = 1/duration of vaccine   A vector with value 0 in state 1 and the vacc decay rate for state 2. KK.
+VaccTreatStart	50.1				##Vaccine administration year start KK 
+nRoundsVacc	15					##number of vaccine rounds KK 
+treatIntervalVacc	1			##KK 
