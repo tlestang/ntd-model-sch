@@ -187,7 +187,7 @@ def configure(params):
     params['contactAgeGroupBreaks'] = np.append(params['contactAgeBreaks'][:-1], params['maxHostAge'])
     params['treatmentAgeGroupBreaks'] = np.append(params['treatmentAgeBreaks'][:-1], params['maxHostAge'] + dT)
     
-    constructedVaccBreaks = np.append(params['VaccTreatmentBreaks'], params['VaccTreatmentBreaks'] + 1)
+    constructedVaccBreaks = np.sort(np.append(params['VaccTreatmentBreaks'], params['VaccTreatmentBreaks'] + 1))
     a = np.append(-dT, constructedVaccBreaks)
     params['VaccTreatmentAgeGroupBreaks'] = np.append(a, params['maxHostAge'] + dT)
     if params['outTimings'][-1] != params['maxTime']:
@@ -216,7 +216,7 @@ def setupSD(params):
     '''
 
     si = np.random.gamma(size=params['N'], scale=1 / params['k'], shape=params['k'])
-    sv = [1] * params['N']
+    sv = np.zeros(params['N'], dtype=int)
     lifeSpans = getLifeSpans(params['N'], params)
     trialBirthDates = - lifeSpans * np.random.uniform(low=0, high=1, size=params['N'])
     trialDeathDates = trialBirthDates + lifeSpans
@@ -246,7 +246,8 @@ def setupSD(params):
 
     stableFreeLiving = params['equiData']['L_stable'] * 2
     
-    VaccTreatmentAgeGroupIndices = pd.cut(x = -demography['birthDate'], bins = params['VaccTreatmentBreaks'])
+    VaccTreatmentAgeGroupIndices = pd.cut(x = -demography['birthDate'], bins = params['VaccTreatmentAgeGroupBreaks'],
+    labels=np.arange(start=0, stop=len(params['VaccTreatmentAgeGroupBreaks']) - 1)).to_numpy()
     
     SD = {'si': si,
           'sv': sv,
@@ -261,7 +262,9 @@ def setupSD(params):
           'compliers': np.random.uniform(low=0, high=1, size=params['N']) > params['propNeverCompliers'],
           'attendanceRecord': [],
           'ageAtChemo': [],
-          'adherenceFactorAtChemo': []}
+          'adherenceFactorAtChemo': [],
+          'vaccCount' :0
+}
 
     return SD
 
@@ -313,7 +316,8 @@ def calcRates2(params, SD):
     hostInfRates = SD['freeLiving'] * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
     deathRate = params['sigma'] * SD['worms']['total'] * params['v1'][SD['sv']]
     hostVaccDecayRates = params['VaccDecayRate'][SD['sv']]
-    return np.append(hostInfRates, hostVaccDecayRates, deathRate)
+    args = (hostInfRates, hostVaccDecayRates, deathRate)
+    return np.concatenate(args)
 
 def doEvent(rates, params, SD):
 
@@ -354,7 +358,7 @@ def doEvent(rates, params, SD):
                 SD['worms']['female'][event] += 1
     elif event <= 2*params['N']:
         hostIndex = event - pars['N']
-        SD['sv'][hostIndex] = 1
+        SD['sv'][hostIndex] = 0
 
     return SD
 
@@ -382,16 +386,16 @@ def doEvent2(rates, params, SD):
     
     event = np.argmax(np.random.uniform(low=0, high=1, size=1) * np.sum(rates) < np.cumsum(rates))
     eventType = ((event - 1) // params['N']) + 1
-    hostIndex = ((event - 1) % params['N']) + 1
+    hostIndex = ((event - 1) % params['N'])
     
     if eventType == 1:
-        np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][event]]
-        SD['worms']['total'][event] += 1
+        np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][hostIndex]]
+        SD['worms']['total'][hostIndex] += 1
         if np.random.uniform(low=0, high=1, size=1) < 0.5:
-            SD['worms']['female'][event] += 1
+            SD['worms']['female'][hostIndex] += 1
 
     if eventType == 2:
-        SD['sv'][hostIndex] = 1
+        SD['sv'][hostIndex] = 0
         
     if eventType == 3:
         if np.random.uniform(low=0, high=1, size=1) < SD['worms']['female'][hostIndex]/SD['worms']['total'][hostIndex]:
@@ -497,14 +501,14 @@ def doDeath(params, SD, t):
     theDead = np.where(SD['demography']['deathDate'] < t)[0]
 
     if len(theDead) != 0:
+        # they also need new force of infections (FOIs)
+        SD['si'][theDead] = np.random.gamma(size=len(theDead), scale=1 / params['k'], shape=params['k'])
+        SD['sv'][theDead] = 0
 
         # update the birth dates and death dates
         SD['demography']['birthDate'][theDead] = t - 0.001
         SD['demography']['deathDate'][theDead] = t + getLifeSpans(len(theDead), params)
 
-        # they also need new force of infections (FOIs)
-        SD['si'][theDead] = np.random.gamma(size=len(theDead), scale=1 / params['k'], shape=params['k'])
-        SD['sv'] = 1
         # kill all their worms
         SD['worms']['total'][theDead] = 0
         SD['worms']['female'][theDead] = 0
@@ -577,7 +581,7 @@ def doChemo(params, SD, t, coverage):
 
 
 
-def doVaccine(params, SD, VaccCoverage):
+def doVaccine(params, SD, t, VaccCoverage):
     '''
     Vaccine function.
 
@@ -600,7 +604,7 @@ def doVaccine(params, SD, VaccCoverage):
     SD: dict
         dictionary containing the updated equilibrium parameter values;
     '''
-    temp = (SD['VaccTreatmentAgeGroupIndices'] + 1 ) // 2
+    temp = temp = ((SD['VaccTreatmentAgeGroupIndices'] + 1 ) // 2) - 1
     vaccinate = np.random.uniform(low=0, high=1, size=params['N']) < VaccCoverage[temp]
     
     indicesToVaccinate = np.arange(0, len(params['VaccTreatmentBreaks']) - 1) * 2
@@ -609,7 +613,7 @@ def doVaccine(params, SD, VaccCoverage):
         Hosts4Vaccination.append(i in indicesToVaccinate)
     
     vaccNow = np.logical_and(Hosts4Vaccination, vaccinate)
-    SD['sv'][vaccNow] = 2
+    SD['sv'][vaccNow] = 1
     SD['vaccCount'] += sum(Hosts4Vaccination) + sum(vaccinate)
     
     return SD
@@ -871,7 +875,7 @@ def getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples=2, Unfer
     array of mean egg counts;
     '''
 
-    meanEggsByHost = getSetOfEggCounts(villageList['wormsOverTime'][:, timeIndex], 
+    meanEggsByHost = getSetOfEggCounts(villageList['wormsOverTime'][:, timeIndex],
                                        villageList['femaleWormsOverTime'][:, timeIndex], params, Unfertilized) / nSamples
 
     for i in range(1, nSamples):
