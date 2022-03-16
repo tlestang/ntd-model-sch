@@ -385,8 +385,8 @@ def doEvent2(rates, params, SD):
     '''
     
     event = np.argmax(np.random.uniform(low=0, high=1, size=1) * np.sum(rates) < np.cumsum(rates))
-    eventType = ((event - 1) // params['N']) + 1
-    hostIndex = ((event - 1) % params['N'])
+    eventType = ((event) // params['N']) + 1
+    hostIndex = ((event) % params['N'])
     
     if eventType == 1:
         np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][hostIndex]]
