@@ -607,7 +607,9 @@ def doVaccine(params, SD, t, VaccCoverage):
     temp  = ((SD['VaccTreatmentAgeGroupIndices'] + 1 ) // 2) - 1
     vaccinate = np.random.uniform(low=0, high=1, size=params['N']) < VaccCoverage[temp]
     
-    indicesToVaccinate = np.arange(0, len(params['VaccTreatmentBreaks']) - 1) * 2
+    indicesToVaccinate=[]
+    for i in range(len(params['VaccTreatmentBreaks'])):
+        indicesToVaccinate.append(1+i*2)
     Hosts4Vaccination = []
     for i in SD['VaccTreatmentAgeGroupIndices']:
         Hosts4Vaccination.append(i in indicesToVaccinate)
