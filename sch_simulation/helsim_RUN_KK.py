@@ -234,3 +234,44 @@ def SCH_Simulation(paramFileName, demogName, numReps=None):
     df = getPrevalence(output, params, numReps)
 
     return df
+
+def SCH_Simulation_DALY(paramFileName, demogName, numReps=None):
+    '''
+    This function generates multiple simulation paths.
+
+    Parameters
+    ----------
+    paramFileName: str
+        name of the input text file with the model parameters;
+
+    demogName: str
+        subset of demography parameters to be extracted;
+
+    numReps: int
+        number of simulations;
+
+    Returns
+    -------
+    df: data frame
+        data frame with simulation results;
+    '''
+
+    # initialize the parameters
+    params = loadParameters(paramFileName, demogName)
+
+    # extract the number of simulations
+    if numReps is None:
+        numReps = params['numReps']
+
+    # run the simulations
+    results = Parallel(n_jobs=num_cores)(
+        delayed(doRealization)(params, i) for i in range(numReps))
+
+    # process the output
+    output = extractHostData(results)
+
+    # transform the output to data frame
+    df = getPrevalenceDALYs(output, params, numReps)
+
+    return df
+
