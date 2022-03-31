@@ -937,6 +937,60 @@ def getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, nSamp
 
     return np.sum(nSamples * mySample > 0.9) / villageSampleSize
 
+def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
+    villageSampleSize=100):
+
+    '''
+    This function provides sampled, age-cat worm prevalence
+    for a given time point and iteration.
+
+    Parameters
+    ----------
+    villageList: dict
+        processed simulation output for a given iteration;
+
+    timeIndex: int
+        selected time point index;
+
+    ageBand: int
+        array with age group boundaries;
+
+    params: dict
+        dictionary containing the parameter names and values;
+
+    nSamples: int
+        number of samples;
+
+    Unfertilized: bool
+        True / False flag for whether unfertilized worms generate eggs;
+
+    villageSampleSize: int;
+        village sample size fraction;
+
+    Returns
+    -------
+    sampled worm prevalence;
+    '''
+
+    meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
+
+    ageGroups = pd.cut(x=villageList['ages'][:, timeIndex], bins=np.append(-10, np.append(ageBand, 150)),
+    labels=np.array([1, 2, 3])).to_numpy()
+
+    currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
+
+    if villageSampleSize < len(currentAgeGroupMeanEggCounts):
+        mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=False)
+
+    else:
+        mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True)
+
+    infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
+    heavy = np.sum(mySample > 16) / villageSampleSize
+
+    return np.array([infected, heavy])
+
+
 def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
     villageSampleSize=100):
 
@@ -986,6 +1040,45 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, pa
         mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True)
 
     return np.sum(mySample > 16) / villageSampleSize
+
+
+def getSampledDetectedPrevByVillageAll(hostData, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
+    villageSampleSize=100):
+
+    '''
+    This function provides sampled, age-cat worm prevalence
+    at a given time point across all iterations.
+
+    Parameters
+    ----------
+    hostData: dict
+        processed simulation output;
+
+    timeIndex: int
+        selected time point index;
+
+    ageBand: int
+        array with age group boundaries;
+
+    params: dict
+        dictionary containing the parameter names and values;
+
+    nSamples: int
+        number of samples;
+
+    Unfertilized: bool
+        True / False flag for whether unfertilized worms generate eggs;
+
+    villageSampleSize: int;
+        village sample size fraction;
+
+    Returns
+    -------
+    sampled worm prevalence;
+    '''
+
+    return np.array([getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params,
+    nSamples, Unfertilized, villageSampleSize) for villageList in hostData])
 
 def getSampledDetectedPrevByVillage(hostData, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
     villageSampleSize=100):
@@ -1117,6 +1210,100 @@ def getPrevalence(hostData, params, numReps, nSamples=2, Unfertilized=False, vil
                        'Adult Prevalence': adult_prevalence,
                        'SAC Heavy Intensity Prevalence': sac_heavy_prevalence,
                        'Adult Heavy Intensity Prevalence': adult_heavy_prevalence})
+
+    df = df[(df['Time'] >= 50) & (df['Time'] <= 64)]
+    df['Time'] = df['Time'] - 50
+
+    return df
+
+def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100):
+
+    '''
+    This function provides the average SAC and adult prevalence at each time point,
+    where the average is calculated across all iterations.
+
+    Parameters
+    ----------
+    hostData: dict
+        processed simulation output;
+
+    params: dict
+        dictionary containing the parameter names and values;
+
+    numReps: int
+        number of simulations;
+
+    nSamples: int
+        number of samples;
+
+    Unfertilized: bool
+        True / False flag for whether unfertilized worms generate eggs;
+
+    villageSampleSize: int;
+        village sample size fraction;
+
+    Returns
+    -------
+    data frame with SAC and adult prevalence at each time point;
+    '''
+    
+    all_results = np.array([getSampledDetectedPrevByVillage(hostData, t, np.array([0, 80]), params, nSamples,
+    Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+
+    ufour_results = np.array([getSampledDetectedPrevByVillage(hostData, t, np.array([0, 4]), params, nSamples,
+    Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+
+    adult_results = np.array([getSampledDetectedPrevByVillage(hostData, t, np.array([5, 80]), params, nSamples,
+    Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+
+    all_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([0, 80]), params,
+    nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+
+    ufour_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([0, 4]), params,
+    nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+
+    adult_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([5, 80]), params,
+    nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
+         
+
+    all_prevalence = np.sum(all_results, axis=1) / numReps
+    ufour_prevalence = np.sum(ufour_results, axis=1) / numReps
+    adult_prevalence = np.sum(adult_results, axis=1) / numReps
+
+    all_heavy_prevalence = np.sum(ufour_heavy_results, axis=1) / numReps
+    ufour_heavy_prevalence = np.sum(ufour_heavy_results, axis=1) / numReps
+    adult_heavy_prevalence = np.sum(adult_heavy_results, axis=1) / numReps
+
+
+
+##    resultsCheck = np.empty((0,2))
+##    for t in range(len(hostData[0]['timePoints'])):
+##        resultsCheck = np.vstack((resultsCheck,getSampledDetectedPrevByVillageAll(hostData, t, np.array([0, 4]), params,
+##                                                                                            nSamples, Unfertilized, villageSampleSize)))
+##
+##    print(resultsCheck)          
+##    ufour_prevalence_check = np.sum(resultsCheck[:, 1], axis=1) / numReps
+##    ufour_heavy_check = np.sum(resultsCheck[:, 2], axis=1) / numReps
+
+##
+##    df = pd.DataFrame({'Time': hostData[0]['timePoints'],
+##                       'Under four': ufour_prevalence,
+##                       'Under four check' : ufour_prevalence_check,
+##                       'Adult Prevalence': adult_prevalence,
+##                       'Under four Heavy Intensity Prevalence': ufour_heavy_prevalence,
+##                       'Under four Heavy Intensity Prevalence Check ': ufour_heavy_check,
+##                       'Adult Heavy Intensity Prevalence': adult_heavy_prevalence})
+
+
+    df = pd.DataFrame({'Time': hostData[0]['timePoints'],
+                        'Prevalence': all_prevalence,
+                        'Heavy Intensity Prevalence': all_heavy_prevalence,
+                       'Under four Prevalence': ufour_prevalence,
+                        'Under four check' : ufour_prevalence_check,
+                        'Under four Heavy Intensity Prevalence': ufour_heavy_prevalence,
+                        'Under four Heavy Intensity Prevalence Check ': ufour_heavy_check,
+                       'Adult Prevalence': adult_prevalence,
+                       'Adult Heavy Intensity Prevalence': adult_heavy_prevalence})]
 
     df = df[(df['Time'] >= 50) & (df['Time'] <= 64)]
     df['Time'] = df['Time'] - 50
