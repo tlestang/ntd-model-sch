@@ -468,7 +468,7 @@ def doFreeLive(params, SD, dt):
     elif params['reproFuncName'] == 'epgMonog':
         productivefemaleworms = np.minimum(SD['worms']['total'] - SD['worms']['female'], SD['worms']['female'])
 
-    eggOutputPerHost = params['lambda'] * productivefemaleworms * np.exp(-productivefemaleworms * params['gamma']) * params['v2'][SD['sv']] # vaccine related fecundity
+    eggOutputPerHost = params['lambda'] * productivefemaleworms * np.exp(-SD['worms']['total'] * params['gamma']) * params['v2'][SD['sv']] # vaccine related fecundity
     eggsProdRate = 2 * params['psi'] * np.sum(eggOutputPerHost * params['rho'][SD['contactAgeGroupIndices']]) / params['N']
     expFactor = np.exp(-params['LDecayRate'] * dt)
     SD['freeLiving'] = SD['freeLiving'] * expFactor + eggsProdRate * (1 - expFactor) / params['LDecayRate']
