@@ -1297,7 +1297,7 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
                         'Low Intensity Prevalence': all_low_prevalence,
                         'Medium Intensity Prevalence': all_medium_prevalence,
                         'Heavy Intensity Prevalence': all_heavy_prevalence,
-                       'Under four' : ufour_prevalence,
+                       'Under four Prevalence' : ufour_prevalence,
                         'Under four Low Intensity Prevalence': ufour_low_prevalence,
                        'Under four Medium Intensity Prevalence': ufour_medium_prevalence,
                        'Under four Heavy Intensity Prevalence': ufour_heavy_prevalence,
