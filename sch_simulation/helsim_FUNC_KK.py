@@ -131,6 +131,8 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'VaccTreatStart':parameters['VaccTreatStart'],
               'nRoundsVacc':parameters['nRoundsVacc'],
               'treatIntervalVacc':parameters['treatIntervalVacc'],
+              'heavyThreshold':parameters['heavyThreshold'],
+              'mediumThreshold':parameters['mediumThreshold'],
               
               'demogType': demogName,
               'hostMuData': demographies[demogName + '_hostMuData'],
@@ -986,10 +988,10 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
         mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True)
 
     infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
-    #low = np.sum((mySample >= 1) & (mySample < 4)) / villageSampleSize
-    medium = np.sum((mySample >= 4) & (mySample <= 16)) / villageSampleSize
-    heavy = np.sum(mySample > 16) / villageSampleSize
-    
+    #low = np.sum((mySample >= 1) & (mySample < params['mediumThreshold']))) / villageSampleSize
+    medium = np.sum((mySample >= params['mediumThreshold']) & (mySample <= params['heavyThreshold'])) / villageSampleSize
+    heavy = np.sum(mySample > params['heavyThreshold']) / villageSampleSize
+
     low = infected - (medium + heavy)
 
     return infected, low, medium, heavy

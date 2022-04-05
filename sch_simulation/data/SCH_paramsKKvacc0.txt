@@ -63,3 +63,6 @@ VaccDecayRate	0 0.2			vacc decay rate. rate of vaccine decay = 1/duration of vac
 VaccTreatStart	50.1				##Vaccine administration year start KK 
 nRoundsVacc	15					##number of vaccine rounds KK 
 treatIntervalVacc	1			##KK 
+### Thresholds
+heavyThreshold	16	The threshold for heavy burden of infection, egg count > heavyThreshold
+mediumThreshold	4	The threshold of medium burden of infection, mediumThreshold <= egg count <= heavyThreshold
