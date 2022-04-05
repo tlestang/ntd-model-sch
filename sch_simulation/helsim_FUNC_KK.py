@@ -389,10 +389,10 @@ def doEvent2(rates, params, SD):
     hostIndex = ((event) % params['N'])
     
     if eventType == 1:
-        np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][hostIndex]]
-        SD['worms']['total'][hostIndex] += 1
-        if np.random.uniform(low=0, high=1, size=1) < 0.5:
-            SD['worms']['female'][hostIndex] += 1
+        if np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][hostIndex]]
+            SD['worms']['total'][hostIndex] += 1
+            if np.random.uniform(low=0, high=1, size=1) < 0.5:
+                SD['worms']['female'][hostIndex] += 1
 
     if eventType == 2:
         SD['sv'][hostIndex] = 0
