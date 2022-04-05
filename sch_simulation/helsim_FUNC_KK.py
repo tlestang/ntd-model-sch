@@ -986,9 +986,11 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
         mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True)
 
     infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
-    low = np.sum((mySample >= 1) & (mySample < 4)) / villageSampleSize
+    #low = np.sum((mySample >= 1) & (mySample < 4)) / villageSampleSize
     medium = np.sum((mySample >= 4) & (mySample <= 16)) / villageSampleSize
     heavy = np.sum(mySample > 16) / villageSampleSize
+    
+    low = infected - (medium + heavy)
 
     return infected, low, medium, heavy
 
