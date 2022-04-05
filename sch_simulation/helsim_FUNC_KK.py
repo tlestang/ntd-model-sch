@@ -986,9 +986,11 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
         mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True)
 
     infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
+    low = np.sum((mySample >= 1) & (mySample < 4)) / villageSampleSize
+    medium = np.sum((mySample >= 4) & (mySample <= 16)) / villageSampleSize
     heavy = np.sum(mySample > 16) / villageSampleSize
 
-    return np.array([infected, heavy])
+    return infected, low, medium, heavy
 
 
 def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
@@ -1264,46 +1266,109 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
 
     adult_heavy_results = np.array([getSampledDetectedPrevHeavyBurdenByVillage(hostData, t, np.array([5, 80]), params,
     nSamples, Unfertilized, villageSampleSize) for t in range(len(hostData[0]['timePoints']))])
-         
 
     all_prevalence = np.sum(all_results, axis=1) / numReps
     ufour_prevalence = np.sum(ufour_results, axis=1) / numReps
     adult_prevalence = np.sum(adult_results, axis=1) / numReps
 
-    all_heavy_prevalence = np.sum(ufour_heavy_results, axis=1) / numReps
+    all_heavy_prevalence = np.sum(all_heavy_results, axis=1) / numReps
     ufour_heavy_prevalence = np.sum(ufour_heavy_results, axis=1) / numReps
     adult_heavy_prevalence = np.sum(adult_heavy_results, axis=1) / numReps
 
+    #under 4s
+    ufour_results_check = np.empty((0,numReps))
+    ufour_low_results_check = np.empty((0,numReps))
+    ufour_medium_results_check = np.empty((0,numReps))
+    ufour_heavy_results_check = np.empty((0,numReps))
+
+    for t in range(len(hostData[0]['timePoints'])): #loop over time points
+        # calculate burdens using the same sample
+        newrow = getSampledDetectedPrevByVillageAll(hostData, t, np.array([0, 4]), params, nSamples, Unfertilized, villageSampleSize)
+        newrowinfected = newrow[:,0]
+        newrowlow = newrow[:,1]
+        newrowmedium = newrow[:,2]
+        newrowheavy = newrow[:,3]
+        # append row
+        ufour_results_check = np.vstack([ufour_results_check, newrowinfected])
+        ufour_low_results_check = np.vstack([ufour_low_results_check, newrowlow])
+        ufour_medium_results_check = np.vstack([ufour_medium_results_check, newrowmedium])
+        ufour_heavy_results_check = np.vstack([ufour_heavy_results_check, newrowheavy])
 
 
-##    resultsCheck = np.empty((0,2))
-##    for t in range(len(hostData[0]['timePoints'])):
-##        resultsCheck = np.vstack((resultsCheck,getSampledDetectedPrevByVillageAll(hostData, t, np.array([0, 4]), params,
-##                                                                                            nSamples, Unfertilized, villageSampleSize)))
-##
-##    print(resultsCheck)          
-##    ufour_prevalence_check = np.sum(resultsCheck[:, 1], axis=1) / numReps
-##    ufour_heavy_check = np.sum(resultsCheck[:, 2], axis=1) / numReps
+    # calculate proportion across number of repetitions
+    ufour_prevalence_check = np.sum(ufour_results_check, axis = 1) / numReps
+    ufour_low_prevalence_check = np.sum(ufour_low_results_check, axis = 1) / numReps
+    ufour_medium_prevalence_check = np.sum(ufour_medium_results_check, axis = 1) / numReps
+    ufour_heavy_prevalence_check = np.sum(ufour_heavy_results_check, axis = 1) / numReps
 
-##
-##    df = pd.DataFrame({'Time': hostData[0]['timePoints'],
-##                       'Under four': ufour_prevalence,
-##                       'Under four check' : ufour_prevalence_check,
-##                       'Adult Prevalence': adult_prevalence,
-##                       'Under four Heavy Intensity Prevalence': ufour_heavy_prevalence,
-##                       'Under four Heavy Intensity Prevalence Check ': ufour_heavy_check,
-##                       'Adult Heavy Intensity Prevalence': adult_heavy_prevalence})
+    # adults (5 to 80)
+    adult_results_check = np.empty((0,numReps))
+    adult_low_results_check = np.empty((0,numReps))
+    adult_medium_results_check = np.empty((0,numReps))
+    adult_heavy_results_check = np.empty((0,numReps))
 
+    for t in range(len(hostData[0]['timePoints'])):
+        newrow = getSampledDetectedPrevByVillageAll(hostData, t, np.array([5, 80]), params, nSamples, Unfertilized, villageSampleSize)
+        newrowinfected = newrow[:,0]
+        newrowlow = newrow[:,1]
+        newrowmedium = newrow[:,2]
+        newrowheavy = newrow[:,3]
+
+        adult_results_check = np.vstack([adult_results_check, newrowinfected])
+        adult_low_results_check = np.vstack([adult_low_results_check, newrowlow])
+        adult_medium_results_check = np.vstack([adult_medium_results_check, newrowmedium])
+        adult_heavy_results_check = np.vstack([adult_heavy_results_check, newrowheavy])
+
+    # calculate proportion across number of repetitions
+    adult_prevalence_check = np.sum(adult_results_check, axis = 1) / numReps
+    adult_low_prevalence_check = np.sum(adult_low_results_check, axis = 1) / numReps
+    adult_medium_prevalence_check = np.sum(adult_medium_results_check, axis = 1) / numReps
+    adult_heavy_prevalence_check = np.sum(adult_heavy_results_check, axis = 1) / numReps
+
+    # all ages
+    all_results_check = np.empty((0,numReps))
+    all_low_results_check = np.empty((0,numReps))
+    all_medium_results_check = np.empty((0,numReps))
+    all_heavy_results_check = np.empty((0,numReps))
+
+    for t in range(len(hostData[0]['timePoints'])):
+        newrow = getSampledDetectedPrevByVillageAll(hostData, t, np.array([0, 80]), params, nSamples, Unfertilized, villageSampleSize)
+        newrowinfected = newrow[:,0]
+        newrowlow = newrow[:,1]
+        newrowmedium = newrow[:,2]        
+        newrowheavy = newrow[:,3]        
+
+        all_results_check = np.vstack([all_results_check, newrowinfected])
+        all_low_results_check = np.vstack([all_low_results_check, newrowlow])
+        all_medium_results_check = np.vstack([all_medium_results_check, newrowmedium])
+        all_heavy_results_check = np.vstack([all_heavy_results_check, newrowheavy])
+
+    # calculate proportion across number of repetitions
+    all_prevalence_check = np.sum(all_results_check, axis = 1) / numReps
+    all_low_prevalence_check = np.sum(all_low_results_check, axis = 1) / numReps
+    all_medium_prevalence_check = np.sum(all_medium_results_check, axis = 1) / numReps
+    all_heavy_prevalence_check = np.sum(all_heavy_results_check, axis = 1) / numReps
 
     df = pd.DataFrame({'Time': hostData[0]['timePoints'],
-                        'Prevalence': all_prevalence,
-                        'Heavy Intensity Prevalence': all_heavy_prevalence,
-                       'Under four Prevalence': ufour_prevalence,
-                        'Under four check' : ufour_prevalence_check,
-                        'Under four Heavy Intensity Prevalence': ufour_heavy_prevalence,
-                        'Under four Heavy Intensity Prevalence Check ': ufour_heavy_check,
-                       'Adult Prevalence': adult_prevalence,
-                       'Adult Heavy Intensity Prevalence': adult_heavy_prevalence})]
+                        'Prevalence old': all_prevalence,
+                       'Prevalence': all_prevalence_check,
+                        'Low Intensity Prevalence': all_low_prevalence_check,
+                        'Medium Intensity Prevalence': all_medium_prevalence_check,
+                        'Heavy Intensity Prevalence': all_heavy_prevalence_check,
+                        'Heavy Intensity Prevalence old': all_heavy_prevalence,
+                       'Under four old': ufour_prevalence,
+                       'Under four' : ufour_prevalence_check,
+                        'Under four Low Intensity Prevalence': ufour_low_prevalence_check,
+                       'Under four Medium Intensity Prevalence': ufour_medium_prevalence_check,
+                       'Under four Heavy Intensity Prevalence': ufour_heavy_prevalence_check,
+                       'Under four Heavy Intensity Prevalence old ': ufour_heavy_prevalence,
+                        'Adult Prevalence old': adult_prevalence,
+                        'Adult Prevalence': adult_prevalence_check,
+                        'Adult Heavy Intensity Prevalence old': adult_heavy_prevalence,
+                        'Adult Low Intensity Prevalence': adult_low_prevalence_check,
+                        'Adult Medium Intensity Prevalence': adult_medium_prevalence_check,
+                        'Adult Heavy Intensity Prevalence': adult_heavy_prevalence_check})
+
 
     df = df[(df['Time'] >= 50) & (df['Time'] <= 64)]
     df['Time'] = df['Time'] - 50
