@@ -980,19 +980,27 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
     labels=np.array([1, 2, 3])).to_numpy()
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
+    
+    is_empty =currentAgeGroupMeanEggCounts.size == 0
 
-    if villageSampleSize < len(currentAgeGroupMeanEggCounts):
-        mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=False)
+    if(is_empty):
+        infected =np.nan
+        low = np.nan
+        medium = np.nan
+        heavy = np.nan
+    else: 
+        if villageSampleSize < len(currentAgeGroupMeanEggCounts):
+            mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=False)
 
-    else:
-        mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True)
+        else:
+            mySample = np.random.choice(a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True)
 
-    infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
-    #low = np.sum((mySample >= 1) & (mySample < params['mediumThreshold']))) / villageSampleSize
-    medium = np.sum((mySample >= params['mediumThreshold']) & (mySample <= params['heavyThreshold'])) / villageSampleSize
-    heavy = np.sum(mySample > params['heavyThreshold']) / villageSampleSize
+        infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
+        #low = np.sum((mySample >= 1) & (mySample < params['mediumThreshold']))) / villageSampleSize
+        medium = np.sum((mySample >= params['mediumThreshold']) & (mySample <= params['heavyThreshold'])) / villageSampleSize
+        heavy = np.sum(mySample > params['heavyThreshold']) / villageSampleSize
 
-    low = infected - (medium + heavy)
+        low = infected - (medium + heavy)
 
     return infected, low, medium, heavy
 
