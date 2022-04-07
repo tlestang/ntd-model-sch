@@ -271,7 +271,7 @@ def SCH_Simulation_DALY(paramFileName, demogName, numReps=None):
     output = extractHostData(results)
 
     # transform the output to data frame
-    df = getPrevalenceDALYs(output, params, numReps)
+    df = getPrevalenceDALYsAll(output, params, numReps)
 
     return df
 
