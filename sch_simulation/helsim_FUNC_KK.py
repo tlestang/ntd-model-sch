@@ -1311,3 +1311,58 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
     df['Time'] = df['Time'] - 50
 
     return df
+
+def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=False, villageSampleSize=100):
+
+    '''
+    This function provides the average SAC and adult prevalence at each time point,
+    where the average is calculated across all iterations.
+
+    Parameters
+    ----------
+    hostData: dict
+        processed simulation output;
+
+    params: dict
+        dictionary containing the parameter names and values;
+
+    numReps: int
+        number of simulations;
+
+    nSamples: int
+        number of samples;
+
+    Unfertilized: bool
+        True / False flag for whether unfertilized worms generate eggs;
+
+    villageSampleSize: int;
+        village sample size fraction;
+
+    Returns
+    -------
+    data frame with SAC and adult prevalence at each time point;
+    '''
+    
+    #all individuals 
+    all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+
+    df = pd.DataFrame({'Time': hostData[0]['timePoints'],
+                       'Prevalence': all_prevalence,
+                        'Low Intensity Prevalence': all_low_prevalence,
+                        'Medium Intensity Prevalence': all_medium_prevalence,
+                        'Heavy Intensity Prevalence': all_heavy_prevalence})
+    
+    for i in range(0,80) : #loop over yearly age bins
+        prevalence, low_prevalence, medium_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+        df[str(i)+' Prevalence'] = prevalence
+        df[str(i)+' Low Intensity Prevalence'] = low_prevalence
+        df[str(i)+' Medium Intensity Prevalence'] = medium_prevalence
+        df[str(i)+' Heavy Intensity Prevalence'] = heavy_prevalence
+
+
+
+    df = df[(df['Time'] >= 50) & (df['Time'] <= 64)]
+    df['Time'] = df['Time'] - 50
+
+    return df
+
