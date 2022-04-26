@@ -222,7 +222,7 @@ def setupSD(params):
     lifeSpans = getLifeSpans(params['N'], params)
     trialBirthDates = - lifeSpans * np.random.uniform(low=0, high=1, size=params['N'])
     trialDeathDates = trialBirthDates + lifeSpans
-
+    sex_id = np.round(np.random.uniform(low = 1, high = 2, size = params['N']))
     communityBurnIn = 1000
 
     while np.min(trialDeathDates) < communityBurnIn:
@@ -254,6 +254,7 @@ def setupSD(params):
     SD = {'si': si,
           'sv': sv,
           'worms': worms,
+          'sex_id': sex_id,
           'freeLiving': stableFreeLiving,
           'demography': demography,
           'contactAgeGroupIndices': contactAgeGroupIndices,
@@ -486,7 +487,7 @@ def doDeath(params, SD, t):
         # they also need new force of infections (FOIs)
         SD['si'][theDead] = np.random.gamma(size=len(theDead), scale=1 / params['k'], shape=params['k'])
         SD['sv'][theDead] = 0
-
+        SD['sex_id'] = np.round(np.random.uniform(low = 1, high = 2, size = len(theDead)))
         # update the birth dates and death dates
         SD['demography']['birthDate'][theDead] = t - 0.001
         SD['demography']['deathDate'][theDead] = t + getLifeSpans(len(theDead), params)
