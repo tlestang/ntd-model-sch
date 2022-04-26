@@ -825,6 +825,7 @@ def extractHostData(results):
             # ageAtChemo=results[rep][-1]['ageAtChemo'],
             # finalFreeLiving=results[rep][-2]['freeLiving'],
             # adherenceFactorAtChemo=results[rep][-1]['adherenceFactorAtChemo']
+            sex_id = np.array([results[rep][i]['sex_id'] for i in range(len(results[0]) - 1)]).T
         ))
 
     return output
@@ -1283,7 +1284,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
     '''
     
     #all individuals 
-    all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+    #all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
 
     # df = pd.DataFrame({'Time': hostData[0]['timePoints'],
     #                    'Prevalence': all_prevalence,
@@ -1292,6 +1293,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
     #                     'Heavy Intensity Prevalence': all_heavy_prevalence})
     
     for i in range(0,80) : #loop over yearly age bins
+        
         prevalence, low_prevalence, moderate_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), nSamples=2, Unfertilized=False, villageSampleSize=100)
         age_start = i
         age_end = i + 1
