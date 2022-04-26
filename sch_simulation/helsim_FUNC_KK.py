@@ -487,7 +487,7 @@ def doDeath(params, SD, t):
         # they also need new force of infections (FOIs)
         SD['si'][theDead] = np.random.gamma(size=len(theDead), scale=1 / params['k'], shape=params['k'])
         SD['sv'][theDead] = 0
-        SD['sex_id'] = np.round(np.random.uniform(low = 1, high = 2, size = len(theDead)))
+        SD['sex_id'][theDead] = np.round(np.random.uniform(low = 1, high = 2, size = len(theDead)))
         # update the birth dates and death dates
         SD['demography']['birthDate'][theDead] = t - 0.001
         SD['demography']['deathDate'][theDead] = t + getLifeSpans(len(theDead), params)
