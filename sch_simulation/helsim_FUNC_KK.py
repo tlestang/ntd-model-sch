@@ -13,12 +13,10 @@ def readParam(fileName):
     '''
     This function extracts the parameter values stored
     in the input text files into a dictionary.
-
     Parameters
     ----------
     fileName: str
         name of the input text file;
-
     Returns
     -------
     params: dict
@@ -56,6 +54,7 @@ def readParam(fileName):
     params = dict(params)
 
     return params
+
 
 def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default'):
 
@@ -133,7 +132,11 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'treatIntervalVacc':parameters['treatIntervalVacc'],
               'heavyThreshold':parameters['heavyThreshold'],
               'mediumThreshold':parameters['mediumThreshold'],
-              
+              'sampleSizeOne': np.int(parameters['sampleSizeOne']),
+              'sampleSizeTwo': np.int(parameters['sampleSizeTwo']),
+              'nSamples': np.int(parameters['nSamples']),
+              'minSurveyAge': parameters['minSurveyAge'],
+              'maxSurveyAge': parameters['maxSurveyAge'],
               'demogType': demogName,
               'hostMuData': demographies[demogName + '_hostMuData'],
               'muBreaks': np.append(0, demographies[demogName + '_upperBoundData']),
@@ -141,7 +144,8 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'reproFuncName': parameters['reproFuncName'],
               'z': np.exp(-parameters['gamma']),
               'psi': 1.0,
-              'k_epg': 0.87}
+              'k_epg': 0.87,
+              'species' : parameters['species']}
 
     return params
 
@@ -149,12 +153,10 @@ def configure(params):
 
     '''
     This function defines a number of additional parameters.
-
     Parameters
     ----------
     params: dict
         dictionary containing the initial parameter names and values;
-
     Returns
     -------
     params: dict
@@ -205,12 +207,10 @@ def setupSD(params):
     '''
     This function sets up the simulation to initial conditions
     based on analytical equilibria.
-
     Parameters
     ----------
     params: dict
         dictionary containing the parameter names and values;
-
     Returns
     -------
     SD: dict
@@ -265,7 +265,9 @@ def setupSD(params):
           'attendanceRecord': [],
           'ageAtChemo': [],
           'adherenceFactorAtChemo': [],
-          'vaccCount' :0
+          'vaccCount' :0,
+          'numSurveyOne':0,
+          'numSurveyTwo':0
 }
 
     return SD
@@ -275,15 +277,12 @@ def calcRates(params, SD):
     '''
     This function calculates the event rates; the events are
     new worms, worms death and vaccination recovery rates.
-
     Parameters
     ----------
     params: dict
         dictionary containing the parameter names and values;
-
     SD: dict
         dictionary containing the equilibrium parameter values;
-
     Returns
     -------
     array of event rates;
@@ -301,15 +300,12 @@ def calcRates2(params, SD):
     This function calculates the event rates; the events are
     new worms, worms death and vaccination recovery rates.
     Each of these types of events happen to individual hosts.
-
     Parameters
     ----------
     params: dict
         dictionary containing the parameter names and values;
-
     SD: dict
         dictionary containing the equilibrium parameter values;
-
     Returns
     -------
     array of event rates;
@@ -326,15 +322,12 @@ def doEvent(rates, params, SD):
     '''
     This function enacts the event; the events are
     new worms, worms death and vaccine recoveries
-
     Parameters
     ----------
     rates: float
         array of event rates;
-
     SD: dict
         dictionary containing the initial equilibrium parameter values;
-
     Returns
     -------
     SD: dict
@@ -371,15 +364,12 @@ def doEvent2(rates, params, SD):
     '''
     This function enacts the event; the events are
     new worms, worms death and vaccine recoveries
-
     Parameters
     ----------
     rates: float
         array of event rates;
-
     SD: dict
         dictionary containing the initial equilibrium parameter values;
-
     Returns
     -------
     SD: dict
@@ -412,12 +402,10 @@ def doRegular(params, SD, t, dt):
     This function runs processes that happen regularly.
     These processes are reincarnating whicever hosts have recently died and
     updating the free living worm population
-
     Parameters
     ----------
     rates: float
         array of event rates;
-
     SD: dict
         dictionary containing the initial equilibrium parameter values;
     
@@ -441,18 +429,14 @@ def doFreeLive(params, SD, dt):
 
     '''
     This function updates the freeliving population deterministically.
-
     Parameters
     ----------
     params: dict
         dictionary containing the parameter names and values;
-
     SD: dict
         dictionary containing the initial equilibrium parameter values;
-
     dt: float
         time interval;
-
     Returns
     -------
     SD: dict
@@ -481,18 +465,14 @@ def doDeath(params, SD, t):
 
     '''
     Death and aging function.
-
     Parameters
     ----------
     params: dict
         dictionary containing the parameter names and values;
-
     SD: dict
         dictionary containing the initial equilibrium parameter values;
-
     t: int
         time step;
-
     Returns
     -------
     SD: dict
@@ -537,21 +517,16 @@ def doChemo(params, SD, t, coverage):
 
     '''
     Chemoterapy function.
-
     Parameters
     ----------
     params: dict
         dictionary containing the parameter names and values;
-
     SD: dict
         dictionary containing the initial equilibrium parameter values;
-
     t: int
         time step;
-
     coverage: array
         coverage fractions;
-
     Returns
     -------
     SD: dict
@@ -586,21 +561,16 @@ def doChemo(params, SD, t, coverage):
 def doVaccine(params, SD, t, VaccCoverage):
     '''
     Vaccine function.
-
     Parameters
     ----------
     params: dict
         dictionary containing the parameter names and values;
-
     SD: dict
         dictionary containing the initial equilibrium parameter values;
-
     t: int
         time step;
-
     VaccCoverage: array
         coverage fractions;
-
     Returns
     -------
     SD: dict
@@ -623,17 +593,64 @@ def doVaccine(params, SD, t, VaccCoverage):
     return SD
     
     
+
+def conductSurveyOne(SD, params, t, sampleSize, nSamples):
+    # get min and max age for survey
+    minAge = params['minSurveyAge']
+    maxAge = params['maxSurveyAge']
+    #minAge = 5
+    #maxAge = 15
+    # get Kato-Katz eggs for each individual
+    for i in range(nSamples):
+        if i == 0:
+            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False)
+        else:
+            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False))
+    eggCounts = eggCounts / nSamples
+
+    # get individuals in chosen survey age group
+    ages = -(SD['demography']['birthDate'] - t)
+    surveyAged = np.logical_and(ages >= minAge, ages <= maxAge)
+
+    # get egg counts for those individuals
+    surveyEggs = eggCounts[surveyAged]
+
+    # get sampled individuals
+    KKSampleSize = min(sampleSize, sum(surveyAged)) 
+    sampledEggs = np.random.choice(a=surveyEggs, size=KKSampleSize, replace=False)
+    SD['numSurveyOne'] += 1
+    # return the prevalence
+    return SD, np.sum(sampledEggs > 0.9) / KKSampleSize
+
+
+def conductSurveyTwo(SD, params, t, sampleSize, nSamples):
+
+    # get Kato-Katz eggs for each individual
+    for i in range(nSamples):
+        if i == 0:
+            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False)
+        else:
+            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False))
+    eggCounts = eggCounts / nSamples
+
+
+    # get sampled individuals
+    KKSampleSize = min(sampleSize, params['N']) 
+    sampledEggs = np.random.choice(a=eggCounts, size=KKSampleSize, replace=False)
+    SD['numSurveyTwo'] += 1
+    # return the prevalence
+    return SD, np.sum(sampledEggs > 0.9) / KKSampleSize
+
+    
     
 def getPsi(params):
 
     '''
     This function calculates the psi parameter.
-
     Parameters
     ----------
     params: dict
         dictionary containing the parameter names and values;
-
     Returns
     -------
     value of the psi parameter;
@@ -672,15 +689,12 @@ def getLifeSpans(nSpans, params):
 
     '''
     This function draws the lifespans from the population survival curve.
-
     Parameters
     ----------
     nSpans: int
         number of drawings;
-
     params: dict
         dictionary containing the parameter names and values;
-
     Returns
     -------
     array containing the lifespan drawings;
@@ -697,12 +711,10 @@ def getEquilibrium(params):
     This function returns a dictionary containing the equilibrium worm burden
     with age and the reservoir value as well as the breakpoint reservoir value
     and other parameter settings.
-
     Parameters
     ----------
     params: dict
         dictionary containing the parameter names and values;
-
     Returns
     -------
     dictionary containing the equilibrium parameter settings;
@@ -785,12 +797,10 @@ def extractHostData(results):
 
     '''
     This function is used for processing results the raw simulation results.
-
     Parameters
     ----------
     results: list
         raw simulation output;
-
     Returns
     -------
     output: list
@@ -823,21 +833,16 @@ def getSetOfEggCounts(total, female, params, Unfertilized=False):
     '''
     This function returns a set of readings of egg counts from a vector of individuals,
     according to their reproductive biology.
-
     Parameters
     ----------
     total: int
         array of total worms;
-
     female: int
         array of female worms;
-
     params: dict
         dictionary containing the parameter names and values;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     Returns
     -------
     random set of egg count readings from a single sample;
@@ -859,21 +864,16 @@ def getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples=2, Unfer
     '''
     This function returns the mean egg count across readings by host
     for a given time point and iteration.
-
     Parameters
     ----------
     villageList: dict
         processed simulation output for a given iteration;
-
     timeIndex: int
         selected time point index;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     Returns
     -------
     array of mean egg counts;
@@ -895,30 +895,22 @@ def getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, nSamp
     '''
     This function provides sampled, age-cat worm prevalence
     for a given time point and iteration.
-
     Parameters
     ----------
     villageList: dict
         processed simulation output for a given iteration;
-
     timeIndex: int
         selected time point index;
-
     ageBand: int
         array with age group boundaries;
-
     params: dict
         dictionary containing the parameter names and values;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     villageSampleSize: int;
         village sample size fraction;
-
     Returns
     -------
     sampled worm prevalence;
@@ -945,30 +937,22 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
     '''
     This function provides sampled, age-cat worm prevalence
     for a given time point and iteration.
-
     Parameters
     ----------
     villageList: dict
         processed simulation output for a given iteration;
-
     timeIndex: int
         selected time point index;
-
     ageBand: int
         array with age group boundaries;
-
     params: dict
         dictionary containing the parameter names and values;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     villageSampleSize: int;
         village sample size fraction;
-
     Returns
     -------
     sampled worm prevalence;
@@ -1010,30 +994,22 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, pa
     '''
     This function provides sampled, age-cat worm prevalence
     for a given time point and iteration.
-
     Parameters
     ----------
     villageList: dict
         processed simulation output for a given iteration;
-
     timeIndex: int
         selected time point index;
-
     ageBand: int
         array with age group boundaries;
-
     params: dict
         dictionary containing the parameter names and values;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     villageSampleSize: int;
         village sample size fraction;
-
     Returns
     -------
     sampled worm prevalence;
@@ -1061,30 +1037,22 @@ def getSampledDetectedPrevByVillageAll(hostData, timeIndex, ageBand, params, nSa
     '''
     This function provides sampled, age-cat worm prevalence
     at a given time point across all iterations.
-
     Parameters
     ----------
     hostData: dict
         processed simulation output;
-
     timeIndex: int
         selected time point index;
-
     ageBand: int
         array with age group boundaries;
-
     params: dict
         dictionary containing the parameter names and values;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     villageSampleSize: int;
         village sample size fraction;
-
     Returns
     -------
     sampled worm prevalence;
@@ -1127,30 +1095,22 @@ def getSampledDetectedPrevByVillage(hostData, timeIndex, ageBand, params, nSampl
     '''
     This function provides sampled, age-cat worm prevalence
     at a given time point across all iterations.
-
     Parameters
     ----------
     hostData: dict
         processed simulation output;
-
     timeIndex: int
         selected time point index;
-
     ageBand: int
         array with age group boundaries;
-
     params: dict
         dictionary containing the parameter names and values;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     villageSampleSize: int;
         village sample size fraction;
-
     Returns
     -------
     sampled worm prevalence;
@@ -1165,30 +1125,22 @@ def getSampledDetectedPrevHeavyBurdenByVillage(hostData, timeIndex, ageBand, par
     '''
     This function provides sampled, age-cat worm prevalence
     at a given time point across all iterations.
-
     Parameters
     ----------
     hostData: dict
         processed simulation output;
-
     timeIndex: int
         selected time point index;
-
     ageBand: int
         array with age group boundaries;
-
     params: dict
         dictionary containing the parameter names and values;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     villageSampleSize: int;
         village sample size fraction;
-
     Returns
     -------
     sampled worm prevalence;
@@ -1202,27 +1154,20 @@ def getPrevalence(hostData, params, numReps, nSamples=2, Unfertilized=False, vil
     '''
     This function provides the average SAC and adult prevalence at each time point,
     where the average is calculated across all iterations.
-
     Parameters
     ----------
     hostData: dict
         processed simulation output;
-
     params: dict
         dictionary containing the parameter names and values;
-
     numReps: int
         number of simulations;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     villageSampleSize: int;
         village sample size fraction;
-
     Returns
     -------
     data frame with SAC and adult prevalence at each time point;
@@ -1262,27 +1207,20 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
     '''
     This function provides the average SAC and adult prevalence at each time point,
     where the average is calculated across all iterations.
-
     Parameters
     ----------
     hostData: dict
         processed simulation output;
-
     params: dict
         dictionary containing the parameter names and values;
-
     numReps: int
         number of simulations;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     villageSampleSize: int;
         village sample size fraction;
-
     Returns
     -------
     data frame with SAC and adult prevalence at each time point;
@@ -1324,27 +1262,20 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
     '''
     This function provides the average SAC and adult prevalence at each time point,
     where the average is calculated across all iterations.
-
     Parameters
     ----------
     hostData: dict
         processed simulation output;
-
     params: dict
         dictionary containing the parameter names and values;
-
     numReps: int
         number of simulations;
-
     nSamples: int
         number of samples;
-
     Unfertilized: bool
         True / False flag for whether unfertilized worms generate eggs;
-
     villageSampleSize: int;
         village sample size fraction;
-
     Returns
     -------
     data frame with SAC and adult prevalence at each time point;
@@ -1353,23 +1284,82 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
     #all individuals 
     all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
 
-    df = pd.DataFrame({'Time': hostData[0]['timePoints'],
-                       'Prevalence': all_prevalence,
-                        'Low Intensity Prevalence': all_low_prevalence,
-                        'Medium Intensity Prevalence': all_medium_prevalence,
-                        'Heavy Intensity Prevalence': all_heavy_prevalence})
+    # df = pd.DataFrame({'Time': hostData[0]['timePoints'],
+    #                    'Prevalence': all_prevalence,
+    #                     'Low Intensity Prevalence': all_low_prevalence,
+    #                     'Medium Intensity Prevalence': all_medium_prevalence,
+    #                     'Heavy Intensity Prevalence': all_heavy_prevalence})
     
     for i in range(0,80) : #loop over yearly age bins
-        prevalence, low_prevalence, medium_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), nSamples=2, Unfertilized=False, villageSampleSize=100)
-        df[str(i)+' Prevalence'] = prevalence
-        df[str(i)+' Low Intensity Prevalence'] = low_prevalence
-        df[str(i)+' Medium Intensity Prevalence'] = medium_prevalence
-        df[str(i)+' Heavy Intensity Prevalence'] = heavy_prevalence
+        prevalence, low_prevalence, moderate_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+        age_start = i
+        age_end = i + 1
+        #year = hostData[0]['timePoints']
+        
+        if i == 0:
+            df = pd.DataFrame({'Time':hostData[0]['timePoints'], 
+                   'age_start': np.repeat(age_start,len(low_prevalence)), 
+                   'age_end':np.repeat(age_end,len(low_prevalence)), 
+                   'intensity':np.repeat('light',len(low_prevalence)),
+                   'species':np.repeat(params['species'],len(low_prevalence)),
+                   'measure':np.repeat('prevalence',len(low_prevalence)),
+                   'draw_1':low_prevalence})
+        
+            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+                   'age_start': np.repeat(age_start,len(low_prevalence)), 
+                   'age_end':np.repeat(age_end,len(low_prevalence)), 
+                   'intensity':np.repeat('moderate',len(low_prevalence)),
+                   'species':np.repeat(params['species'],len(low_prevalence)),
+                   'measure':np.repeat('prevalence',len(low_prevalence)),
+                   'draw_1':moderate_prevalence}))
+                   
+        
+            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+                   'age_start': np.repeat(age_start,len(low_prevalence)), 
+                   'age_end':np.repeat(age_end,len(low_prevalence)), 
+                   'intensity':np.repeat('heavy',len(low_prevalence)),
+                   'species':np.repeat(params['species'],len(low_prevalence)),
+                   'measure':np.repeat('prevalence',len(low_prevalence)),
+                   'draw_1':heavy_prevalence}))
+        else:
+            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+                   'age_start': np.repeat(age_start,len(low_prevalence)), 
+                   'age_end':np.repeat(age_end,len(low_prevalence)), 
+                   'intensity':np.repeat('light',len(low_prevalence)),
+                   'species':np.repeat(params['species'],len(low_prevalence)),
+                   'measure':np.repeat('prevalence',len(low_prevalence)),
+                   'draw_1':low_prevalence}))
+            
+            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+                   'age_start': np.repeat(age_start,len(low_prevalence)), 
+                   'age_end':np.repeat(age_end,len(low_prevalence)), 
+                   'intensity':np.repeat('moderate',len(low_prevalence)),
+                   'species':np.repeat(params['species'],len(low_prevalence)),
+                   'measure':np.repeat('prevalence',len(low_prevalence)),
+                   'draw_1':moderate_prevalence}))
+            
+            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+                   'age_start': np.repeat(age_start,len(low_prevalence)), 
+                   'age_end':np.repeat(age_end,len(low_prevalence)), 
+                   'intensity':np.repeat('heavy',len(low_prevalence)),
+                   'species':np.repeat(params['species'],len(low_prevalence)),
+                   'measure':np.repeat('prevalence',len(low_prevalence)),
+                   'draw_1':heavy_prevalence}))
+            
+        # df[str(i)+' Prevalence'] = prevalence
+        # df[str(i)+' Low Intensity Prevalence'] = low_prevalence
+        # df[str(i)+' Medium Intensity Prevalence'] = medium_prevalence
+        # df[str(i)+' Heavy Intensity Prevalence'] = heavy_prevalence
 
 
 
-    df = df[(df['Time'] >= 50) & (df['Time'] <= 64)]
-    df['Time'] = df['Time'] - 50
+    #df = df[(df['Time'] >= 50) & (df['Time'] <= 64)]
+    #df['Time'] = df['Time'] - 50
 
     return df
+
+
+
+
+
 
