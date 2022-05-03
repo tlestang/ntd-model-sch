@@ -1283,21 +1283,13 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
     data frame with SAC and adult prevalence at each time point;
     '''
     
-    #all individuals 
-    #all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
 
-    # df = pd.DataFrame({'Time': hostData[0]['timePoints'],
-    #                    'Prevalence': all_prevalence,
-    #                     'Low Intensity Prevalence': all_low_prevalence,
-    #                     'Medium Intensity Prevalence': all_medium_prevalence,
-    #                     'Heavy Intensity Prevalence': all_heavy_prevalence})
     
     for i in range(0,80) : #loop over yearly age bins
         
         prevalence, low_prevalence, moderate_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), nSamples=2, Unfertilized=False, villageSampleSize=100)
         age_start = i
         age_end = i + 1
-        #year = hostData[0]['timePoints']
         
         if i == 0:
             df = pd.DataFrame({'Time':hostData[0]['timePoints'], 
@@ -1306,7 +1298,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                    'intensity':np.repeat('light',len(low_prevalence)),
                    'species':np.repeat(params['species'],len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':low_prevalence})
+                   'draw':low_prevalence})
         
             df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
@@ -1314,7 +1306,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                    'intensity':np.repeat('moderate',len(low_prevalence)),
                    'species':np.repeat(params['species'],len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':moderate_prevalence}))
+                   'draw' :moderate_prevalence}))
                    
         
             df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
@@ -1323,7 +1315,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                    'intensity':np.repeat('heavy',len(low_prevalence)),
                    'species':np.repeat(params['species'],len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':heavy_prevalence}))
+                   'draw':heavy_prevalence}))
         else:
             df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
@@ -1331,7 +1323,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                    'intensity':np.repeat('light',len(low_prevalence)),
                    'species':np.repeat(params['species'],len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':low_prevalence}))
+                   'draw' :low_prevalence}))
             
             df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
@@ -1339,7 +1331,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                    'intensity':np.repeat('moderate',len(low_prevalence)),
                    'species':np.repeat(params['species'],len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':moderate_prevalence}))
+                   'draw':moderate_prevalence}))
             
             df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
@@ -1347,12 +1339,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                    'intensity':np.repeat('heavy',len(low_prevalence)),
                    'species':np.repeat(params['species'],len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':heavy_prevalence}))
-            
-        # df[str(i)+' Prevalence'] = prevalence
-        # df[str(i)+' Low Intensity Prevalence'] = low_prevalence
-        # df[str(i)+' Medium Intensity Prevalence'] = medium_prevalence
-        # df[str(i)+' Heavy Intensity Prevalence'] = heavy_prevalence
+                   'draw':heavy_prevalence}))
 
 
 
