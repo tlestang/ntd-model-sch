@@ -144,7 +144,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'reproFuncName': parameters['reproFuncName'],
               'z': np.exp(-parameters['gamma']),
               'psi': 1.0,
-              'k_epg': 0.87,
+              'k_epg': parameters['k_epg'],
               'species' : parameters['species']}
 
     return params
