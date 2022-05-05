@@ -243,6 +243,45 @@ def parse_coverage_input(coverageFileName,
     return coverageText
 
 
+
+def nextMDAVaccInfo(params):
+    chemoTiming = {}
+    for i in range(1, params['nMDAAges']+1):
+        chemoTiming["Age{0}".format(i)] = copy.deepcopy(params['MDA_Years' + str(i)])
+    VaccTiming = {}
+    for i in range(1, params['nVaccAges']+1):
+        VaccTiming["Age{0}".format(i)] = copy.deepcopy(params['Vacc_Years' + str(i)])
+  #  currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
+  
+    nextChemoTime = 10000
+    for i in range(1, params['nMDAAges']+1):
+        nextChemoTime = min(nextChemoTime, min(chemoTiming["Age{0}".format(i)]))
+    nextMDAAge = []
+    for i in range(1, params['nMDAAges']+1):
+        if nextChemoTime == min(chemoTiming["Age{0}".format(i)]):
+            nextMDAAge.append(i)
+    nextChemoIndex = []
+    for i in range(len(nextMDAAge)):
+        k = nextMDAAge[i]
+        nextChemoIndex.append(np.argmin(chemoTiming["Age{0}".format(k)]))
+        
+        
+        
+    nextVaccTime = 10000
+    for i in range(1, params['nVaccAges']+1):
+        nextVaccTime = min(nextVaccTime, min(VaccTiming["Age{0}".format(i)]))
+    nextVaccAge = []
+    for i in range(1, params['nVaccAges']+1):
+        if nextVaccTime == min(VaccTiming["Age{0}".format(i)]):
+            nextVaccAge.append(i)    
+    nextVaccIndex = []
+    for i in range(len(nextVaccAge)):
+        k = nextVaccAge[i]
+        nextVaccIndex.append(np.argmin(VaccTiming["Age{0}".format(k)]))
+        
+    return chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex
+
+
 def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default'):
 
     '''
