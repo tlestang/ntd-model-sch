@@ -821,6 +821,86 @@ def doChemo(params, SD, t, coverage):
 
     return SD
 
+def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
+
+    '''
+    Chemoterapy function.
+    Parameters
+    ----------
+    params: dict
+        dictionary containing the parameter names and values;
+    SD: dict
+        dictionary containing the initial equilibrium parameter values;
+    t: int
+        time step;
+    minAge: int
+        minimum age for treatment;
+    maxAge: int
+        maximum age for treatment;
+    coverage: array
+        coverage fractions;
+    Returns
+    -------
+    SD: dict
+        dictionary containing the updated equilibrium parameter values;
+    '''
+
+    # decide which individuals are treated, treatment is random
+    attendance = np.random.uniform(low=0, high=1, size=params['N']) < coverage
+    # get age of each individual
+    ages = t - SD['demography']['birthDate']
+    # choose individuals in correct age range
+    correctAges = np.logical_and(ages <= maxAge , ages >= minAge)
+    # they're compliers, in the right age group and it's their turn
+    toTreatNow = np.logical_and(attendance, SD['compliers'])
+    toTreatNow = np.logical_and(toTreatNow , correctAges)
+    
+    # initialize the share of drug 1 and drug2 
+    d1Share = 0
+    d2Share = 0
+    
+    # get the actual share of each drug for this treatment.
+    if t in params['drug1Years']:
+        i = np.where(params['drug1Years'] == t)[0][0]
+        d1Share = params['drug1Split'][i]
+    if t in params['drug2Years']:
+        j = np.where(params['drug2Years'] == t)[0][0]
+        d2Share = params['drug1Split'][j]
+        
+    # assign which drug each person will take    
+    drug = np.ones(sum(toTreatNow))        
+    if d2Share > 0:
+        k = random.sample(range(int(sum(drug))), int(sum(drug) * d2Share))
+        drug[k] = 2
+    # calculate the number of dead worms
+    
+    # if drug 1 share is > 0, then treat the appropriate individuals with drug 1
+    if d1Share > 0:
+        dEff = params['DrugEfficacy1']
+        k = np.where(drug == 1)[0]
+        femaleToDie = np.random.binomial(size=len(k), n=SD['worms']['female'][k], p=dEff)
+        maleToDie = np.random.binomial(size=len(k), n=SD['worms']['total'][k] - SD['worms']['female'][k], p=dEff)
+        SD['worms']['female'][k] -= femaleToDie
+        SD['worms']['total'][k] -= (maleToDie + femaleToDie)
+        # save actual attendance record and the age of each host when treated
+        SD['attendanceRecord'].append(k)
+        
+    # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
+    if d2Share > 0:
+        dEff = params['DrugEfficacy2']
+        k = np.where(drug == 2)[0]
+        femaleToDie = np.random.binomial(size=len(k), n=SD['worms']['female'][k], p=dEff)
+        maleToDie = np.random.binomial(size=len(k), n=SD['worms']['total'][k] - SD['worms']['female'][k], p=dEff)
+        SD['worms']['female'][k] -= femaleToDie
+        SD['worms']['total'][k] -= (maleToDie + femaleToDie)
+        # save actual attendance record and the age of each host when treated
+        SD['attendanceRecord'].append(k)    
+  
+    
+    SD['ageAtChemo'].append(t - SD['demography']['birthDate'])
+    SD['adherenceFactorAtChemo'].append(SD['adherenceFactors'])
+
+    return SD
 
 
 def doVaccine(params, SD, t, VaccCoverage):
