@@ -250,13 +250,13 @@ def doRealizationSurvey(params, i):
                       nextChemoTime2, nextAgeTime, nextVaccineTime])
     
     passSurveyOne = 0
-    passSurveyTwo = 0
+   # passSurveyTwo = 0
     nChemo = 0
     nVacc = 0
     nSurveyOne = 0
-    nSurveyTwo = 0
+   # nSurveyTwo = 0
     tSurveyOne = maxTime + 10
-    tSurveyTwo = maxTime + 10
+   # tSurveyTwo = maxTime + 10
     results = []  # initialise empty list to store results
 
     # run stochastic algorithm
@@ -305,7 +305,7 @@ def doRealizationSurvey(params, i):
                 simData = doChemo(params, simData, t, params['coverage1'])
                 if nChemo == 0:
                     tSurveyOne = t + 5
-                    tSurveyTwo = t + 9
+                  #  tSurveyTwo = t + 9
                 nChemo += 1
                 currentchemoTiming1[nextChemoIndex1] = maxTime + 10
                 nextChemoIndex1 = np.argmin(currentchemoTiming1)
@@ -317,7 +317,6 @@ def doRealizationSurvey(params, i):
                 simData = doChemo(params, simData, t, params['coverage2'])
                 if nChemo == 0:
                     tSurveyOne = t + 5
-                    tSurveyTwo = t + 9
                 nChemo += 1
                 currentchemoTiming2[nextChemoIndex2] = maxTime + 10
                 nextChemoIndex2 = np.argmin(currentchemoTiming2)
@@ -335,27 +334,32 @@ def doRealizationSurvey(params, i):
             if timeBarrier >= tSurveyOne:
                 simData, prevOne = conductSurveyOne(simData, params, t, sampleSizeOne, nSamples)
                 nSurveyOne += 1
-                tSurveyOne = maxTime + 10
+                #tSurveyOne = maxTime + 10
                 if prevOne < 0.01:
-                    tSurveyTwo = t + 4
-                    simData, prevTwo = conductSurveyTwo(simData, params, t, sampleSizeTwo, nSamples)
-                    nSurveyTwo += 1
-                    if prevTwo < 0.01:
-                        nextChemoTime1 = maxTime + 10
-                        nextChemoTime2 = maxTime + 10
-                        nextVaccineTime = maxTime + 10
-                        tSurveyTwo = maxTime + 10
-
-            if timeBarrier >= tSurveyTwo:
-                simData, prevTwo = conductSurveyTwo(simData, params, t, sampleSizeTwo, nSamples)
-                nSurveyTwo += 1
-                if prevTwo < 0.01:
                     nextChemoTime1 = maxTime + 10
                     nextChemoTime2 = maxTime + 10
                     nextVaccineTime = maxTime + 10
-                    tSurveyTwo = maxTime + 10
+                    tSurveyOne = maxTime + 10
                 else:
-                    tSurveyTwo = t + 4
+                    tSurveyOne = t + 4
+                   # simData, prevTwo = conductSurveyTwo(simData, params, t, sampleSizeTwo, nSamples)
+                   # nSurveyTwo += 1
+                   # if prevTwo < 0.01:
+                   #     nextChemoTime1 = maxTime + 10
+                   #     nextChemoTime2 = maxTime + 10
+                   #     nextVaccineTime = maxTime + 10
+                     #   tSurveyTwo = maxTime + 10
+
+            # if timeBarrier >= tSurveyTwo:
+            #     simData, prevTwo = conductSurveyTwo(simData, params, t, sampleSizeTwo, nSamples)
+            #     nSurveyTwo += 1
+            #     if prevTwo < 0.01:
+            #         nextChemoTime1 = maxTime + 10
+            #         nextChemoTime2 = maxTime + 10
+            #         nextVaccineTime = maxTime + 10
+            #         tSurveyTwo = maxTime + 10
+            #     else:
+            #         tSurveyTwo = t + 4
                     
             if timeBarrier >= nextOutTime:
 
@@ -371,8 +375,8 @@ def doRealizationSurvey(params, i):
                     compliers=copy.deepcopy(simData['compliers']),
                     nVacc = nVacc,
                     nChemo = nChemo,
-                    nSurveyOne = nSurveyOne,
-                    nSurveyTwo = nSurveyTwo
+                    nSurveyOne = nSurveyOne #,
+                  #  nSurveyTwo = nSurveyTwo
                 ))
                 outTimes[nextOutIndex] = maxTime + 10
                 nextOutIndex = np.argmin(outTimes)
@@ -387,6 +391,7 @@ def doRealizationSurvey(params, i):
     ))
 
     return results
+
 
 
 def SCH_Simulation(paramFileName, demogName, numReps=None):
