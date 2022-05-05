@@ -282,6 +282,24 @@ def nextMDAVaccInfo(params):
     return chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex
 
 
+def overWritePostVacc(params,  nextVaccAge, nextVaccIndex):
+    
+    for i in range(len(nextVaccAge)):
+        k = nextVaccIndex[i]
+        j = nextVaccAge[i]
+        params['Vacc_Years' + str(j)][k] = 10000
+        
+    return params
+
+def overWritePostMDA(params,  nextMDAAge, nextChemoIndex):
+    
+    for i in range(len(nextMDAAge)):
+        k = nextChemoIndex[i]
+        j = nextMDAAge[i]
+        params['MDA_Years' + str(j)][k] = 10000
+        
+    return params
+
 def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default'):
 
     '''
