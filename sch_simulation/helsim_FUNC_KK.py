@@ -300,6 +300,26 @@ def overWritePostMDA(params,  nextMDAAge, nextChemoIndex):
         
     return params
 
+
+
+def readCoverageFile(coverageTextFileStorageName, params):
+    coverage = readParam(coverageTextFileStorageName)
+    params['nMDAAges'] = np.int(coverage['nMDAAges'])
+    params['nVaccAges'] = np.int(coverage['nVaccAges'])
+    for i in range(1, params['nMDAAges'] + 1):
+        params['MDA_age'+str(i)] = coverage['MDA_age'+ str(i)]
+        params['MDA_Years'+str(i)] = coverage['MDA_Years'+ str(i)] - 2018
+        params['MDA_Coverage'+str(i)] = coverage['MDA_Coverage'+ str(i)]
+    for i in range(1, params['nVaccAges'] + 1):
+        params['Vacc_age'+str(i)] = coverage['Vacc_age'+ str(i)]
+        params['Vacc_Years'+str(i)] = coverage['Vacc_Years'+ str(i)] - 2018
+        params['Vacc_Coverage'+str(i)] = coverage['Vacc_Coverage'+ str(i)]
+    params['drug1Years'] = coverage['drug1Years'] - 2018
+    params['drug1Split'] = coverage['drug1Split']
+    params['drug2Years'] = coverage['drug2Years'] - 2018
+    params['drug2Split'] = coverage['drug2Split']
+    return params
+
 def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default'):
 
     '''
