@@ -937,6 +937,35 @@ def doVaccine(params, SD, t, VaccCoverage):
     
     return SD
     
+def doVaccineAgeRange(params, SD, t, minAge, maxAge, coverage):
+    '''
+    Vaccine function.
+    Parameters
+    ----------
+    params: dict
+        dictionary containing the parameter names and values;
+    SD: dict
+        dictionary containing the initial equilibrium parameter values;
+    t: int
+        time step;
+    VaccCoverage: array
+        coverage fractions;
+    Returns
+    -------
+    SD: dict
+        dictionary containing the updated equilibrium parameter values;
+    '''
+
+    vaccinate = np.random.uniform(low=0, high=1, size=params['N']) < coverage
+    ages = t - SD['demography']['birthDate']
+    correctAges = np.logical_and(ages <= maxAge , ages >= minAge)
+    # they're compliers and it's their turn
+    vaccNow = np.logical_and(vaccinate, SD['compliers'])
+    vaccNow = np.logical_and(vaccNow , correctAges)
+    SD['sv'][vaccNow] = 1
+    SD['vaccCount'] += sum(vaccNow) 
+    
+    return SD
     
 
 def conductSurveyOne(SD, params, t, sampleSize, nSamples):
