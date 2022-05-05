@@ -56,6 +56,193 @@ def readParam(fileName):
     return params
 
 
+def parse_coverage_input(coverageFileName,
+                         coverageTextFileStorageName):
+    '''
+    This function extracts the coverage data and stores in a text file
+    
+    Parameters
+    ----------
+    coverageFileName: str
+        name of the input text file;
+    coverageTextFileStorageName: str
+        name of txt file in which to store processed intervention data
+    Returns
+    -------
+    coverageText: str
+        string variable holding all coverage information for given file name;
+    '''
+    import pandas as pd
+    import numpy as np
+    # read in Coverage spreadsheet
+    PlatCov = pd.read_excel(coverageFileName, sheet_name = 'Platform Coverage')
+    # which rows are for MDA and vaccine
+    MDARows = np.where(PlatCov['Intervention Type'] == "Treatment")[0]
+    VaccRows = np.where(PlatCov['Intervention Type'] == "Vaccine")[0]
+    
+    # initialize variables to contain Age ranges, years and coverage values for MDA and vaccine
+    MDAAges = np.zeros([len(MDARows),2])
+    MDAYears = []
+    MDACoverages = []
+    VaccAges = np.zeros([len(VaccRows),2])
+    VaccYears = []
+    VaccCoverages = []
+    
+    # store number of age ranges specified for MDA coverage
+    numMDAAges = len(MDARows)
+    # initialize MDA text storage with the number of age groups specified for MDA
+    MDA_txt = 'nMDAAges' + '\t' + str(numMDAAges) + '\n'
+    # add drug efficiencies for 2 MDNA drugs
+    MDA_txt = MDA_txt + 'drug1Eff\t' + str(0.87) + '\n' +  'drug2Eff\t' + str(0.95) + '\n'
+    
+    # store number of age ranges specified for Vaccine coverage
+    numVaccAges = len(VaccRows)
+    # initialize vaccine text storage with the number of age groups specified for vaccination
+    Vacc_txt = 'nVaccAges' + '\t' + str(numVaccAges)+ '\n'
+    
+    # we want to find which is the first year specified in the coverage data, along with which 
+    # column of the data set this corresponds to
+    fy = 10000
+    fy_index = 10000
+    for i in range(len(PlatCov.columns)):
+        if type(PlatCov.columns[i]) == int:
+            fy = min(fy, PlatCov.columns[i])
+            fy_index = min(fy_index, i)
+    
+    # loop over MDA coverage rows
+    for i in range(len(MDARows)):
+        # get row number of each MDA entry 
+        k = MDARows[i]
+        # store this row
+        w = PlatCov.iloc[k, :]
+        # store the min and maximum age of this MDA row
+        MDAAges[i,:] = [w['min age'], w['max age']]
+        # re initilize the coverage and years data
+        MDAYears = []
+        MDACoverages = []
+        # loop over the yearly data for this row
+        for j in range(fy_index, len(PlatCov.columns)):
+            # get the column name of specified column
+            cname = PlatCov.columns[j]
+            # if the coverage is >0, then add the year and coverage to the appropriate variable
+            if w[cname] > 0:
+                MDAYears.append(cname)
+                MDACoverages.append(w[cname])
+        
+        MDA_txt = MDA_txt + 'MDA_age' + str(i+1) + '\t'+ str(int(MDAAges[i,:][0])) +' ' + str(int(MDAAges[i,:][1])) +'\n'
+        MDA_txt = MDA_txt + 'MDA_Years' + str(i+1) + '\t'
+        for k in range(len(MDAYears)):
+            if k == (len(MDAYears)-1):
+                MDA_txt = MDA_txt + str(MDAYears[k]) + '\n'
+            else:
+                MDA_txt = MDA_txt + str(MDAYears[k]) + ' '
+        MDA_txt = MDA_txt + 'MDA_Coverage' + str(i+1) + '\t'
+        for k in range(len(MDACoverages)):
+            if k == (len(MDACoverages)-1):
+                MDA_txt = MDA_txt + str(MDACoverages[k]) + '\n'
+            else:
+                MDA_txt = MDA_txt + str(MDACoverages[k]) + ' '
+        
+    # loop over Vaccination coverage rows
+    for i in range(len(VaccRows)):
+        # get row number of each MDA entry 
+        k = VaccRows[i]
+        # store this row
+        w = PlatCov.iloc[k, :]
+        # store the min and maximum age of this Vaccine row
+        VaccAges[i,:] = [w['min age'], w['max age']]
+        # re initilize the coverage and years data
+        VaccYears = []
+        VaccCoverages = []
+        # loop over the yearly data for this row
+        for j in range(fy_index, len(PlatCov.columns)):
+            # get the column name of specified column
+            cname = PlatCov.columns[j]
+            # if coverage is >0 then add the year and coverage to the appropriate variable
+            if w[cname] > 0:
+                VaccYears.append(cname)
+                VaccCoverages.append(w[cname])
+        # once all years and coverages have been collected, we store these in a string variable
+        Vacc_txt = Vacc_txt + 'Vacc_age'+str(i+1)+'\t'+ str(int(VaccAges[i,:][0]))+' ' + str(int(VaccAges[i,:][1])) +'\n'
+        Vacc_txt = Vacc_txt + 'Vacc_Years' + str(i+1) + '\t'
+        for k in range(len(VaccYears)):
+            if k == (len(VaccYears)-1):
+                Vacc_txt = Vacc_txt + str(VaccYears[k]) +'\n'
+            else:
+                Vacc_txt = Vacc_txt + str(VaccYears[k]) +' '
+        Vacc_txt = Vacc_txt + 'Vacc_Coverage' + str(i+1) + '\t'
+        for k in range(len(VaccCoverages)):
+            if k == (len(VaccCoverages)-1):
+                Vacc_txt = Vacc_txt + str(VaccCoverages[k]) + '\n'
+            else:
+                Vacc_txt = Vacc_txt + str(VaccCoverages[k]) + ' '
+
+    #read in market share data
+    MarketShare = pd.read_excel(coverageFileName, sheet_name = 'MarketShare')
+    # find which rows store data for MDAs
+    MDAMarketShare = np.where(MarketShare['Platform'] == 'MDA')[0]
+    # initialize variable to store which drug is being used
+    MDASplit = np.zeros(len(MDAMarketShare))
+    # find which row holds data for the Old and New drugs
+    # these will be stored at 1 and 2 respectively
+    for i in range(len(MDAMarketShare)):
+        if 'Old' in MarketShare['Product'][MDAMarketShare[i]]:
+            MDASplit[i] = 1
+        else:
+            MDASplit[i] = 2
+            
+    # we want to find which is the first year specified in the coverage data, along with which 
+    # column of the data set this corresponds to
+    fy = 10000
+    fy_index = 10000
+    for i in range(len(MarketShare.columns)):
+        if type(MarketShare.columns[i]) == int:
+            fy = min(fy, MarketShare.columns[i])
+            fy_index = min(fy_index, i)
+            
+    # loop over Market share MDA rows
+    for i in range(len(MDAMarketShare)):
+        # store which row we are on
+        k = MDAMarketShare[i]
+        # get data for this row
+        w = MarketShare.iloc[k, :]
+        # initialize needed arrays
+        MDAYears = []
+        MDAYearSplit = []
+        drugInd = MDASplit[i]
+        # loop over yearly market share data
+        for j in range(fy_index, len(MarketShare.columns)):
+            # get column name for this column
+            cname = MarketShare.columns[j]
+            # if split is >0 then store the year and split in appropriate variables
+            if w[cname] > 0:
+                MDAYears.append(cname)
+                MDAYearSplit.append(w[cname])
+                
+        # once we have looped over each year, we store add this information to the MDA string variable
+        MDA_txt = MDA_txt + 'drug' + str(int(drugInd)) + 'Years\t'
+        for k in range(len(MDAYears)):
+            if k == (len(MDAYears) - 1):
+                MDA_txt = MDA_txt + str(MDAYears[k]) +'\n'
+            else:
+                MDA_txt = MDA_txt + str(MDAYears[k]) +' '
+
+        MDA_txt = MDA_txt + 'drug' + str(int(drugInd)) +'Split\t'
+        for k in range(len(MDAYearSplit)):
+            if k == (len(MDAYearSplit)-1):
+                MDA_txt = MDA_txt + str(MDAYearSplit[k]) + '\n'                
+            else:
+                MDA_txt = MDA_txt + str(MDAYearSplit[k]) + ' '
+
+        
+    coverageText = MDA_txt + Vacc_txt    
+    # store the Coverage data in a text file
+    with open(coverageTextFileStorageName, 'w', encoding='utf-8') as f:
+        f.write(coverageText)
+    
+    return coverageText
+
+
 def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default'):
 
     '''
