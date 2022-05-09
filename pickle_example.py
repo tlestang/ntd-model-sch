@@ -4,6 +4,8 @@ import pickle
 import time
 import multiprocessing
 
+# flag for saving results or not
+saveResults = False
 
 # path to pickle file
 InSimFilePath = 'sch_simulation/data/Man_AGO02049.p'
@@ -59,6 +61,12 @@ start_time = time.time()
 results = Parallel(n_jobs=num_cores)(
         delayed(multiple_simulations)(params, pickleData, simparams, i) for i in range(numSims))
     
+    
 end_time = time.time()
 
 print(end_time - start_time)
+
+if saveResults:
+    for i in range(len(results)):
+        df = results[i]
+        df.to_csv('sch_simulation/data/simResults/results_'+str(i)+'.csv', index=False)
