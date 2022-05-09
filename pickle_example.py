@@ -4,6 +4,12 @@ import pickle
 import time
 import multiprocessing
 
+'''
+File to load in a pickle file and associated parameters file and then
+run forward in time 23 years and give back results
+Can store results as a set of csv's if saveResults = True
+'''
+
 # flag for saving results or not
 saveResults = False
 
