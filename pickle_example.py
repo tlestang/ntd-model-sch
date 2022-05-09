@@ -33,7 +33,7 @@ R0 = simparams.iloc[:, 1].tolist()
 k = simparams.iloc[:, 2].tolist()
 
 # path to coverage file
-coverageFileName = 'sch_simulation/data/Coverage_template.xlsx'
+coverageFileName = 'Coverage_template.xlsx'
 demogName = 'Default'
 
 # file name to store munged coverage information in 

@@ -126,7 +126,8 @@ def parse_coverage_input(coverageFileName,
     import pandas as pd
     import numpy as np
     # read in Coverage spreadsheet
-    PlatCov = pd.read_excel(coverageFileName, sheet_name = 'Platform Coverage')
+    DATA_PATH = pkg_resources.resource_filename('sch_simulation', 'data/')
+    PlatCov = pd.read_excel(DATA_PATH + coverageFileName, sheet_name = 'Platform Coverage')
     # which rows are for MDA and vaccine
     MDARows = np.where(PlatCov['Intervention Type'] == "Treatment")[0]
     VaccRows = np.where(PlatCov['Intervention Type'] == "Vaccine")[0]
@@ -229,7 +230,7 @@ def parse_coverage_input(coverageFileName,
                 Vacc_txt = Vacc_txt + str(VaccCoverages[k]) + ' '
 
     #read in market share data
-    MarketShare = pd.read_excel(coverageFileName, sheet_name = 'MarketShare')
+    MarketShare = pd.read_excel(DATA_PATH + coverageFileName, sheet_name = 'MarketShare')
     # find which rows store data for MDAs
     MDAMarketShare = np.where(MarketShare['Platform'] == 'MDA')[0]
     # initialize variable to store which drug is being used
