@@ -67,16 +67,16 @@ def readCovFile(fileName):
     Parameters
     ----------
     fileName: str
-        name of the input text file;
+        name of the input text file; this should be a
+        relative or absolute filesystem path provided
+        by the caller of the library functions
     Returns
     -------
     params: dict
         dictionary containing the parameter names and values;
     '''
 
-    DATA_PATH = pkg_resources.resource_filename('sch_simulation','/')
-
-    with open(DATA_PATH + fileName) as f:
+    with open(fileName) as f:
         
         contents = f.readlines()
 
