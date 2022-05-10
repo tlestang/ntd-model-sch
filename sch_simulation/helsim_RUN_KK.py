@@ -3,6 +3,7 @@ import multiprocessing
 import pandas as pd
 import numpy as np
 import copy
+import time
 
 from sch_simulation.helsim_FUNC_KK import *
 num_cores = multiprocessing.cpu_count()
@@ -98,7 +99,8 @@ def doRealization(params, i):
     # run stochastic algorithm
     while t < maxTime:
         if (t*1000 %10) == 0:
-            print(t)
+            pass
+            #print(t)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
 
@@ -459,7 +461,8 @@ def doRealizationSurveyCoverage(params, i):
     # run stochastic algorithm
     while t < maxTime:
         if t > print_t:
-            print(t)
+            pass
+            #print(t)
             print_t += print_t_interval
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
@@ -642,7 +645,8 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
     # run stochastic algorithm
     while t < maxTime:
         if t > print_t:
-            print(t)
+            pass
+            #print(t)
             print_t += print_t_interval
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
@@ -915,6 +919,9 @@ def singleSimulationDALYCoverage(params,simData,
 
 def multiple_simulations(params, pickleData, simparams, i):
 
+    print( f"==> multiple_simulations starting sim {i}" )
+    start_time = time.time()
+
     # copy the parameters
     parameters = copy.deepcopy(params)
 
@@ -967,4 +974,7 @@ def multiple_simulations(params, pickleData, simparams, i):
 
     # transform the output to data frame
     df = singleSimulationDALYCoverage(params, simData, 1)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print( f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s" )
     return df
