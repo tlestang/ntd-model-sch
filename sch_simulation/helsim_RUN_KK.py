@@ -543,14 +543,19 @@ def doRealizationSurveyCoverage(params, i):
                 nSurvey += 1
 
                 if prevOne < params['surveyThreshold']:
-                    nextChemoTime1 = maxTime + 10
-                    nextChemoTime2 = maxTime + 10
-                    nextVaccineTime = maxTime + 10
+                    for i in range(params['nMDAAges']):
+                        k = i + 1
+                        params['MDA_Years' + str(k)] = [maxTime + 10]
+                    for i in range(params['nVaccAges']):
+                        k = i + 1
+                        params['Vacc_Years' + str(k)] = [maxTime + 10]
+                        
                     tSurvey = maxTime + 10
                 else:
                     tSurvey = t + params['timeToNextSurvey']
                  
-                    
+                chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex = nextMDAVaccInfo(params) 
+            
             if timeBarrier >= nextOutTime:
 
                 results.append(dict(
@@ -637,7 +642,7 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
     nChemo = 0
     nVacc = 0
     nSurvey = 0
-  
+    surveyPass = 0
     tSurvey = maxTime + 10
     results = []  # initialise empty list to store results
     print_t_interval = 0.5
@@ -727,16 +732,24 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                 nSurvey += 1
 
                 if prevOne < params['surveyThreshold']:
-                    nextChemoTime1 = maxTime + 10
-                    nextChemoTime2 = maxTime + 10
-                    nextVaccineTime = maxTime + 10
+                    surveyPass = 1
+                    for i in range(params['nMDAAges']):
+                        k = i + 1
+                        params['MDA_Years' + str(k)] = [maxTime + 10]
+                    for i in range(params['nVaccAges']):
+                        k = i + 1
+                        params['Vacc_Years' + str(k)] = [maxTime + 10]
+                        
                     tSurvey = maxTime + 10
                 else:
                     tSurvey = t + params['timeToNextSurvey']
                  
+                chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex = nextMDAVaccInfo(params) 
+            
                     
             if timeBarrier >= nextOutTime:
-
+                a, truePrev = conductSurvey(simData, params, t, params['N'], 2)
+                trueElim = int(1 - truePrev)
                 results.append(dict(
                     iteration=i,
                     time=t,
@@ -747,9 +760,11 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                     adherenceFactors=copy.deepcopy(
                         simData['adherenceFactors']),
                     compliers=copy.deepcopy(simData['compliers']),
-                    nVacc = nVacc,
-                    nChemo = nChemo,
-                    nSurvey = nSurvey
+                    nVacc = simData['vaccCount'],
+                    nChemo = simData['nChemo'],
+                    nSurvey = nSurvey,
+                    surveyPass = surveyPass,
+                    elimination = trueElim
                 ))
                 outTimes[nextOutIndex] = maxTime + 10
                 nextOutIndex = np.argmin(outTimes)
@@ -840,6 +855,56 @@ def SCH_Simulation_DALY(paramFileName, demogName, numReps=None):
     return df
 
 
+
+def getCostData(results, params):
+    for i in range(len(results)):
+        df = pd.DataFrame(results[i])
+        if i == 0:
+            df1 = pd.DataFrame({'Time':df['time'], 
+                   'age_start': np.repeat('None', df.shape[0]), 
+                   'age_end':np.repeat('None',df.shape[0]), 
+                   'intensity':np.repeat('None', df.shape[0]),
+                   'species':np.repeat(params['species'], df.shape[0]),
+                   'measure':np.repeat('nChemo', df.shape[0]),
+                   'draw_1':df['nChemo']})
+        else:
+            df1 = df1.append(pd.DataFrame({'Time':df['time'], 
+                   'age_start': np.repeat('None', df.shape[0]), 
+                   'age_end':np.repeat('None',df.shape[0]), 
+                   'intensity':np.repeat('None', df.shape[0]),
+                   'species':np.repeat(params['species'], df.shape[0]),
+                   'measure':np.repeat('nChemo', df.shape[0]),
+                   'draw_1':df['nChemo']}))
+        df1 = df1.append(pd.DataFrame({'Time':df['time'], 
+                   'age_start': np.repeat('None', df.shape[0]), 
+                   'age_end':np.repeat('None',df.shape[0]), 
+                   'intensity':np.repeat('None', df.shape[0]),
+                   'species':np.repeat(params['species'], df.shape[0]),
+                   'measure':np.repeat('nVacc', df.shape[0]),
+                   'draw_1':df['nVacc']}))
+        df1 = df1.append(pd.DataFrame({'Time':df['time'], 
+                   'age_start': np.repeat('None', df.shape[0]), 
+                   'age_end':np.repeat('None',df.shape[0]), 
+                   'intensity':np.repeat('None', df.shape[0]),
+                   'species':np.repeat(params['species'], df.shape[0]),
+                   'measure':np.repeat('nSurvey', df.shape[0]),
+                   'draw_1':df['nSurvey']}))
+        df1 = df1.append(pd.DataFrame({'Time':df['time'], 
+                   'age_start': np.repeat('None', df.shape[0]), 
+                   'age_end':np.repeat('None',df.shape[0]), 
+                   'intensity':np.repeat('None', df.shape[0]),
+                   'species':np.repeat(params['species'], df.shape[0]),
+                   'measure':np.repeat('surveyPass', df.shape[0]),
+                   'draw_1':df['surveyPass']}))
+        df1 = df1.append(pd.DataFrame({'Time':df['time'], 
+                   'age_start': np.repeat('None', df.shape[0]), 
+                   'age_end':np.repeat('None',df.shape[0]), 
+                   'intensity':np.repeat('None', df.shape[0]),
+                   'species':np.repeat(params['species'], df.shape[0]),
+                   'measure':np.repeat('trueElimination', df.shape[0]),
+                   'draw_1':df['elimination']}))
+        return df1
+
 def SCH_Simulation_DALY_Coverage(paramFileName, demogName, 
                                  coverageFileName,
                                  coverageTextFileStorageName,
@@ -906,13 +971,13 @@ def singleSimulationDALYCoverage(params,simData,
 
     # process the output
     output = extractHostData(results)
-
+    
     # transform the output to data frame
     df = getPrevalenceDALYsAll(output, params, numReps)
     numAgeGroup = outputNumberInAgeGroup(results, params)
-    
+    costData = getCostData(results, params)
     df1 = pd.concat([df,numAgeGroup],ignore_index=True)
-    
+    df1 = pd.concat([df1, costData], ignore_index=True)
     return df1
 
 
@@ -938,6 +1003,7 @@ def multiple_simulations(params, pickleData, simparams, i):
     simData['ageAtChemo'] = []
     simData['adherenceFactorAtChemo'] = []
     simData['vaccCount'] = 0
+    simData['nChemo'] = 0
     simData['numSurvey'] = 0
     simData['compliers'] = np.random.uniform(low=0, high=1, size=len(simData['si'])) > params['propNeverCompliers']
     simData['adherenceFactors']= np.random.uniform(low=0, high=1, size=len(simData['si']))
@@ -949,9 +1015,9 @@ def multiple_simulations(params, pickleData, simparams, i):
     simData['demography']['birthDate'] = simData['demography']['birthDate'] - times['maxTime']
     simData['demography']['deathDate'] = simData['demography']['deathDate'] - times['maxTime']
     
-    simData['contactAgeGroupIndices'] = pd.cut(x=t - simData['demography']['birthDate'], bins=params['contactAgeGroupBreaks'],
-    labels=np.arange(0, len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
-    params['N'] = len(simData['si'])
+    simData['contactAgeGroupIndices'] = pd.cut(x=t - simData['demography']['birthDate'], bins=parameters['contactAgeGroupBreaks'],
+    labels=np.arange(0, len(parameters['contactAgeGroupBreaks']) - 1)).to_numpy()
+    parameters['N'] = len(simData['si'])
     # increment the simulation times
    # parameters['maxTime'] += times['maxTime']
    
@@ -973,7 +1039,7 @@ def multiple_simulations(params, pickleData, simparams, i):
     # output = extractHostData(results)
 
     # transform the output to data frame
-    df = singleSimulationDALYCoverage(params, simData, 1)
+    df = singleSimulationDALYCoverage(parameters, simData, 1)
     end_time = time.time()
     total_time = end_time - start_time
     print( f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s" )
