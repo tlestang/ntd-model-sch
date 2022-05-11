@@ -99,8 +99,7 @@ def doRealization(params, i):
     # run stochastic algorithm
     while t < maxTime:
         if (t*1000 %10) == 0:
-            pass
-            #print(t)
+            print(t)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
 
@@ -461,8 +460,7 @@ def doRealizationSurveyCoverage(params, i):
     # run stochastic algorithm
     while t < maxTime:
         if t > print_t:
-            pass
-            #print(t)
+            print(t)
             print_t += print_t_interval
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
@@ -650,8 +648,7 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
     # run stochastic algorithm
     while t < maxTime:
         if t > print_t:
-            pass
-            #print(t)
+            print(t)
             print_t += print_t_interval
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
