@@ -756,8 +756,8 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                     adherenceFactors=copy.deepcopy(
                         simData['adherenceFactors']),
                     compliers=copy.deepcopy(simData['compliers']),
-                    nVacc = nVacc,
-                    nChemo = nChemo,
+                    nVacc = simData['vaccCount'],
+                    nChemo = simData['nChemo'],
                     nSurvey = nSurvey,
                     surveyPass = surveyPass,
                     elimination = trueElim
@@ -996,6 +996,7 @@ def multiple_simulations(params, pickleData, simparams, i):
     simData['ageAtChemo'] = []
     simData['adherenceFactorAtChemo'] = []
     simData['vaccCount'] = 0
+    simData['nChemo'] = 0
     simData['numSurvey'] = 0
     simData['compliers'] = np.random.uniform(low=0, high=1, size=len(simData['si'])) > params['propNeverCompliers']
     simData['adherenceFactors']= np.random.uniform(low=0, high=1, size=len(simData['si']))
