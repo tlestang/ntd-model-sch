@@ -960,7 +960,7 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
     
     SD['ageAtChemo'].append(t - SD['demography']['birthDate'])
     SD['adherenceFactorAtChemo'].append(SD['adherenceFactors'])
-
+    SD['nChemo'] += sum(toTreatNow)
     return SD
 
 
