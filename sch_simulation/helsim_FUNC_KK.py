@@ -416,6 +416,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'sigma': parameters['sigma'],
               'v1':parameters['v1sigma'], # vacc par
               'LDecayRate': parameters['ReservoirDecayRate'],
+              'DrugEfficacy': parameters['drugEff'],
               'DrugEfficacy1': parameters['drugEff1'],
               'DrugEfficacy2': parameters['drugEff2'],
               'contactAgeBreaks': parameters['contactAgeBreaks'],
