@@ -320,7 +320,7 @@ def nextMDAVaccInfo(params):
     nextChemoIndex = []
     for i in range(len(nextMDAAge)):
         k = nextMDAAge[i]
-        nextChemoIndex.append(np.argmin(chemoTiming["Age{0}".format(k)]))
+        nextChemoIndex.append(np.argmin(np.array(chemoTiming["Age{0}".format(k)])))
         
         
         
@@ -334,7 +334,7 @@ def nextMDAVaccInfo(params):
     nextVaccIndex = []
     for i in range(len(nextVaccAge)):
         k = nextVaccAge[i]
-        nextVaccIndex.append(np.argmin(VaccTiming["Age{0}".format(k)]))
+        nextVaccIndex.append(np.argmin(np.array(VaccTiming["Age{0}".format(k)])))
         
     return chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex
 
@@ -1255,7 +1255,7 @@ def extractHostData(results):
             # adherenceFactors=np.array([results[rep][i]['adherenceFactors'] for i in range(len(results[0]) - 1)]).T,
             # compliers=np.array([results[rep][i]['compliers'] for i in range(len(results[0]) - 1)]).T,
             # totalPop=len(results[rep][0]['worms']['total']),
-            timePoints=np.array([results[rep][i]['time'] for i in range(len(results[0]) - 1)]),
+            timePoints=np.array([np.array(results[rep][i]['time']) for i in range(len(results[0]) - 1)]),
             # attendanceRecord=results[rep][-1]['attendanceRecord'],
             # ageAtChemo=results[rep][-1]['ageAtChemo'],
             # finalFreeLiving=results[rep][-2]['freeLiving'],
