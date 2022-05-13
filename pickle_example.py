@@ -14,7 +14,7 @@ Can store results as a set of csv's if saveResults = True
 saveResults = False
 
 # path to pickle file
-InSimFilePath = '/tmp/Man_AGO02049.p'
+InSimFilePath = 'Man_AGO02049.p'
 
 #pickleData = pickle.loads( cloudModule.get_blob( InSimFilePath ) ) if useCloudStorage else pickle.load(open(InSimFilePath, 'rb'))
 
@@ -22,7 +22,7 @@ InSimFilePath = '/tmp/Man_AGO02049.p'
 pickleData =  pickle.load(open(InSimFilePath, 'rb'))
 
 # path to 200 parameters file
-RkFilePath = '/tmp/Input_Rk_Man_AGO02049.csv'
+RkFilePath = 'Input_Rk_Man_AGO02049.csv'
 # read in parameters
 simparams = pd.read_csv(RkFilePath)
 simparams.columns = [s.replace(' ', '') for s in simparams.columns]

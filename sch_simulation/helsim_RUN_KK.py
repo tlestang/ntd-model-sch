@@ -1,11 +1,36 @@
-from joblib import Parallel, delayed
-import multiprocessing
-import pandas as pd
-import numpy as np
 import copy
+import multiprocessing
 import time
 
-from sch_simulation.helsim_FUNC_KK import *
+import cupy as np
+from joblib import Parallel, delayed
+import pandas as pd
+
+from sch_simulation.helsim_FUNC_KK import (
+    calcRates2,
+    conductSurvey,
+    configure,
+    doChemo,
+    doChemoAgeRange,
+    doDeath,
+    doEvent2,
+    doFreeLive,
+    doVaccine,
+    getEquilibrium,
+    getPsi,
+    nextMDAVaccInfo,
+    overWritePostMDA,
+    readParams,
+    setupSD,
+    doVaccineAgeRange,
+    overWritePostVacc,
+    extractHostData,
+    getPrevalence,
+    getPrevalenceDALYsAll,
+    outputNumberInAgeGroup,
+    parse_coverage_input,
+    readCoverageFile
+)
 num_cores = multiprocessing.cpu_count()
 
 
@@ -106,19 +131,13 @@ def doRealization(params, i):
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
         if sumRates < 1e-4:
-
             dt = 10000
 
         else:
-
-
             dt = np.random.exponential(scale=1 / sumRates, size=1)[0]
 
         if t + dt < nextStep:
-
             t += dt
-   
-
             simData = doEvent2(rates, params, simData)
 
         else:

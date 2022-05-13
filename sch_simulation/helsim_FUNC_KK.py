@@ -1,4 +1,5 @@
-import numpy as np
+#import numpy as np
+import cupy as np
 import pandas as pd
 from scipy.optimize import bisect
 import warnings
@@ -6,7 +7,7 @@ import copy
 import random
 import pkg_resources
 warnings.filterwarnings('ignore')
-np.seterr(divide='ignore')
+#np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
 
@@ -391,9 +392,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
 
     demographies = readParam(demogFileName)
     parameters = readParam(paramFileName)
-
-    chemoTimings1 = np.array([parameters['treatStart1'] + x * parameters['treatInterval1']
-    for x in range(np.int(parameters['nRounds1']))])
+    chemoTimings1 = np.array([float(parameters['treatStart1'] + x * parameters['treatInterval1']) for x in range(np.int(parameters['nRounds1']))])
 
     chemoTimings2 = np.array([parameters['treatStart2'] + x * parameters['treatInterval2']
     for x in range(np.int(parameters['nRounds2']))])
@@ -412,7 +411,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'sigma': parameters['sigma'],
               'v1':parameters['v1sigma'], # vacc par
               'LDecayRate': parameters['ReservoirDecayRate'],
-              'DrugEfficacy': parameters['drugEff'],
+              #'DrugEfficacy': parameters['drugEff'],
               'DrugEfficacy1': parameters['drugEff1'],
               'DrugEfficacy2': parameters['drugEff2'],
               'contactAgeBreaks': parameters['contactAgeBreaks'],
@@ -461,7 +460,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'timeToFirstSurvey' : parameters['timeToFirstSurvey'],
               'timeToNextSurvey' : parameters['timeToNextSurvey'],
               'surveyThreshold' : parameters['surveyThreshold'],
-              'Unfertilized' : parameters['unfertilized']}
+              'Unfertilized' : False}#parameters['unfertilized']}
 
     return params
 

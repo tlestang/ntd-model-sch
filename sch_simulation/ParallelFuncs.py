@@ -1,5 +1,7 @@
-import numpy as np
-from scipy.special import gamma
+#import numpy as np
+import cupy as np
+#from scipy.special import gamma
+from cupyx.scipy.special import gamma
 
 def epgPerPerson(x, params):
 
