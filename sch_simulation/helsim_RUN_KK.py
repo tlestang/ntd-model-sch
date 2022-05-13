@@ -791,8 +791,8 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                 nextOutIndex = np.argmin(outTimes)
                 nextOutTime = outTimes[nextOutIndex]
 
-            nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime,
-                       nextAgeTime, nextVaccTime])
+            nextStep = min([float(nextOutTime), float(t + maxStep), float(nextChemoTime),
+                       float(nextAgeTime), float(nextVaccTime)])
 
     # results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
     #     # ageAtChemo=np.array(simData['ageAtChemo']),

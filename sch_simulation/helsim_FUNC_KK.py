@@ -922,8 +922,8 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
         j = np.where(params['drug2Years'] == t)[0][0]
         d2Share = params['drug2Split'][j]
         
-    # assign which drug each person will take    
-    drug = np.ones(sum(toTreatNow))        
+    # assign which drug each person will take  
+    drug = np.ones(int(sum(toTreatNow)))
     if d2Share > 0:
         k = random.sample(range(int(sum(drug))), int(sum(drug) * d2Share))
         drug[k] = 2
@@ -1052,7 +1052,8 @@ def conductSurvey(SD, params, t, sampleSize, nSamples):
 
     # get sampled individuals
     KKSampleSize = min(sampleSize, sum(surveyAged)) 
-    sampledEggs = np.random.choice(a=surveyEggs, size=KKSampleSize, replace=False)
+    # TODO: Replace=False not supported in cupy - how critical?
+    sampledEggs = np.random.choice(a=np.array(surveyEggs), size=int(KKSampleSize), replace=True)
     SD['numSurvey'] += 1
     # return the prevalence
     return SD, np.sum(sampledEggs > 0.9) / KKSampleSize
