@@ -3,7 +3,6 @@ import multiprocessing
 import pandas as pd
 import numpy as np
 import copy
-import time
 
 from sch_simulation.helsim_FUNC_KK import *
 num_cores = multiprocessing.cpu_count()
@@ -758,7 +757,8 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                         simData['adherenceFactors']),
                     compliers=copy.deepcopy(simData['compliers']),
                     nVacc = simData['vaccCount'],
-                    nChemo = simData['nChemo'],
+                    nChemo1 = simData['nChemo1'],
+                    nChemo2 = simData['nChemo2'],
                     nSurvey = nSurvey,
                     surveyPass = surveyPass,
                     elimination = trueElim
@@ -862,8 +862,8 @@ def getCostData(results, params):
                    'age_end':np.repeat('None',df.shape[0]), 
                    'intensity':np.repeat('None', df.shape[0]),
                    'species':np.repeat(params['species'], df.shape[0]),
-                   'measure':np.repeat('nChemo', df.shape[0]),
-                   'draw_1':df['nChemo']})
+                   'measure':np.repeat('nChemo1', df.shape[0]),
+                   'draw_1':df['nChemo1']})
         else:
             df1 = df1.append(pd.DataFrame({'Time':df['time'], 
                    'age_start': np.repeat('None', df.shape[0]), 
@@ -872,6 +872,13 @@ def getCostData(results, params):
                    'species':np.repeat(params['species'], df.shape[0]),
                    'measure':np.repeat('nChemo', df.shape[0]),
                    'draw_1':df['nChemo']}))
+        df1 = df1.append(pd.DataFrame({'Time':df['time'], 
+                   'age_start': np.repeat('None', df.shape[0]), 
+                   'age_end':np.repeat('None',df.shape[0]), 
+                   'intensity':np.repeat('None', df.shape[0]),
+                   'species':np.repeat(params['species'], df.shape[0]),
+                   'measure':np.repeat('nChemo2', df.shape[0]),
+                   'draw_1':df['nChemo2']}))
         df1 = df1.append(pd.DataFrame({'Time':df['time'], 
                    'age_start': np.repeat('None', df.shape[0]), 
                    'age_end':np.repeat('None',df.shape[0]), 
@@ -970,7 +977,7 @@ def singleSimulationDALYCoverage(params,simData,
     output = extractHostData(results)
     
     # transform the output to data frame
-    df = getPrevalenceDALYsAll(output, params, numReps)
+    df = getPrevalenceDALYsAll(output, params, numReps, Unfertilized= params['Unfertilized'])
     numAgeGroup = outputNumberInAgeGroup(results, params)
     costData = getCostData(results, params)
     df1 = pd.concat([df,numAgeGroup],ignore_index=True)
@@ -980,9 +987,6 @@ def singleSimulationDALYCoverage(params,simData,
 
 
 def multiple_simulations(params, pickleData, simparams, i):
-
-    print( f"==> multiple_simulations starting sim {i}" )
-    start_time = time.time()
 
     # copy the parameters
     parameters = copy.deepcopy(params)
@@ -1000,7 +1004,8 @@ def multiple_simulations(params, pickleData, simparams, i):
     simData['ageAtChemo'] = []
     simData['adherenceFactorAtChemo'] = []
     simData['vaccCount'] = 0
-    simData['nChemo'] = 0
+    simData['nChemo1'] = 0
+    simData['nChemo2'] = 0
     simData['numSurvey'] = 0
     simData['compliers'] = np.random.uniform(low=0, high=1, size=len(simData['si'])) > params['propNeverCompliers']
     simData['adherenceFactors']= np.random.uniform(low=0, high=1, size=len(simData['si']))
@@ -1037,7 +1042,4 @@ def multiple_simulations(params, pickleData, simparams, i):
 
     # transform the output to data frame
     df = singleSimulationDALYCoverage(parameters, simData, 1)
-    end_time = time.time()
-    total_time = end_time - start_time
-    print( f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s" )
     return df
