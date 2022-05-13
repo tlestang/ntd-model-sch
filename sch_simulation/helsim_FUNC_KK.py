@@ -1213,12 +1213,11 @@ def getEquilibrium(params):
     test_L = np.append(np.linspace(start=0, stop=L_minus, num=10), np.linspace(start=L_minus, stop=L_hat, num=20))
 
     def K_valueFunc(currentL, params):
-        return params['psi'] * np.sum(params['reproFunc'](currentL * Q, params) * rhoAge * hostSurvivalCurve * deltaT) / \
-        (MeanLifespan * params['LDecayRate']) - currentL
-        #return params['psi'] * np.sum(params['reproFunc'](currentL * Q, params) * rhoAge * hostSurvivalCurve * deltaT) / (MeanLifespan * params['LDecayRate']) - currentL
-    K_values = np.vectorize(K_valueFunc)(currentL=test_L, params=params)
-    #K_values = K_valueFunc(currentL=test_L, params=params)
-
+        repro_result = params['reproFunc'](currentL * Q, params)
+        return params['psi'] * np.sum(repro_result * rhoAge * hostSurvivalCurve * deltaT) / (MeanLifespan * params['LDecayRate']) - currentL
+    #K_values = np.vectorize(K_valueFunc)(currentL=test_L, params=params)
+    K_values = np.array([K_valueFunc(i,params) for i in test_L])
+    
     # now find the maximum of K_values and use bisection to find critical Ls
     iMax = np.argmax(K_values)
     mid_L = test_L[iMax]

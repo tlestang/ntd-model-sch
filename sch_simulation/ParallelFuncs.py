@@ -1,7 +1,7 @@
-import numpy as np
-#import cupy as np
-from scipy.special import gamma
-#from cupyx.scipy.special import gamma
+#import numpy as np
+import cupy as np
+#from scipy.special import gamma
+from cupyx.scipy.special import gamma
 
 def epgPerPerson(x, params):
 
@@ -84,7 +84,13 @@ def monogFertilityFuncApprox(x, params):
     else:
 
         g = x / (x + params['k'])
-        integrand = (1 - params['monogParams']['cosTheta']) * (1 + g * params['monogParams']['cosTheta']) ** (- 1 - params['k'])
+        integrand = (
+            1 - params['monogParams']['cosTheta']
+        ) * (
+            1 + float(g) * params['monogParams']['cosTheta']
+        ) ** (
+            - 1 - float(params['k'])
+        )
         integral = np.mean(integrand)
 
         return 1 - (1 - g) ** (1 + params['k']) * integral
@@ -103,8 +109,8 @@ def epgMonog(x, params):
     params: dict
         dictionary containing the parameter names and values;
     '''
-
-    return epgPerPerson(x, params) * np.vectorize(monogFertilityFuncApprox)(x, params)
+    vectorized = np.array([monogFertilityFuncApprox(i, params) for i in x])
+    return epgPerPerson(x, params) * vectorized
 
 def epgFertility(x, params):
 

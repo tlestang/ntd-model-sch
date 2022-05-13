@@ -2,8 +2,8 @@ import copy
 import multiprocessing
 import time
 
-#import cupy as np
-import numpy as np
+import cupy as np
+#import numpy as np
 from joblib import Parallel, delayed
 import pandas as pd
 
