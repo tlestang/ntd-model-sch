@@ -67,16 +67,16 @@ def readCovFile(fileName):
     Parameters
     ----------
     fileName: str
-        name of the input text file; this should be a
-        relative or absolute filesystem path provided
-        by the caller of the library functions
+        name of the input text file;
     Returns
     -------
     params: dict
         dictionary containing the parameter names and values;
     '''
 
-    with open(fileName) as f:
+    DATA_PATH = pkg_resources.resource_filename('sch_simulation','/')
+
+    with open(DATA_PATH + fileName) as f:
         
         contents = f.readlines()
 
@@ -126,8 +126,7 @@ def parse_coverage_input(coverageFileName,
     import pandas as pd
     import numpy as np
     # read in Coverage spreadsheet
-    DATA_PATH = pkg_resources.resource_filename('sch_simulation', 'data/')
-    PlatCov = pd.read_excel(DATA_PATH + coverageFileName, sheet_name = 'Platform Coverage')
+    PlatCov = pd.read_excel(coverageFileName, sheet_name = 'Platform Coverage')
     # which rows are for MDA and vaccine
     MDARows = np.where(PlatCov['Intervention Type'] == "Treatment")[0]
     VaccRows = np.where(PlatCov['Intervention Type'] == "Vaccine")[0]
@@ -230,7 +229,7 @@ def parse_coverage_input(coverageFileName,
                 Vacc_txt = Vacc_txt + str(VaccCoverages[k]) + ' '
 
     #read in market share data
-    MarketShare = pd.read_excel(DATA_PATH + coverageFileName, sheet_name = 'MarketShare')
+    MarketShare = pd.read_excel(coverageFileName, sheet_name = 'MarketShare')
     # find which rows store data for MDAs
     MDAMarketShare = np.where(MarketShare['Platform'] == 'MDA')[0]
     # initialize variable to store which drug is being used
@@ -290,7 +289,7 @@ def parse_coverage_input(coverageFileName,
     coverageText = MDA_txt + Vacc_txt    
     # store the Coverage data in a text file
     with open(coverageTextFileStorageName, 'w', encoding='utf-8') as f:
-        f.write(coverageText)
+        f.write('sch_simulation/'+coverageText)
     
     return coverageText
 
@@ -416,7 +415,6 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'sigma': parameters['sigma'],
               'v1':parameters['v1sigma'], # vacc par
               'LDecayRate': parameters['ReservoirDecayRate'],
-              'DrugEfficacy': parameters['drugEff'],
               'DrugEfficacy1': parameters['drugEff1'],
               'DrugEfficacy2': parameters['drugEff2'],
               'contactAgeBreaks': parameters['contactAgeBreaks'],
@@ -464,7 +462,8 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'species' : parameters['species'],
               'timeToFirstSurvey' : parameters['timeToFirstSurvey'],
               'timeToNextSurvey' : parameters['timeToNextSurvey'],
-              'surveyThreshold' : parameters['surveyThreshold']}
+              'surveyThreshold' : parameters['surveyThreshold'],
+              'Unfertilized' : parameters['Unfertilized']}
 
     return params
 
@@ -947,7 +946,7 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
         SD['worms']['total'][k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
         SD['attendanceRecord'].append(k)
-        
+        SD['nChemo1'] += len(k)
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
         dEff = params['DrugEfficacy2']
@@ -958,11 +957,11 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
         SD['worms']['total'][k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
         SD['attendanceRecord'].append(k)    
-  
+        SD['nChemo2'] += len(k)
     
     SD['ageAtChemo'].append(t - SD['demography']['birthDate'])
     SD['adherenceFactorAtChemo'].append(SD['adherenceFactors'])
-    SD['nChemo'] += sum(toTreatNow)
+    
     return SD
 
 
@@ -1046,9 +1045,9 @@ def conductSurvey(SD, params, t, sampleSize, nSamples):
     # get Kato-Katz eggs for each individual
     for i in range(nSamples):
         if i == 0:
-            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False)
+            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized'])
         else:
-            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False))
+            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized']))
     eggCounts = eggCounts / nSamples
 
     # get individuals in chosen survey age group
@@ -1071,9 +1070,9 @@ def conductSurveyTwo(SD, params, t, sampleSize, nSamples):
     # get Kato-Katz eggs for each individual
     for i in range(nSamples):
         if i == 0:
-            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False)
+            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized'])
         else:
-            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False))
+            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized']))
     eggCounts = eggCounts / nSamples
 
 
@@ -1272,7 +1271,7 @@ def extractHostData(results):
 
     return output
 
-def getSetOfEggCounts(total, female, params, Unfertilized=False):
+def getSetOfEggCounts(total, female, params, Unfertilized):
 
     '''
     This function returns a set of readings of egg counts from a vector of individuals,
@@ -1672,13 +1671,13 @@ def getPrevalenceDALYs(hostData, params, numReps, nSamples=2, Unfertilized=False
 
 
     #under 4s
-    ufour_prevalence, ufour_low_prevalence, ufour_medium_prevalence, ufour_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 4]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+    ufour_prevalence, ufour_low_prevalence, ufour_medium_prevalence, ufour_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 4]), nSamples=2, Unfertilized=Unfertilized, villageSampleSize=100)
 
     # adults
-    adult_prevalence, adult_low_prevalence, adult_medium_prevalence, adult_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([5, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+    adult_prevalence, adult_low_prevalence, adult_medium_prevalence, adult_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([5, 80]), nSamples=2, Unfertilized = Unfertilized, villageSampleSize=100)
 
     #all individuals 
-    all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+    all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized = Unfertilized, villageSampleSize=100)
 
 
     df = pd.DataFrame({'Time': hostData[0]['timePoints'],
@@ -1736,7 +1735,7 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
     
     for i in range(0,80) : #loop over yearly age bins
         
-        prevalence, low_prevalence, moderate_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), nSamples=2, Unfertilized=False, villageSampleSize=100)
+        prevalence, low_prevalence, moderate_prevalence, heavy_prevalence = getBurdens(hostData, params, numReps, np.array([i, i+1]), nSamples=2, Unfertilized = Unfertilized, villageSampleSize=100)
         age_start = i
         age_end = i + 1
         #year = hostData[0]['timePoints']
