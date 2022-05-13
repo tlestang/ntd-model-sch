@@ -557,24 +557,20 @@ def setupSD(params):
         trialDeathDates[earlyDeath] += getLifeSpans(len(earlyDeath), params)
 
     demography = {'birthDate': trialBirthDates - communityBurnIn, 'deathDate': trialDeathDates - communityBurnIn}
+    
+    contactAgeGroupIndices = np.digitize(-demography['birthDate'], params['contactAgeGroupBreaks'])-1
 
-    contactAgeGroupIndices = pd.cut(x=-demography['birthDate'], bins=params['contactAgeGroupBreaks'],
-    labels=np.arange(start=0, stop=len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
+    treatmentAgeGroupIndices = np.digitize(-demography['birthDate'], params['treatmentAgeGroupBreaks'])-1
 
-    treatmentAgeGroupIndices = pd.cut(x=-demography['birthDate'], bins=params['treatmentAgeGroupBreaks'],
-    labels=np.arange(start=0, stop=len(params['treatmentAgeGroupBreaks']) - 1)).to_numpy()
-
-    meanBurdenIndex = pd.cut(x=-demography['birthDate'], bins=np.append(0, params['equiData']['ageValues']),
-    labels=np.arange(start=0, stop=len(params['equiData']['ageValues']))).to_numpy()
+    meanBurdenIndex = np.digitize(-demography['birthDate'], np.append(0, params['equiData']['ageValues']))-1
 
     wTotal = np.random.poisson(lam=si * params['equiData']['stableProfile'][meanBurdenIndex] * 2, size=params['N'])
 
     worms = dict(total=wTotal, female=np.random.binomial(n=wTotal, p=0.5, size=params['N']))
 
     stableFreeLiving = params['equiData']['L_stable'] * 2
-    
-    VaccTreatmentAgeGroupIndices = pd.cut(x = -demography['birthDate'], bins = params['VaccTreatmentAgeGroupBreaks'],
-    labels=np.arange(start=0, stop=len(params['VaccTreatmentAgeGroupBreaks']) - 1)).to_numpy()
+
+    VaccTreatmentAgeGroupIndices = np.digitize(-demography['birthDate'], params['VaccTreatmentAgeGroupBreaks'])-1
     
     SD = {'si': si,
           'sv': sv,
@@ -637,9 +633,6 @@ def calcRates2(params, SD):
     -------
     array of event rates;
     '''
-    print("free ", SD['freeLiving'])
-    print("si ", SD['si'])
-    print("other ", params['contactRates'][SD['contactAgeGroupIndices']])
     hostInfRates = float(SD['freeLiving']) * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
     deathRate = params['sigma'] * SD['worms']['total'] * params['v1'][SD['sv']]
     hostVaccDecayRates = params['VaccDecayRate'][SD['sv']]
@@ -831,15 +824,12 @@ def doDeath(params, SD, t):
         SD['compliers'][theDead] = np.random.uniform(low=0, high=1, size=len(theDead)) > params['propNeverCompliers']
 
     # update the contact age categories
-    SD['contactAgeGroupIndices'] = pd.cut(x=t - SD['demography']['birthDate'], bins=params['contactAgeGroupBreaks'],
-    labels=np.arange(0, len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
-    
+    SD['contactAgeGroupIndices'] = np.digitize(t - SD['demography']['birthDate'], params['contactAgeGroupBreaks'])-1
 
     # update the treatment age categories
-    SD['treatmentAgeGroupIndices'] = pd.cut(x=t - SD['demography']['birthDate'], bins=params['treatmentAgeGroupBreaks'],
-    labels=np.arange(0, len(params['treatmentAgeGroupBreaks']) - 1)).to_numpy()
-    SD['VaccTreatmentAgeGroupIndices'] = pd.cut(x=t - SD['demography']['birthDate'], bins=params['VaccTreatmentAgeGroupBreaks'],
-    labels=np.arange(0, len(params['VaccTreatmentAgeGroupBreaks']) - 1)).to_numpy()
+    SD['treatmentAgeGroupIndices'] = np.digitize(t - SD['demography']['birthDate'], params['treatmentAgeGroupBreaks'])-1
+    SD['VaccTreatmentAgeGroupIndices'] = np.digitize(t - SD['demography']['birthDate'], params['VaccTreatmentAgeGroupBreaks'])-1
+
     return SD
 
 def doChemo(params, SD, t, coverage):
@@ -1109,10 +1099,7 @@ def getPsi(params):
 
 
 
-    #inner = pd.cut(
-    #    x=modelAges, 
-    #    bins=params['muBreaks'], 
-    #    labels=np.arange(start=0, stop=len(params['hostMuData']))).to_numpy()
+
     inner = np.digitize(modelAges, params['muBreaks'])-1
 
     # hostMu for the new age intervals
@@ -1124,12 +1111,7 @@ def getPsi(params):
     # calculate the cumulative sum of host and worm death rates from which to calculate worm survival
     # intMeanWormDeathEvents = np.cumsum(hostMu + params['sigma']) * deltaT # commented out as it is not used
 
-    #modelAgeGroupCatIndex = pd.cut(
-    #    x=modelAges, 
-    #    bins=params['contactAgeGroupBreaks'], 
-    #    labels=np.arange(
-    #        start=0,
-    #        stop=len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
+
     modelAgeGroupCatIndex = np.digitize(modelAges, params['contactAgeGroupBreaks'])-1
 
     betaAge = params['contactRates'][modelAgeGroupCatIndex]
@@ -1372,8 +1354,8 @@ def getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, nSamp
 
     meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
 
-    ageGroups = pd.cut(x=villageList['ages'][:, timeIndex], bins=np.append(-10, np.append(ageBand, 150)),
-    labels=np.array([1, 2, 3])).to_numpy()
+
+    ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
 
@@ -1413,9 +1395,7 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
     '''
 
     meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
-
-    ageGroups = pd.cut(x=villageList['ages'][:, timeIndex], bins=np.append(-10, np.append(ageBand, 150)),
-    labels=np.array([1, 2, 3])).to_numpy()
+    ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
     
@@ -1470,9 +1450,7 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, pa
     '''
 
     meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
-
-    ageGroups = pd.cut(x=villageList['ages'][:, timeIndex], bins=np.append(-10, np.append(ageBand, 150)),
-    labels=np.array([1, 2, 3])).to_numpy()
+    ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
 
