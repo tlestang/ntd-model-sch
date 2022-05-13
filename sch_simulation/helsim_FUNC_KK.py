@@ -460,7 +460,8 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'species' : parameters['species'],
               'timeToFirstSurvey' : parameters['timeToFirstSurvey'],
               'timeToNextSurvey' : parameters['timeToNextSurvey'],
-              'surveyThreshold' : parameters['surveyThreshold']}
+              'surveyThreshold' : parameters['surveyThreshold'],
+              'Unfertilized' : parameters['unfertilized']}
 
     return params
 
@@ -943,7 +944,7 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
         SD['worms']['total'][k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
         SD['attendanceRecord'].append(k)
-        
+        SD['nChemo1'] += len(k)
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
         dEff = params['DrugEfficacy2']
@@ -954,11 +955,11 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
         SD['worms']['total'][k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
         SD['attendanceRecord'].append(k)    
-  
+        SD['nChemo2'] += len(k)
     
     SD['ageAtChemo'].append(t - SD['demography']['birthDate'])
     SD['adherenceFactorAtChemo'].append(SD['adherenceFactors'])
-    SD['nChemo'] += sum(toTreatNow)
+
     return SD
 
 
@@ -1042,9 +1043,9 @@ def conductSurvey(SD, params, t, sampleSize, nSamples):
     # get Kato-Katz eggs for each individual
     for i in range(nSamples):
         if i == 0:
-            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False)
+            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized'])
         else:
-            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False))
+            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized']))
     eggCounts = eggCounts / nSamples
 
     # get individuals in chosen survey age group
@@ -1067,9 +1068,9 @@ def conductSurveyTwo(SD, params, t, sampleSize, nSamples):
     # get Kato-Katz eggs for each individual
     for i in range(nSamples):
         if i == 0:
-            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False)
+            eggCounts = getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized'])
         else:
-            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=False))
+            eggCounts = np.add(eggCounts, getSetOfEggCounts(SD['worms']['total'], SD['worms']['female'], params, Unfertilized=params['Unfertilized']))
     eggCounts = eggCounts / nSamples
 
 
