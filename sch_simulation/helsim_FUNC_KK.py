@@ -488,19 +488,24 @@ def configure(params):
     params['reproFunc'] = getattr(ParallelFuncs, params['reproFuncName'])
 
     # max age cutoff point
-    params['maxHostAge'] = np.min([np.max(params['muBreaks']), np.max(params['contactAgeBreaks'])])
+    params['maxHostAge'] = np.min(np.array([np.max(params['muBreaks']), np.max(params['contactAgeBreaks'])]))
 
     # full range of ages
     params['muAges'] = np.arange(start=0, stop=np.max(params['muBreaks']), step=dT) + 0.5 * dT
-
-    params['hostMu'] = params['hostMuData'][pd.cut(x=params['muAges'], bins=params['muBreaks'],
-    labels=np.arange(start=0, stop=len(params['hostMuData']))).to_numpy()]
+    
+    #inner = pd.cut(
+    #    x=params['muAges'], 
+    #    bins=params['muBreaks'],
+    #    labels=np.arange(start=0, stop=len(params['hostMuData']))
+    #).to_numpy()
+    inner = np.digitize(params['muAges'], params['muBreaks'])-1
+    params['hostMu'] = params['hostMuData'][inner]
 
     # probability of surviving
     params['hostSurvivalCurve'] = np.exp(-np.cumsum(params['hostMu']) * dT)
 
     # the index for the last age group before the cutoff in this discretization
-    maxAgeIndex = np.argmax([params['muAges'] > params['maxHostAge']]) - 1
+    maxAgeIndex = np.argmax(np.array([params['muAges'] > params['maxHostAge']])) - 1
 
     # cumulative probability of dying
     params['hostAgeCumulDistr'] = np.append(np.cumsum(dT * params['hostMu'] * np.append(1,
@@ -1101,9 +1106,16 @@ def getPsi(params):
     # inteval-centered ages for the age intervals, midpoints from 0 to maxHostAge
     modelAges = np.arange(start=0, stop=params['maxHostAge'], step=deltaT) + 0.5 * deltaT
 
+
+
+    #inner = pd.cut(
+    #    x=modelAges, 
+    #    bins=params['muBreaks'], 
+    #    labels=np.arange(start=0, stop=len(params['hostMuData']))).to_numpy()
+    inner = np.digitize(modelAges, params['muBreaks'])-1
+
     # hostMu for the new age intervals
-    hostMu = params['hostMuData'][pd.cut(x=modelAges, bins=params['muBreaks'], labels=np.arange(start=0,
-    stop=len(params['hostMuData']))).to_numpy()]
+    hostMu = params['hostMuData'][inner]
 
     hostSurvivalCurve = np.exp(-np.cumsum(hostMu * deltaT))
     MeanLifespan = np.sum(hostSurvivalCurve[:len(modelAges)]) * deltaT
@@ -1111,8 +1123,13 @@ def getPsi(params):
     # calculate the cumulative sum of host and worm death rates from which to calculate worm survival
     # intMeanWormDeathEvents = np.cumsum(hostMu + params['sigma']) * deltaT # commented out as it is not used
 
-    modelAgeGroupCatIndex = pd.cut(x=modelAges, bins=params['contactAgeGroupBreaks'], labels=np.arange(start=0,
-    stop=len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
+    #modelAgeGroupCatIndex = pd.cut(
+    #    x=modelAges, 
+    #    bins=params['contactAgeGroupBreaks'], 
+    #    labels=np.arange(
+    #        start=0,
+    #        stop=len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
+    modelAgeGroupCatIndex = np.digitize(modelAges, params['contactAgeGroupBreaks'])-1
 
     betaAge = params['contactRates'][modelAgeGroupCatIndex]
     rhoAge = params['rho'][modelAgeGroupCatIndex]
@@ -1166,14 +1183,11 @@ def getEquilibrium(params):
     modelAges = np.arange(start=0, stop=params['maxHostAge'], step=deltaT) + 0.5 * deltaT
 
     # hostMu for the new age intervals
-    hostMu = params['hostMuData'][pd.cut(x=modelAges, bins=params['muBreaks'], labels=np.arange(start=0,
-    stop=len(params['hostMuData'])))]
+    hostMu = params['hostMuData'][np.digitize(modelAges, params['muBreaks'])-1]
 
     hostSurvivalCurve = np.exp(-np.cumsum(hostMu * deltaT))
     MeanLifespan = np.sum(hostSurvivalCurve[:len(modelAges)]) * deltaT
-
-    modelAgeGroupCatIndex = pd.cut(x=modelAges, bins=params['contactAgeBreaks'], labels=np.arange(start=0,
-    stop=len(params['contactAgeBreaks']) - 1)).to_numpy()
+    modelAgeGroupCatIndex = np.digitize(modelAges, params['contactAgeBreaks'])-1
 
     betaAge = params['contactRates'][modelAgeGroupCatIndex]
     rhoAge = params['rho'][modelAgeGroupCatIndex]
@@ -1199,11 +1213,11 @@ def getEquilibrium(params):
     test_L = np.append(np.linspace(start=0, stop=L_minus, num=10), np.linspace(start=L_minus, stop=L_hat, num=20))
 
     def K_valueFunc(currentL, params):
-
         return params['psi'] * np.sum(params['reproFunc'](currentL * Q, params) * rhoAge * hostSurvivalCurve * deltaT) / \
         (MeanLifespan * params['LDecayRate']) - currentL
-
+        #return params['psi'] * np.sum(params['reproFunc'](currentL * Q, params) * rhoAge * hostSurvivalCurve * deltaT) / (MeanLifespan * params['LDecayRate']) - currentL
     K_values = np.vectorize(K_valueFunc)(currentL=test_L, params=params)
+    #K_values = K_valueFunc(currentL=test_L, params=params)
 
     # now find the maximum of K_values and use bisection to find critical Ls
     iMax = np.argmax(K_values)

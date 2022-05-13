@@ -1,7 +1,7 @@
-#import numpy as np
-import cupy as np
-#from scipy.special import gamma
-from cupyx.scipy.special import gamma
+import numpy as np
+#import cupy as np
+from scipy.special import gamma
+#from cupyx.scipy.special import gamma
 
 def epgPerPerson(x, params):
 
@@ -54,9 +54,13 @@ def monogFertilityConfig(params, N=30):
     N: int
         resolution for the numerical integration
     '''
-
-    return dict(c_k=gamma(params['k'] + 0.5) * (2 * params['k'] / np.pi) ** 0.5 / gamma(params['k'] + 1),
-    cosTheta=np.cos(np.linspace(start=0, stop=2 * np.pi, num=N + 1)[:N]))
+    p_k = float(params['k'])
+    c_k = gamma(p_k + 0.5) * (2 * p_k / np.pi) ** 0.5 / gamma(p_k + 1)
+    cos_theta = np.cos(np.linspace(start=0, stop=2 * np.pi, num=N + 1)[:N])
+    return dict(
+        c_k=c_k,
+        cosTheta=cos_theta
+    )
 
 def monogFertilityFuncApprox(x, params):
 

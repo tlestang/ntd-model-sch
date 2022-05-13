@@ -37,7 +37,7 @@ coverageFileName = 'Coverage_template.xlsx'
 demogName = 'Default'
 
 # file name to store munged coverage information in 
-coverageTextFileStorageName = '/tmp/Man_AGO02049_MDA_vacc.txt'
+coverageTextFileStorageName = 'Man_AGO02049_MDA_vacc.txt'
 
 # standard parameter file path (in sch_simulation/data folder)
 paramFileName = 'sch_example.txt'
