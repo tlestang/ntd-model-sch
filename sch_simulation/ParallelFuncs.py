@@ -1,7 +1,13 @@
-#import numpy as np
-import cupy as np
-#from scipy.special import gamma
-from cupyx.scipy.special import gamma
+
+
+useGPU = True
+
+if useGPU:
+    import cupy as np
+    from cupyx.scipy.special import gamma
+else:
+    import numpy as np
+    from scipy.special import gamma
 
 def epgPerPerson(x, params):
 

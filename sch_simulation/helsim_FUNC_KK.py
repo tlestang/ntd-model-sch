@@ -1,5 +1,10 @@
-#import numpy as np
-import cupy as np
+
+from sch_simulation.ParallelFuncs import useGPU
+if useGPU:
+    import cupy as np
+else:
+    import numpy as np
+
 import pandas as pd
 from scipy.optimize import bisect
 import warnings
@@ -7,7 +12,6 @@ import copy
 import random
 import pkg_resources
 warnings.filterwarnings('ignore')
-#np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
 
@@ -124,14 +128,14 @@ def parse_coverage_input(coverageFileName,
     coverageText: str
         string variable holding all coverage information for given file name;
     '''
-    import pandas as pd
-    import numpy as np
+
     # read in Coverage spreadsheet
     DATA_PATH = pkg_resources.resource_filename('sch_simulation', 'data/')
     PlatCov = pd.read_excel(DATA_PATH + coverageFileName, sheet_name = 'Platform Coverage')
     # which rows are for MDA and vaccine
-    MDARows = np.where(PlatCov['Intervention Type'] == "Treatment")[0]
-    VaccRows = np.where(PlatCov['Intervention Type'] == "Vaccine")[0]
+    intervention_array = PlatCov['Intervention Type']
+    MDARows = np.where(np.array(intervention_array == "Treatment"))[0]
+    VaccRows = np.where(np.array(intervention_array == "Vaccine"))[0]
     
     # initialize variables to contain Age ranges, years and coverage values for MDA and vaccine
     MDAAges = np.zeros([len(MDARows),2])
@@ -167,9 +171,9 @@ def parse_coverage_input(coverageFileName,
         # get row number of each MDA entry 
         k = MDARows[i]
         # store this row
-        w = PlatCov.iloc[k, :]
+        w = PlatCov.iloc[int(k), :]
         # store the min and maximum age of this MDA row
-        MDAAges[i,:] = [w['min age'], w['max age']]
+        MDAAges[i,:] = np.array([w['min age'], w['max age']])
         # re initilize the coverage and years data
         MDAYears = []
         MDACoverages = []
@@ -201,9 +205,9 @@ def parse_coverage_input(coverageFileName,
         # get row number of each MDA entry 
         k = VaccRows[i]
         # store this row
-        w = PlatCov.iloc[k, :]
+        w = PlatCov.iloc[int(k), :]
         # store the min and maximum age of this Vaccine row
-        VaccAges[i,:] = [w['min age'], w['max age']]
+        VaccAges[i,:] = np.array([w['min age'], w['max age']])
         # re initilize the coverage and years data
         VaccYears = []
         VaccCoverages = []
@@ -233,13 +237,13 @@ def parse_coverage_input(coverageFileName,
     #read in market share data
     MarketShare = pd.read_excel(DATA_PATH + coverageFileName, sheet_name = 'MarketShare')
     # find which rows store data for MDAs
-    MDAMarketShare = np.where(MarketShare['Platform'] == 'MDA')[0]
+    MDAMarketShare = np.where(np.array(MarketShare['Platform'] == 'MDA'))[0]
     # initialize variable to store which drug is being used
     MDASplit = np.zeros(len(MDAMarketShare))
     # find which row holds data for the Old and New drugs
     # these will be stored at 1 and 2 respectively
     for i in range(len(MDAMarketShare)):
-        if 'Old' in MarketShare['Product'][MDAMarketShare[i]]:
+        if 'Old' in MarketShare['Product'][int(MDAMarketShare[i])]:
             MDASplit[i] = 1
         else:
             MDASplit[i] = 2
@@ -258,7 +262,7 @@ def parse_coverage_input(coverageFileName,
         # store which row we are on
         k = MDAMarketShare[i]
         # get data for this row
-        w = MarketShare.iloc[k, :]
+        w = MarketShare.iloc[int(k), :]
         # initialize needed arrays
         MDAYears = []
         MDAYearSplit = []
@@ -493,11 +497,6 @@ def configure(params):
     # full range of ages
     params['muAges'] = np.arange(start=0, stop=np.max(params['muBreaks']), step=dT) + 0.5 * dT
     
-    #inner = pd.cut(
-    #    x=params['muAges'], 
-    #    bins=params['muBreaks'],
-    #    labels=np.arange(start=0, stop=len(params['hostMuData']))
-    #).to_numpy()
     inner = np.digitize(params['muAges'], params['muBreaks'])-1
     params['hostMu'] = params['hostMuData'][inner]
 
@@ -638,8 +637,10 @@ def calcRates2(params, SD):
     -------
     array of event rates;
     '''
-        
-    hostInfRates = SD['freeLiving'] * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
+    print("free ", SD['freeLiving'])
+    print("si ", SD['si'])
+    print("other ", params['contactRates'][SD['contactAgeGroupIndices']])
+    hostInfRates = float(SD['freeLiving']) * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
     deathRate = params['sigma'] * SD['worms']['total'] * params['v1'][SD['sv']]
     hostVaccDecayRates = params['VaccDecayRate'][SD['sv']]
     args = (hostInfRates, hostVaccDecayRates, deathRate)

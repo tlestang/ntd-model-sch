@@ -1,9 +1,12 @@
 import copy
 import multiprocessing
 import time
+from sch_simulation.ParallelFuncs import useGPU
+if useGPU:
+    import cupy as np
+else:
+    import numpy as np
 
-import cupy as np
-#import numpy as np
 from joblib import Parallel, delayed
 import pandas as pd
 
@@ -117,8 +120,8 @@ def doRealization(params, i):
     nextChemoTime2 = currentchemoTiming2[nextChemoIndex2]
     nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
     # next event
-    nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime1,
-                      nextChemoTime2, nextAgeTime, nextVaccineTime])
+    nextStep = np.min(np.array([nextOutTime, t + maxStep, nextChemoTime1,
+                      nextChemoTime2, nextAgeTime, nextVaccineTime]))
 
     results = []  # initialise empty list to store results
 
@@ -652,9 +655,8 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
     
     # next event
     
-    
-    nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime,
-                       nextAgeTime, nextVaccTime])
+    nextStep = np.min(np.array([float(nextOutTime), float(t + maxStep), float(nextChemoTime),
+                       float(nextAgeTime), float(nextVaccTime)]))
     
 
     nChemo = 0
@@ -1039,8 +1041,7 @@ def multiple_simulations(params, pickleData, simparams, i):
     simData['demography']['birthDate'] = simData['demography']['birthDate'] - times['maxTime']
     simData['demography']['deathDate'] = simData['demography']['deathDate'] - times['maxTime']
     
-    simData['contactAgeGroupIndices'] = pd.cut(x=t - simData['demography']['birthDate'], bins=parameters['contactAgeGroupBreaks'],
-    labels=np.arange(0, len(parameters['contactAgeGroupBreaks']) - 1)).to_numpy()
+    simData['contactAgeGroupIndices'] = np.digitize(np.array(t - simData['demography']['birthDate']), np.array(parameters['contactAgeGroupBreaks']))-1
     parameters['N'] = len(simData['si'])
     # increment the simulation times
    # parameters['maxTime'] += times['maxTime']
