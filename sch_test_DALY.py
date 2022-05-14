@@ -2,10 +2,10 @@ from sch_simulation.helsim_RUN_KK import SCH_Simulation_DALY
 
 
 # Schisto (mansoni)
-df0 = SCH_Simulation_DALY(paramFileName='SCH_params/sch_scenario_1.txt', demogName='UgandaRural', numReps=1)
+df0 = SCH_Simulation_DALY(paramFileName='SCH_params/mansoni_scenario_1.txt', demogName='UgandaRural', numReps=1)
 df0.to_csv('sch_test.csv')
 
-df0 = SCH_Simulation_DALY(paramFileName='SCH_params/sch_scenario_3.txt', demogName='UgandaRural', numReps=1)
+df0 = SCH_Simulation_DALY(paramFileName='SCH_params/mansoni_scenario_2.txt', demogName='UgandaRural', numReps=1)
 df0.to_csv('sch_test_3.csv')
 
 # Hookworm
