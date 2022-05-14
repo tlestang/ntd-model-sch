@@ -4,7 +4,8 @@ if useGPU:
     import cupy as np
 else:
     import numpy as np
-
+import numpy as numpy_only
+import cupy as cupy_only
 import pandas as pd
 from scipy.optimize import bisect
 import warnings
@@ -1420,7 +1421,7 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
 
         low = infected - (medium + heavy)
 
-    return infected, low, medium, heavy, len(currentAgeGroupMeanEggCounts)
+    return np.array(infected), np.array(low), np.array(medium), np.array(heavy), np.array(len(currentAgeGroupMeanEggCounts))
 
 
 def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
@@ -1491,8 +1492,8 @@ def getSampledDetectedPrevByVillageAll(hostData, timeIndex, ageBand, params, nSa
     sampled worm prevalence;
     '''
 
-    return np.array([getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params,
-    nSamples, Unfertilized, villageSampleSize) for villageList in hostData])
+    return [getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params,
+    nSamples, Unfertilized, villageSampleSize) for villageList in hostData]
 
 def getBurdens(hostData, params, numReps, ageBand, nSamples=2, Unfertilized=False, villageSampleSize=100):
    
@@ -1503,7 +1504,7 @@ def getBurdens(hostData, params, numReps, ageBand, nSamples=2, Unfertilized=Fals
 
     for t in range(len(hostData[0]['timePoints'])): #loop over time points
     # calculate burdens using the same sample
-        newrow = getSampledDetectedPrevByVillageAll(hostData, t, ageBand, params, nSamples, Unfertilized, villageSampleSize)
+        newrow = np.array(getSampledDetectedPrevByVillageAll(hostData, t, ageBand, params, nSamples, Unfertilized, villageSampleSize))
         newrowinfected = newrow[:,0]
         newrowlow = newrow[:,1]
         newrowmedium = newrow[:,2]
@@ -1729,56 +1730,47 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
         age_start = i
         age_end = i + 1
         #year = hostData[0]['timePoints']
-        
+
+        def convert_to_numpy_array(array):
+            if isinstance(array, cupy_only.ndarray):
+                return cupy_only.asnumpy(array)
+            else:
+                return array
+
         if i == 0:
-            df = pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('light',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':low_prevalence})
+            df = pd.DataFrame({
+                   'Time':convert_to_numpy_array(hostData[0]['timePoints']),
+                   'age_start': numpy_only.repeat(age_start,len(low_prevalence)), 
+                   'age_end':numpy_only.repeat(age_end,len(low_prevalence)), 
+                   'intensity':numpy_only.repeat('light',len(low_prevalence)),
+                   'species':numpy_only.repeat(params['species'], len(low_prevalence)),
+                   'measure':numpy_only.repeat('prevalence',len(low_prevalence)),
+                   'draw_1':convert_to_numpy_array(low_prevalence)})
         
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('moderate',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':moderate_prevalence}))
-                   
-        
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('heavy',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':heavy_prevalence}))
         else:
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('light',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':low_prevalence}))
+            df = df.append(pd.DataFrame({'Time':convert_to_numpy_array(hostData[0]['timePoints']), 
+                   'age_start': numpy_only.repeat(age_start,len(low_prevalence)), 
+                   'age_end':numpy_only.repeat(age_end,len(low_prevalence)), 
+                   'intensity':numpy_only.repeat('light',len(low_prevalence)),
+                   'species':numpy_only.repeat(params['species'],len(low_prevalence)),
+                   'measure':numpy_only.repeat('prevalence',len(low_prevalence)),
+                   'draw_1':convert_to_numpy_array(low_prevalence)}))
             
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('moderate',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':moderate_prevalence}))
-            
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('heavy',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':heavy_prevalence}))
+        df = df.append(pd.DataFrame({'Time':convert_to_numpy_array(hostData[0]['timePoints']), 
+                'age_start': numpy_only.repeat(age_start,len(low_prevalence)), 
+                'age_end':numpy_only.repeat(age_end,len(low_prevalence)), 
+                'intensity':numpy_only.repeat('moderate',len(low_prevalence)),
+                'species':numpy_only.repeat(params['species'],len(low_prevalence)),
+                'measure':numpy_only.repeat('prevalence',len(low_prevalence)),
+                'draw_1':convert_to_numpy_array(moderate_prevalence)}))
+        
+        df = df.append(pd.DataFrame({'Time':convert_to_numpy_array(hostData[0]['timePoints']), 
+                'age_start': numpy_only.repeat(age_start,len(low_prevalence)), 
+                'age_end':numpy_only.repeat(age_end,len(low_prevalence)), 
+                'intensity':numpy_only.repeat('heavy',len(low_prevalence)),
+                'species':numpy_only.repeat(params['species'],len(low_prevalence)),
+                'measure':numpy_only.repeat('prevalence',len(low_prevalence)),
+                'draw_1':convert_to_numpy_array(heavy_prevalence)}))
             
         # df[str(i)+' Prevalence'] = prevalence
         # df[str(i)+' Low Intensity Prevalence'] = low_prevalence
@@ -1808,20 +1800,22 @@ def outputNumberInAgeGroup(results, params):
             age_counts.append(ages1.count(j))
             
         if (i == 0):
-                numEachAgeGroup = pd.DataFrame({'Time': np.repeat(d['time'], len(age_counts)), 
+                numEachAgeGroup = pd.DataFrame({
+                        'Time': numpy_only.repeat(d['time'], len(age_counts)), 
                        'age_start': range(int(params['maxHostAge'])), 
                        'age_end':range(1,1+int(params['maxHostAge'])), 
-                       'intensity':np.repeat('All', len(age_counts)),
-                       'species':np.repeat(params['species'], len(age_counts)),
-                       'measure':np.repeat('number', len(age_counts)),
+                       'intensity':numpy_only.repeat('All', len(age_counts)),
+                       'species':numpy_only.repeat(params['species'], len(age_counts)),
+                       'measure':numpy_only.repeat('number', len(age_counts)),
                        'draw_1':age_counts})
         else:
-                numEachAgeGroup = numEachAgeGroup.append(pd.DataFrame({'Time': np.repeat(d['time'], len(age_counts)), 
+                numEachAgeGroup = numEachAgeGroup.append(pd.DataFrame({
+                        'Time': numpy_only.repeat(d['time'], len(age_counts)), 
                        'age_start': range(int(params['maxHostAge'])), 
                        'age_end':range(1,1+int(params['maxHostAge'])), 
-                       'intensity':np.repeat('All', len(age_counts)),
-                       'species':np.repeat(params['species'], len(age_counts)),
-                       'measure':np.repeat('number', len(age_counts)),
+                       'intensity':numpy_only.repeat('All', len(age_counts)),
+                       'species':numpy_only.repeat(params['species'], len(age_counts)),
+                       'measure':numpy_only.repeat('number', len(age_counts)),
                        'draw_1':age_counts}))
     
     return numEachAgeGroup 
