@@ -68,7 +68,7 @@ heavyThreshold	2083.3
 
 ## Survey parameters
 timeToFirstSurvey	5
-timeToNextSurvey	5000
+timeToNextSurvey	3
 surveyThreshold	0.02
 sampleSizeOne	250
 sampleSizeTwo	250

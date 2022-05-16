@@ -1,6 +1,6 @@
 #### Trichuris parameter values. 
 species	trichuris
-
+unfertilized	True		unfertilised marker
 
 ### Model running parameters.
 repNum	1		Number of repetitions
