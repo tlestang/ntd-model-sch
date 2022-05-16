@@ -29,7 +29,7 @@ StochSR	TRUE		## Turn SR on or off in the stochastic model. 	[Stochastic]  ## FA
 ## Treatment parameters.
 treatmentBreaks	0 2 5 15 80		Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
 #coverage	0 0 0 0		Coverages: Infants; Pre-SAC; SAC; Adults
-drugEff 0.87
+drugEff	0.87
 drugEff1	0.87					Drug efficacy
 drugEff2	0.96	
 #treatStart	100.05				Treatment year start; Treatment year end; Frequency of treatment by year. ADDED A BIT TO ENSURE OUTPUT FIRST. was 100.05
