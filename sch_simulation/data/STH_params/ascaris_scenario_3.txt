@@ -1,6 +1,6 @@
 #### Ascaris parameter values. 
-species	ascaris
-
+species	ascaris		species name
+unfertilized	True		unfertilized marker
 
 ### Model running parameters.
 repNum	1		Number of repetitions
@@ -68,7 +68,7 @@ heavyThreshold	2083.3
 
 ## Survey parameters
 timeToFirstSurvey	5
-timeToNextSurvey	5000
+timeToNextSurvey	3
 surveyThreshold	0.02
 sampleSizeOne	250
 sampleSizeTwo	250

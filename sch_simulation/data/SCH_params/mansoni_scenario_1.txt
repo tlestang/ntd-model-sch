@@ -1,5 +1,6 @@
 #### Mansoni parameter values.
 species	mansoni
+unfertilized	False
 
 ### Model running parameters.
 repNum	1		Number of repetitions
@@ -28,9 +29,9 @@ StochSR	TRUE		## Turn SR on or off in the stochastic model. 	[Stochastic]  ## FA
 
 ## Treatment parameters. 
 treatmentBreaks	0 2 5 15 80		Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
-drugEff	0.87					Drug efficacy
-drugEff1	0.87					Drug efficacy
-drugEff2	0.87
+drugEff	0.764					Drug efficacy
+drugEff1	0.764					Drug efficacy
+drugEff2	0.764
 treatInterval1	1			interval between treatments in years, pre-COVID. 
 treatInterval2	1			interval between treatments in years, post-COVID. 
 treatStart1	1					Treatment year start, pre-COVID
@@ -53,7 +54,7 @@ v1sigma	1 1	impact of vaccine on worm death rate KK. Assume worm death rate is v
 v2lambda	1 0	impact of vaccine on eggs per gram   Fraction of eggs produced when vaccinated. KK
 v3betaValues	1 0	impact of vaccine on contact rates  Assume contact rate under vaccination is times v3. KK 
 VaccTreatmentBreaks	5 10 15		age range of vaccinated group.  ## KK: these are the lower bounds of ranges with width 1. THEY MUST BE > 1 YEAR APART!!
-VaccCoverage	0 0.85 0 0.6 0 0.45		Vaccine coverage of the age groups KK
+VaccCoverage	0 0 0		Vaccine coverage of the age groups KK
 VaccDecayRate	0 0.2			vacc decay rate. rate of vaccine decay = 1/duration of vaccine   A vector with value 0 in state 1 and the vacc decay rate for state 2. KK.
 VaccTreatStart	10.1				##Vaccine administration year start KK 
 nRoundsVacc	60					##number of vaccine rounds KK 

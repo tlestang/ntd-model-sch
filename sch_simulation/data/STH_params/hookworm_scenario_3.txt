@@ -1,6 +1,6 @@
-#### Hookworm parameter values. 
-species	hookworm
-
+#### Ascaris parameter values. 
+species	hookworm		species name
+unfertilized	True		unfertilized marker
 ### Model running parameters.
 repNum	1		Number of repetitions
 nYears	23		Number of years to run
@@ -68,7 +68,7 @@ heavyThreshold	166.7
 
 ## Survey parameters
 timeToFirstSurvey	5
-timeToNextSurvey	5000
+timeToNextSurvey	3
 surveyThreshold	0.02
 sampleSizeOne	250
 sampleSizeTwo	250

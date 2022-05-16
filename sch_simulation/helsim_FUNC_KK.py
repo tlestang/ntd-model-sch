@@ -142,6 +142,44 @@ def parse_coverage_input(coverageFileName,
     VaccYears = []
     VaccCoverages = []
     
+   
+    # we want to find which is the first year specified in the coverage data, along with which 
+    # column of the data set this corresponds to
+    fy = 10000
+    fy_index = 10000
+    for i in range(len(PlatCov.columns)):
+        if type(PlatCov.columns[i]) == int:
+            fy = min(fy, PlatCov.columns[i])
+            fy_index = min(fy_index, i)
+    
+    
+    include = []
+    for i in range(len(MDARows)):
+        k = MDARows[i]
+        w = PlatCov.iloc[k, :]
+        greaterThan0 = 0
+        for j in range(fy_index, len(PlatCov.columns)):
+            cname = PlatCov.columns[j]
+            if w[cname] > 0 :
+                greaterThan0 += 1
+        if greaterThan0 > 0:
+            include.append(k)
+    MDARows = include
+    
+    include = []
+    for i in range(len(VaccRows)):
+        k = VaccRows[i]
+        w = PlatCov.iloc[k, :]
+        greaterThan0 = 0
+        for j in range(fy_index, len(PlatCov.columns)):
+            cname = PlatCov.columns[j]
+            if w[cname] > 0 :
+                greaterThan0 += 1
+        if greaterThan0 > 0:
+            include.append(k)
+    
+    VaccRows = include
+    
     # store number of age ranges specified for MDA coverage
     numMDAAges = len(MDARows)
     # initialize MDA text storage with the number of age groups specified for MDA
@@ -154,14 +192,6 @@ def parse_coverage_input(coverageFileName,
     # initialize vaccine text storage with the number of age groups specified for vaccination
     Vacc_txt = 'nVaccAges' + '\t' + str(numVaccAges)+ '\n'
     
-    # we want to find which is the first year specified in the coverage data, along with which 
-    # column of the data set this corresponds to
-    fy = 10000
-    fy_index = 10000
-    for i in range(len(PlatCov.columns)):
-        if type(PlatCov.columns[i]) == int:
-            fy = min(fy, PlatCov.columns[i])
-            fy_index = min(fy_index, i)
     
     # loop over MDA coverage rows
     for i in range(len(MDARows)):
@@ -272,7 +302,9 @@ def parse_coverage_input(coverageFileName,
             if w[cname] > 0:
                 MDAYears.append(cname)
                 MDAYearSplit.append(w[cname])
-                
+        if len(MDAYears) == 0:
+            MDAYears.append(10000)
+            MDAYearSplit.append(0)
         # once we have looped over each year, we store add this information to the MDA string variable
         MDA_txt = MDA_txt + 'drug' + str(int(drugInd)) + 'Years\t'
         for k in range(len(MDAYears)):
@@ -366,10 +398,10 @@ def readCoverageFile(coverageTextFileStorageName, params):
         params['Vacc_age'+str(i)] = coverage['Vacc_age'+ str(i)]
         params['Vacc_Years'+str(i)] = coverage['Vacc_Years'+ str(i)] - 2018
         params['Vacc_Coverage'+str(i)] = coverage['Vacc_Coverage'+ str(i)]
-    params['drug1Years'] = coverage['drug1Years'] - 2018
-    params['drug1Split'] = coverage['drug1Split']
-    params['drug2Years'] = coverage['drug2Years'] - 2018
-    params['drug2Split'] = coverage['drug2Split']
+    params['drug1Years'] = np.array(coverage['drug1Years'] - 2018)
+    params['drug1Split'] = np.array(coverage['drug1Split'])
+    params['drug2Years'] = np.array(coverage['drug2Years'] - 2018)
+    params['drug2Split'] = np.array(coverage['drug2Split'])
     return params
 
 def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Default'):
@@ -915,6 +947,7 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
     d2Share = 0
     
     # get the actual share of each drug for this treatment.
+    
     if t in params['drug1Years']:
         i = np.where(params['drug1Years'] == t)[0][0]
         d1Share = params['drug1Split'][i]
@@ -1008,8 +1041,12 @@ def doVaccineAgeRange(params, SD, t, minAge, maxAge, coverage):
         dictionary containing the initial equilibrium parameter values;
     t: int
         time step;
-    VaccCoverage: array
-        coverage fractions;
+    minAge: float
+        minimum age for targeted vaccination;
+    maxAge: float
+        maximum age for targeted vaccination;    
+    coverage: array
+        coverage of vaccination ;
     Returns
     -------
     SD: dict

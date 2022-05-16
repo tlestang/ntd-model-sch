@@ -995,14 +995,14 @@ def singleSimulationDALYCoverage(params,simData,
 
 
 
-def multiple_simulations(params, pickleData, simparams, i):
+def multiple_simulations(params, pickleData, simparams, indices, i):
     print( f"==> multiple_simulations starting sim {i}" )
     start_time = time.time()
     # copy the parameters
     parameters = copy.deepcopy(params)
-
+    j = indices[i]
     # load the previous simulation results
-    data = pickleData[i]
+    data = pickleData[j]
 
     # extract the previous simulation output
     keys = ['si', 'worms', 'freeLiving', 'demography', 'contactAgeGroupIndices', 'treatmentAgeGroupIndices']
@@ -1032,13 +1032,10 @@ def multiple_simulations(params, pickleData, simparams, i):
     
     simData['contactAgeGroupIndices'] = np.digitize(np.array(t - simData['demography']['birthDate']), np.array(parameters['contactAgeGroupBreaks']))-1
     parameters['N'] = len(simData['si'])
-    # increment the simulation times
-   # parameters['maxTime'] += times['maxTime']
    
     # update the parameters
-    #seed = simparams.iloc[i, 0].tolist()
-    R0 = simparams.iloc[i, 1].tolist()
-    k = simparams.iloc[i, 2].tolist()
+    R0 = simparams.iloc[j, 1].tolist()
+    k = simparams.iloc[j, 2].tolist()
     parameters['R0'] = R0
     parameters['k'] = k
 
