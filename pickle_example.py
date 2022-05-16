@@ -66,7 +66,7 @@ start_time = time.time()
 
 # run simulations in parallel
 results = Parallel(n_jobs=num_cores)(
-        delayed(multiple_simulations)(params, pickleData, simparams, i) for i in range(numSims))
+        delayed(multiple_simulations)(params, pickleData, simparams, indices, i) for i in range(numSims))
     
 end_time = time.time()
 
