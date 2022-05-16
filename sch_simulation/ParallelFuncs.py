@@ -52,9 +52,13 @@ def monogFertilityConfig(params, N=30):
     N: int
         resolution for the numerical integration
     '''
-
-    return dict(c_k=gamma(params['k'] + 0.5) * (2 * params['k'] / np.pi) ** 0.5 / gamma(params['k'] + 1),
-    cosTheta=np.cos(np.linspace(start=0, stop=2 * np.pi, num=N + 1)[:N]))
+    p_k = float(params['k'])
+    c_k = gamma(p_k + 0.5) * (2 * p_k / np.pi) ** 0.5 / gamma(p_k + 1)
+    cos_theta = np.cos(np.linspace(start=0, stop=2 * np.pi, num=N + 1)[:N])
+    return dict(
+        c_k=c_k,
+        cosTheta=cos_theta
+    )
 
 def monogFertilityFuncApprox(x, params):
 
@@ -78,7 +82,13 @@ def monogFertilityFuncApprox(x, params):
     else:
 
         g = x / (x + params['k'])
-        integrand = (1 - params['monogParams']['cosTheta']) * (1 + g * params['monogParams']['cosTheta']) ** (- 1 - params['k'])
+        integrand = (
+            1 - params['monogParams']['cosTheta']
+        ) * (
+            1 + float(g) * params['monogParams']['cosTheta']
+        ) ** (
+            - 1 - float(params['k'])
+        )
         integral = np.mean(integrand)
 
         return 1 - (1 - g) ** (1 + params['k']) * integral
@@ -97,8 +107,8 @@ def epgMonog(x, params):
     params: dict
         dictionary containing the parameter names and values;
     '''
-
-    return epgPerPerson(x, params) * np.vectorize(monogFertilityFuncApprox)(x, params)
+    vectorized = np.array([monogFertilityFuncApprox(i, params) for i in x])
+    return epgPerPerson(x, params) * vectorized
 
 def epgFertility(x, params):
 
