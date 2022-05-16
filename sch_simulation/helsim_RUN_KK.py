@@ -36,6 +36,8 @@ from sch_simulation.helsim_FUNC_KK import (
     parse_coverage_input,
     readCoverageFile
 )
+import random
+
 num_cores = multiprocessing.cpu_count()
 
 
@@ -139,7 +141,7 @@ def doRealization(params, i):
             dt = 10000
 
         else:
-            dt = np.random.exponential(scale=1 / sumRates, size=1)[0]
+            dt = random.expovariate(lambd = sumRates)
 
         if t + dt < nextStep:
             t += dt
@@ -656,8 +658,8 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
     
     # next event
     
-    nextStep = np.min(np.array([float(nextOutTime), float(t + maxStep), float(nextChemoTime),
-                       float(nextAgeTime), float(nextVaccTime)]))
+    nextStep = min(float(nextOutTime), float(t + maxStep), float(nextChemoTime),
+                       float(nextAgeTime), float(nextVaccTime))
     
 
     nChemo = 0
@@ -679,29 +681,19 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
         if sumRates < 1e-4:
-
             dt = 10000
-
         else:
+            dt = random.expovariate(lambd = sumRates)
 
-
-            dt = np.random.exponential(scale=1 / sumRates, size=1)[0]
-
-        if t + dt < nextStep:
-
-            t += dt
-   
-
+        new_t = t+dt
+        if new_t < nextStep:
+            t = new_t
             simData = doEvent2(rates, params, simData)
-
         else:
-
             simData = doFreeLive(params, simData, nextStep - freeliveTime)
-
             t = nextStep
             freeliveTime = nextStep
             timeBarrier = nextStep
-
             # ageing and death
             if timeBarrier >= nextAgeTime:
 
@@ -727,7 +719,7 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                 params = overWritePostMDA(params,  nextMDAAge, nextChemoIndex)
                 
                 chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex = nextMDAVaccInfo(params)
-                
+
 
             # vaccination
             if timeBarrier >= nextVaccTime:
@@ -791,8 +783,8 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                 nextOutIndex = np.argmin(outTimes)
                 nextOutTime = outTimes[nextOutIndex]
 
-            nextStep = min([float(nextOutTime), float(t + maxStep), float(nextChemoTime),
-                       float(nextAgeTime), float(nextVaccTime)])
+            nextStep = min(float(nextOutTime), float(t + maxStep), float(nextChemoTime),
+                       float(nextAgeTime), float(nextVaccTime))
 
     # results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
     #     # ageAtChemo=np.array(simData['ageAtChemo']),

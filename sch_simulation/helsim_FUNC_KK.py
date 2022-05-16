@@ -13,6 +13,8 @@ import copy
 import random
 import pkg_resources
 warnings.filterwarnings('ignore')
+if not useGPU:
+    np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
 
@@ -698,24 +700,27 @@ def doEvent2(rates, params, SD):
     SD: dict
         dictionary containing the updated equilibrium parameter values;
     '''
-    
-    event = np.argmax(np.random.uniform(low=0, high=1, size=1) * np.sum(rates) < np.cumsum(rates))
-    eventType = ((event) // params['N']) + 1
-    hostIndex = ((event) % params['N'])
+    n_pop = params['N']
+    param_v3 = params['v3']
+    event = np.argmax(random.random() * np.sum(rates) < np.cumsum(rates))
+
+    eventType = ((event) // n_pop) + 1
+    hostIndex = ((event) % n_pop)
     
     if eventType == 1:
-        if np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][hostIndex]]:
+        if random.random() < param_v3[SD['sv'][hostIndex]]:
             SD['worms']['total'][hostIndex] += 1
-            if np.random.uniform(low=0, high=1, size=1) < 0.5:
+            if random.random() < 0.5:
                 SD['worms']['female'][hostIndex] += 1
-
-    if eventType == 2:
+    elif eventType == 2:
         SD['sv'][hostIndex] = 0
         
-    if eventType == 3:
-        if np.random.uniform(low=0, high=1, size=1) < SD['worms']['female'][hostIndex]/SD['worms']['total'][hostIndex]:
+    elif eventType == 3:
+        if random.random() < SD['worms']['female'][hostIndex]/SD['worms']['total'][hostIndex]:
             SD['worms']['female'][hostIndex] -= 1
         SD['worms']['total'][hostIndex] -= 1
+    else:
+        raise RuntimeError("Unknown event type")
         
     return SD
     
@@ -934,8 +939,8 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
     if d1Share > 0:
         dEff = params['DrugEfficacy1']
         k = np.where(drug == 1)[0]
-        femaleToDie = np.random.binomial(size=len(k), n=SD['worms']['female'][k], p=dEff)
-        maleToDie = np.random.binomial(size=len(k), n=SD['worms']['total'][k] - SD['worms']['female'][k], p=dEff)
+        femaleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['female'][k], dtype = 'int32'), p=dEff)
+        maleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['total'][k] - SD['worms']['female'][k], dtype = 'int32'), p=dEff)
         SD['worms']['female'][k] -= femaleToDie
         SD['worms']['total'][k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
@@ -945,8 +950,8 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
     if d2Share > 0:
         dEff = params['DrugEfficacy2']
         k = np.where(drug == 2)[0]
-        femaleToDie = np.random.binomial(size=len(k), n=SD['worms']['female'][k], p=dEff)
-        maleToDie = np.random.binomial(size=len(k), n=SD['worms']['total'][k] - SD['worms']['female'][k], p=dEff)
+        femaleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['female'][k], dtype = 'int32'), p=dEff)
+        maleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['total'][k] - SD['worms']['female'][k], dtype = 'int32'), p=dEff)
         SD['worms']['female'][k] -= femaleToDie
         SD['worms']['total'][k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated

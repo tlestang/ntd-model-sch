@@ -1,6 +1,6 @@
 
 
-useGPU = True
+useGPU = False
 
 if useGPU:
     import cupy as np
