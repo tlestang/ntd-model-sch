@@ -1,16 +1,9 @@
 import copy
 import multiprocessing
 import time
-from sch_simulation.ParallelFuncs import useGPU
-if useGPU:
-    import cupy as np
-else:
-    import numpy as np
-import cupy as cupy_only
-import numpy as numpy_only
+import numpy as np
 from joblib import Parallel, delayed
 import pandas as pd
-from typing import Dict, Any
 from sch_simulation.helsim_FUNC_KK import (
     calcRates2,
     conductSurvey,
@@ -1015,19 +1008,8 @@ def multiple_simulations(params, pickleData, simparams, i):
     keys = ['si', 'worms', 'freeLiving', 'demography', 'contactAgeGroupIndices', 'treatmentAgeGroupIndices']
     t = 0
     
-    def recurse_convert(d: Dict[str, Any]) -> Dict[str, Any]:
-        new_d = {}
-        for k, v in d.items():
-            if isinstance(v, dict):
-                new_d[k] = recurse_convert(v)
-            elif isinstance(v, cupy_only.ndarray) or isinstance(v, numpy_only.ndarray):
-                new_d[k] = np.array(v)
-            else:
-                new_d[k] = v
-        return new_d
     
     simData = dict((key, copy.deepcopy(data[key])) for key in keys)
-    simData = recurse_convert(simData)
     # Convert all layers to correct data format
 
     simData['sv'] = np.zeros(len(simData['si']) ,dtype = int)
