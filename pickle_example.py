@@ -14,7 +14,7 @@ Can store results as a set of csv's if saveResults = True
 saveResults = False
 
 # path to pickle file
-InSimFilePath = '/tmp/Man_AGO02049.p'
+InSimFilePath = 'Man_AGO02049.p'
 
 #pickleData = pickle.loads( cloudModule.get_blob( InSimFilePath ) ) if useCloudStorage else pickle.load(open(InSimFilePath, 'rb'))
 
@@ -22,7 +22,7 @@ InSimFilePath = '/tmp/Man_AGO02049.p'
 pickleData =  pickle.load(open(InSimFilePath, 'rb'))
 
 # path to 200 parameters file
-RkFilePath = '/tmp/Input_Rk_Man_AGO02049.csv'
+RkFilePath = 'Input_Rk_Man_AGO02049.csv'
 # read in parameters
 simparams = pd.read_csv(RkFilePath)
 simparams.columns = [s.replace(' ', '') for s in simparams.columns]
@@ -37,7 +37,7 @@ coverageFileName = 'Coverage_template.xlsx'
 demogName = 'Default'
 
 # file name to store munged coverage information in 
-coverageTextFileStorageName = '/tmp/Man_AGO02049_MDA_vacc.txt'
+coverageTextFileStorageName = 'Man_AGO02049_MDA_vacc.txt'
 
 # standard parameter file path (in sch_simulation/data folder)
 paramFileName = 'sch_example.txt'
@@ -66,7 +66,7 @@ start_time = time.time()
 
 # run simulations in parallel
 results = Parallel(n_jobs=num_cores)(
-        delayed(multiple_simulations)(params, pickleData, simparams, i) for i in range(numSims))
+        delayed(multiple_simulations)(params, pickleData, simparams, indices, i) for i in range(numSims))
     
 end_time = time.time()
 

@@ -1,11 +1,36 @@
-from joblib import Parallel, delayed
-import multiprocessing
-import pandas as pd
-import numpy as np
 import copy
+import multiprocessing
 import time
+import numpy as np
+from joblib import Parallel, delayed
+import pandas as pd
+from sch_simulation.helsim_FUNC_KK import (
+    calcRates2,
+    conductSurvey,
+    configure,
+    doChemo,
+    doChemoAgeRange,
+    doDeath,
+    doEvent2,
+    doFreeLive,
+    doVaccine,
+    getEquilibrium,
+    getPsi,
+    nextMDAVaccInfo,
+    overWritePostMDA,
+    readParams,
+    setupSD,
+    doVaccineAgeRange,
+    overWritePostVacc,
+    extractHostData,
+    getPrevalence,
+    getPrevalenceDALYsAll,
+    outputNumberInAgeGroup,
+    parse_coverage_input,
+    readCoverageFile
+)
+import random
 
-from sch_simulation.helsim_FUNC_KK import *
 num_cores = multiprocessing.cpu_count()
 
 
@@ -91,8 +116,8 @@ def doRealization(params, i):
     nextChemoTime2 = currentchemoTiming2[nextChemoIndex2]
     nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
     # next event
-    nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime1,
-                      nextChemoTime2, nextAgeTime, nextVaccineTime])
+    nextStep = np.min(np.array([nextOutTime, t + maxStep, nextChemoTime1,
+                      nextChemoTime2, nextAgeTime, nextVaccineTime]))
 
     results = []  # initialise empty list to store results
 
@@ -106,19 +131,13 @@ def doRealization(params, i):
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
         if sumRates < 1e-4:
-
             dt = 10000
 
         else:
-
-
-            dt = np.random.exponential(scale=1 / sumRates, size=1)[0]
+            dt = random.expovariate(lambd = sumRates)
 
         if t + dt < nextStep:
-
             t += dt
-   
-
             simData = doEvent2(rates, params, simData)
 
         else:
@@ -632,9 +651,8 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
     
     # next event
     
-    
-    nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime,
-                       nextAgeTime, nextVaccTime])
+    nextStep = min(float(nextOutTime), float(t + maxStep), float(nextChemoTime),
+                       float(nextAgeTime), float(nextVaccTime))
     
 
     nChemo = 0
@@ -656,29 +674,19 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
         if sumRates < 1e-4:
-
             dt = 10000
-
         else:
+            dt = random.expovariate(lambd = sumRates)
 
-
-            dt = np.random.exponential(scale=1 / sumRates, size=1)[0]
-
-        if t + dt < nextStep:
-
-            t += dt
-   
-
+        new_t = t+dt
+        if new_t < nextStep:
+            t = new_t
             simData = doEvent2(rates, params, simData)
-
         else:
-
             simData = doFreeLive(params, simData, nextStep - freeliveTime)
-
             t = nextStep
             freeliveTime = nextStep
             timeBarrier = nextStep
-
             # ageing and death
             if timeBarrier >= nextAgeTime:
 
@@ -704,7 +712,7 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                 params = overWritePostMDA(params,  nextMDAAge, nextChemoIndex)
                 
                 chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex = nextMDAVaccInfo(params)
-                
+
 
             # vaccination
             if timeBarrier >= nextVaccTime:
@@ -768,8 +776,8 @@ def doRealizationSurveyCoveragePickle(params, simData, i):
                 nextOutIndex = np.argmin(outTimes)
                 nextOutTime = outTimes[nextOutIndex]
 
-            nextStep = np.min([nextOutTime, t + maxStep, nextChemoTime,
-                       nextAgeTime, nextVaccTime])
+            nextStep = min(float(nextOutTime), float(t + maxStep), float(nextChemoTime),
+                       float(nextAgeTime), float(nextVaccTime))
 
     # results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
     #     # ageAtChemo=np.array(simData['ageAtChemo']),
@@ -1000,7 +1008,10 @@ def multiple_simulations(params, pickleData, simparams, indices, i):
     keys = ['si', 'worms', 'freeLiving', 'demography', 'contactAgeGroupIndices', 'treatmentAgeGroupIndices']
     t = 0
     
+    
     simData = dict((key, copy.deepcopy(data[key])) for key in keys)
+    # Convert all layers to correct data format
+
     simData['sv'] = np.zeros(len(simData['si']) ,dtype = int)
     simData['attendanceRecord'] = []
     simData['ageAtChemo'] = []
@@ -1019,8 +1030,7 @@ def multiple_simulations(params, pickleData, simparams, indices, i):
     simData['demography']['birthDate'] = simData['demography']['birthDate'] - times['maxTime']
     simData['demography']['deathDate'] = simData['demography']['deathDate'] - times['maxTime']
     
-    simData['contactAgeGroupIndices'] = pd.cut(x=t - simData['demography']['birthDate'], bins=parameters['contactAgeGroupBreaks'],
-    labels=np.arange(0, len(parameters['contactAgeGroupBreaks']) - 1)).to_numpy()
+    simData['contactAgeGroupIndices'] = np.digitize(np.array(t - simData['demography']['birthDate']), np.array(parameters['contactAgeGroupBreaks']))-1
     parameters['N'] = len(simData['si'])
    
     # update the parameters

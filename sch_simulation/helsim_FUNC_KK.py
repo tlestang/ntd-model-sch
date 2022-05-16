@@ -1,4 +1,5 @@
 import numpy as np
+
 import pandas as pd
 from scipy.optimize import bisect
 import warnings
@@ -6,6 +7,7 @@ import copy
 import random
 import pkg_resources
 warnings.filterwarnings('ignore')
+
 np.seterr(divide='ignore')
 
 import sch_simulation.ParallelFuncs as ParallelFuncs
@@ -123,14 +125,14 @@ def parse_coverage_input(coverageFileName,
     coverageText: str
         string variable holding all coverage information for given file name;
     '''
-    import pandas as pd
-    import numpy as np
+
     # read in Coverage spreadsheet
     DATA_PATH = pkg_resources.resource_filename('sch_simulation', 'data/')
     PlatCov = pd.read_excel(DATA_PATH + coverageFileName, sheet_name = 'Platform Coverage')
     # which rows are for MDA and vaccine
-    MDARows = np.where(PlatCov['Intervention Type'] == "Treatment")[0]
-    VaccRows = np.where(PlatCov['Intervention Type'] == "Vaccine")[0]
+    intervention_array = PlatCov['Intervention Type']
+    MDARows = np.where(np.array(intervention_array == "Treatment"))[0]
+    VaccRows = np.where(np.array(intervention_array == "Vaccine"))[0]
     
     # initialize variables to contain Age ranges, years and coverage values for MDA and vaccine
     MDAAges = np.zeros([len(MDARows),2])
@@ -196,9 +198,9 @@ def parse_coverage_input(coverageFileName,
         # get row number of each MDA entry 
         k = MDARows[i]
         # store this row
-        w = PlatCov.iloc[k, :]
+        w = PlatCov.iloc[int(k), :]
         # store the min and maximum age of this MDA row
-        MDAAges[i,:] = [w['min age'], w['max age']]
+        MDAAges[i,:] = np.array([w['min age'], w['max age']])
         # re initilize the coverage and years data
         MDAYears = []
         MDACoverages = []
@@ -230,9 +232,9 @@ def parse_coverage_input(coverageFileName,
         # get row number of each MDA entry 
         k = VaccRows[i]
         # store this row
-        w = PlatCov.iloc[k, :]
+        w = PlatCov.iloc[int(k), :]
         # store the min and maximum age of this Vaccine row
-        VaccAges[i,:] = [w['min age'], w['max age']]
+        VaccAges[i,:] = np.array([w['min age'], w['max age']])
         # re initilize the coverage and years data
         VaccYears = []
         VaccCoverages = []
@@ -262,13 +264,13 @@ def parse_coverage_input(coverageFileName,
     #read in market share data
     MarketShare = pd.read_excel(DATA_PATH + coverageFileName, sheet_name = 'MarketShare')
     # find which rows store data for MDAs
-    MDAMarketShare = np.where(MarketShare['Platform'] == 'MDA')[0]
+    MDAMarketShare = np.where(np.array(MarketShare['Platform'] == 'MDA'))[0]
     # initialize variable to store which drug is being used
     MDASplit = np.zeros(len(MDAMarketShare))
     # find which row holds data for the Old and New drugs
     # these will be stored at 1 and 2 respectively
     for i in range(len(MDAMarketShare)):
-        if 'Old' in MarketShare['Product'][MDAMarketShare[i]]:
+        if 'Old' in MarketShare['Product'][int(MDAMarketShare[i])]:
             MDASplit[i] = 1
         else:
             MDASplit[i] = 2
@@ -287,7 +289,7 @@ def parse_coverage_input(coverageFileName,
         # store which row we are on
         k = MDAMarketShare[i]
         # get data for this row
-        w = MarketShare.iloc[k, :]
+        w = MarketShare.iloc[int(k), :]
         # initialize needed arrays
         MDAYears = []
         MDAYearSplit = []
@@ -347,7 +349,7 @@ def nextMDAVaccInfo(params):
     nextChemoIndex = []
     for i in range(len(nextMDAAge)):
         k = nextMDAAge[i]
-        nextChemoIndex.append(np.argmin(chemoTiming["Age{0}".format(k)]))
+        nextChemoIndex.append(np.argmin(np.array(chemoTiming["Age{0}".format(k)])))
         
         
         
@@ -361,7 +363,7 @@ def nextMDAVaccInfo(params):
     nextVaccIndex = []
     for i in range(len(nextVaccAge)):
         k = nextVaccAge[i]
-        nextVaccIndex.append(np.argmin(VaccTiming["Age{0}".format(k)]))
+        nextVaccIndex.append(np.argmin(np.array(VaccTiming["Age{0}".format(k)])))
         
     return chemoTiming, VaccTiming, nextChemoTime, nextMDAAge, nextChemoIndex, nextVaccTime, nextVaccAge, nextVaccIndex
 
@@ -423,9 +425,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
 
     demographies = readParam(demogFileName)
     parameters = readParam(paramFileName)
-
-    chemoTimings1 = np.array([parameters['treatStart1'] + x * parameters['treatInterval1']
-    for x in range(np.int(parameters['nRounds1']))])
+    chemoTimings1 = np.array([float(parameters['treatStart1'] + x * parameters['treatInterval1']) for x in range(np.int(parameters['nRounds1']))])
 
     chemoTimings2 = np.array([parameters['treatStart2'] + x * parameters['treatInterval2']
     for x in range(np.int(parameters['nRounds2']))])
@@ -444,7 +444,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'sigma': parameters['sigma'],
               'v1':parameters['v1sigma'], # vacc par
               'LDecayRate': parameters['ReservoirDecayRate'],
-              'DrugEfficacy': parameters['drugEff'],
+              #'DrugEfficacy': parameters['drugEff'],
               'DrugEfficacy1': parameters['drugEff1'],
               'DrugEfficacy2': parameters['drugEff2'],
               'contactAgeBreaks': parameters['contactAgeBreaks'],
@@ -493,7 +493,7 @@ def readParams(paramFileName, demogFileName='Demographies.txt', demogName='Defau
               'timeToFirstSurvey' : parameters['timeToFirstSurvey'],
               'timeToNextSurvey' : parameters['timeToNextSurvey'],
               'surveyThreshold' : parameters['surveyThreshold'],
-              'Unfertilized' : parameters['unfertilized']}
+              'Unfertilized' : False}#parameters['unfertilized']}
 
     return params
 
@@ -521,19 +521,19 @@ def configure(params):
     params['reproFunc'] = getattr(ParallelFuncs, params['reproFuncName'])
 
     # max age cutoff point
-    params['maxHostAge'] = np.min([np.max(params['muBreaks']), np.max(params['contactAgeBreaks'])])
+    params['maxHostAge'] = np.min(np.array([np.max(params['muBreaks']), np.max(params['contactAgeBreaks'])]))
 
     # full range of ages
     params['muAges'] = np.arange(start=0, stop=np.max(params['muBreaks']), step=dT) + 0.5 * dT
-
-    params['hostMu'] = params['hostMuData'][pd.cut(x=params['muAges'], bins=params['muBreaks'],
-    labels=np.arange(start=0, stop=len(params['hostMuData']))).to_numpy()]
+    
+    inner = np.digitize(params['muAges'], params['muBreaks'])-1
+    params['hostMu'] = params['hostMuData'][inner]
 
     # probability of surviving
     params['hostSurvivalCurve'] = np.exp(-np.cumsum(params['hostMu']) * dT)
 
     # the index for the last age group before the cutoff in this discretization
-    maxAgeIndex = np.argmax([params['muAges'] > params['maxHostAge']]) - 1
+    maxAgeIndex = np.argmax(np.array([params['muAges'] > params['maxHostAge']])) - 1
 
     # cumulative probability of dying
     params['hostAgeCumulDistr'] = np.append(np.cumsum(dT * params['hostMu'] * np.append(1,
@@ -586,24 +586,20 @@ def setupSD(params):
         trialDeathDates[earlyDeath] += getLifeSpans(len(earlyDeath), params)
 
     demography = {'birthDate': trialBirthDates - communityBurnIn, 'deathDate': trialDeathDates - communityBurnIn}
+    
+    contactAgeGroupIndices = np.digitize(-demography['birthDate'], params['contactAgeGroupBreaks'])-1
 
-    contactAgeGroupIndices = pd.cut(x=-demography['birthDate'], bins=params['contactAgeGroupBreaks'],
-    labels=np.arange(start=0, stop=len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
+    treatmentAgeGroupIndices = np.digitize(-demography['birthDate'], params['treatmentAgeGroupBreaks'])-1
 
-    treatmentAgeGroupIndices = pd.cut(x=-demography['birthDate'], bins=params['treatmentAgeGroupBreaks'],
-    labels=np.arange(start=0, stop=len(params['treatmentAgeGroupBreaks']) - 1)).to_numpy()
-
-    meanBurdenIndex = pd.cut(x=-demography['birthDate'], bins=np.append(0, params['equiData']['ageValues']),
-    labels=np.arange(start=0, stop=len(params['equiData']['ageValues']))).to_numpy()
+    meanBurdenIndex = np.digitize(-demography['birthDate'], np.append(0, params['equiData']['ageValues']))-1
 
     wTotal = np.random.poisson(lam=si * params['equiData']['stableProfile'][meanBurdenIndex] * 2, size=params['N'])
 
     worms = dict(total=wTotal, female=np.random.binomial(n=wTotal, p=0.5, size=params['N']))
 
     stableFreeLiving = params['equiData']['L_stable'] * 2
-    
-    VaccTreatmentAgeGroupIndices = pd.cut(x = -demography['birthDate'], bins = params['VaccTreatmentAgeGroupBreaks'],
-    labels=np.arange(start=0, stop=len(params['VaccTreatmentAgeGroupBreaks']) - 1)).to_numpy()
+
+    VaccTreatmentAgeGroupIndices = np.digitize(-demography['birthDate'], params['VaccTreatmentAgeGroupBreaks'])-1
     
     SD = {'si': si,
           'sv': sv,
@@ -666,8 +662,7 @@ def calcRates2(params, SD):
     -------
     array of event rates;
     '''
-        
-    hostInfRates = SD['freeLiving'] * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
+    hostInfRates = float(SD['freeLiving']) * SD['si'] * params['contactRates'][SD['contactAgeGroupIndices']]
     deathRate = params['sigma'] * SD['worms']['total'] * params['v1'][SD['sv']]
     hostVaccDecayRates = params['VaccDecayRate'][SD['sv']]
     args = (hostInfRates, hostVaccDecayRates, deathRate)
@@ -731,24 +726,27 @@ def doEvent2(rates, params, SD):
     SD: dict
         dictionary containing the updated equilibrium parameter values;
     '''
-    
-    event = np.argmax(np.random.uniform(low=0, high=1, size=1) * np.sum(rates) < np.cumsum(rates))
-    eventType = ((event) // params['N']) + 1
-    hostIndex = ((event) % params['N'])
+    n_pop = params['N']
+    param_v3 = params['v3']
+    event = np.argmax(random.random() * np.sum(rates) < np.cumsum(rates))
+
+    eventType = ((event) // n_pop) + 1
+    hostIndex = ((event) % n_pop)
     
     if eventType == 1:
-        if np.random.uniform(low=0, high=1, size=1) < params['v3'][SD['sv'][hostIndex]]:
+        if random.random() < param_v3[SD['sv'][hostIndex]]:
             SD['worms']['total'][hostIndex] += 1
-            if np.random.uniform(low=0, high=1, size=1) < 0.5:
+            if random.random() < 0.5:
                 SD['worms']['female'][hostIndex] += 1
-
-    if eventType == 2:
+    elif eventType == 2:
         SD['sv'][hostIndex] = 0
         
-    if eventType == 3:
-        if np.random.uniform(low=0, high=1, size=1) < SD['worms']['female'][hostIndex]/SD['worms']['total'][hostIndex]:
+    elif eventType == 3:
+        if random.random() < SD['worms']['female'][hostIndex]/SD['worms']['total'][hostIndex]:
             SD['worms']['female'][hostIndex] -= 1
         SD['worms']['total'][hostIndex] -= 1
+    else:
+        raise RuntimeError("Unknown event type")
         
     return SD
     
@@ -858,15 +856,12 @@ def doDeath(params, SD, t):
         SD['compliers'][theDead] = np.random.uniform(low=0, high=1, size=len(theDead)) > params['propNeverCompliers']
 
     # update the contact age categories
-    SD['contactAgeGroupIndices'] = pd.cut(x=t - SD['demography']['birthDate'], bins=params['contactAgeGroupBreaks'],
-    labels=np.arange(0, len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
-    
+    SD['contactAgeGroupIndices'] = np.digitize(t - SD['demography']['birthDate'], params['contactAgeGroupBreaks'])-1
 
     # update the treatment age categories
-    SD['treatmentAgeGroupIndices'] = pd.cut(x=t - SD['demography']['birthDate'], bins=params['treatmentAgeGroupBreaks'],
-    labels=np.arange(0, len(params['treatmentAgeGroupBreaks']) - 1)).to_numpy()
-    SD['VaccTreatmentAgeGroupIndices'] = pd.cut(x=t - SD['demography']['birthDate'], bins=params['VaccTreatmentAgeGroupBreaks'],
-    labels=np.arange(0, len(params['VaccTreatmentAgeGroupBreaks']) - 1)).to_numpy()
+    SD['treatmentAgeGroupIndices'] = np.digitize(t - SD['demography']['birthDate'], params['treatmentAgeGroupBreaks'])-1
+    SD['VaccTreatmentAgeGroupIndices'] = np.digitize(t - SD['demography']['birthDate'], params['VaccTreatmentAgeGroupBreaks'])-1
+
     return SD
 
 def doChemo(params, SD, t, coverage):
@@ -960,8 +955,8 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
         j = np.where(params['drug2Years'] == t)[0][0]
         d2Share = params['drug2Split'][j]
         
-    # assign which drug each person will take    
-    drug = np.ones(sum(toTreatNow))        
+    # assign which drug each person will take  
+    drug = np.ones(int(sum(toTreatNow)))
     if d2Share > 0:
         k = random.sample(range(int(sum(drug))), int(sum(drug) * d2Share))
         drug[k] = 2
@@ -971,8 +966,8 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
     if d1Share > 0:
         dEff = params['DrugEfficacy1']
         k = np.where(drug == 1)[0]
-        femaleToDie = np.random.binomial(size=len(k), n=SD['worms']['female'][k], p=dEff)
-        maleToDie = np.random.binomial(size=len(k), n=SD['worms']['total'][k] - SD['worms']['female'][k], p=dEff)
+        femaleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['female'][k], dtype = 'int32'), p=dEff)
+        maleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['total'][k] - SD['worms']['female'][k], dtype = 'int32'), p=dEff)
         SD['worms']['female'][k] -= femaleToDie
         SD['worms']['total'][k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
@@ -982,8 +977,8 @@ def doChemoAgeRange(params, SD, t, minAge, maxAge, coverage):
     if d2Share > 0:
         dEff = params['DrugEfficacy2']
         k = np.where(drug == 2)[0]
-        femaleToDie = np.random.binomial(size=len(k), n=SD['worms']['female'][k], p=dEff)
-        maleToDie = np.random.binomial(size=len(k), n=SD['worms']['total'][k] - SD['worms']['female'][k], p=dEff)
+        femaleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['female'][k], dtype = 'int32'), p=dEff)
+        maleToDie = np.random.binomial(size=len(k), n=np.array(SD['worms']['total'][k] - SD['worms']['female'][k], dtype = 'int32'), p=dEff)
         SD['worms']['female'][k] -= femaleToDie
         SD['worms']['total'][k] -= (maleToDie + femaleToDie)
         # save actual attendance record and the age of each host when treated
@@ -1094,7 +1089,8 @@ def conductSurvey(SD, params, t, sampleSize, nSamples):
 
     # get sampled individuals
     KKSampleSize = min(sampleSize, sum(surveyAged)) 
-    sampledEggs = np.random.choice(a=surveyEggs, size=KKSampleSize, replace=False)
+
+    sampledEggs = np.random.choice(a=np.array(surveyEggs), size=int(KKSampleSize), replace=False)
     SD['numSurvey'] += 1
     # return the prevalence
     return SD, np.sum(sampledEggs > 0.9) / KKSampleSize
@@ -1139,9 +1135,13 @@ def getPsi(params):
     # inteval-centered ages for the age intervals, midpoints from 0 to maxHostAge
     modelAges = np.arange(start=0, stop=params['maxHostAge'], step=deltaT) + 0.5 * deltaT
 
+
+
+
+    inner = np.digitize(modelAges, params['muBreaks'])-1
+
     # hostMu for the new age intervals
-    hostMu = params['hostMuData'][pd.cut(x=modelAges, bins=params['muBreaks'], labels=np.arange(start=0,
-    stop=len(params['hostMuData']))).to_numpy()]
+    hostMu = params['hostMuData'][inner]
 
     hostSurvivalCurve = np.exp(-np.cumsum(hostMu * deltaT))
     MeanLifespan = np.sum(hostSurvivalCurve[:len(modelAges)]) * deltaT
@@ -1149,8 +1149,8 @@ def getPsi(params):
     # calculate the cumulative sum of host and worm death rates from which to calculate worm survival
     # intMeanWormDeathEvents = np.cumsum(hostMu + params['sigma']) * deltaT # commented out as it is not used
 
-    modelAgeGroupCatIndex = pd.cut(x=modelAges, bins=params['contactAgeGroupBreaks'], labels=np.arange(start=0,
-    stop=len(params['contactAgeGroupBreaks']) - 1)).to_numpy()
+
+    modelAgeGroupCatIndex = np.digitize(modelAges, params['contactAgeGroupBreaks'])-1
 
     betaAge = params['contactRates'][modelAgeGroupCatIndex]
     rhoAge = params['rho'][modelAgeGroupCatIndex]
@@ -1204,14 +1204,11 @@ def getEquilibrium(params):
     modelAges = np.arange(start=0, stop=params['maxHostAge'], step=deltaT) + 0.5 * deltaT
 
     # hostMu for the new age intervals
-    hostMu = params['hostMuData'][pd.cut(x=modelAges, bins=params['muBreaks'], labels=np.arange(start=0,
-    stop=len(params['hostMuData'])))]
+    hostMu = params['hostMuData'][np.digitize(modelAges, params['muBreaks'])-1]
 
     hostSurvivalCurve = np.exp(-np.cumsum(hostMu * deltaT))
     MeanLifespan = np.sum(hostSurvivalCurve[:len(modelAges)]) * deltaT
-
-    modelAgeGroupCatIndex = pd.cut(x=modelAges, bins=params['contactAgeBreaks'], labels=np.arange(start=0,
-    stop=len(params['contactAgeBreaks']) - 1)).to_numpy()
+    modelAgeGroupCatIndex = np.digitize(modelAges, params['contactAgeBreaks'])-1
 
     betaAge = params['contactRates'][modelAgeGroupCatIndex]
     rhoAge = params['rho'][modelAgeGroupCatIndex]
@@ -1237,12 +1234,11 @@ def getEquilibrium(params):
     test_L = np.append(np.linspace(start=0, stop=L_minus, num=10), np.linspace(start=L_minus, stop=L_hat, num=20))
 
     def K_valueFunc(currentL, params):
-
-        return params['psi'] * np.sum(params['reproFunc'](currentL * Q, params) * rhoAge * hostSurvivalCurve * deltaT) / \
-        (MeanLifespan * params['LDecayRate']) - currentL
-
-    K_values = np.vectorize(K_valueFunc)(currentL=test_L, params=params)
-
+        repro_result = params['reproFunc'](currentL * Q, params)
+        return params['psi'] * np.sum(repro_result * rhoAge * hostSurvivalCurve * deltaT) / (MeanLifespan * params['LDecayRate']) - currentL
+    #K_values = np.vectorize(K_valueFunc)(currentL=test_L, params=params)
+    K_values = np.array([K_valueFunc(i,params) for i in test_L])
+    
     # now find the maximum of K_values and use bisection to find critical Ls
     iMax = np.argmax(K_values)
     mid_L = test_L[iMax]
@@ -1296,7 +1292,7 @@ def extractHostData(results):
             # adherenceFactors=np.array([results[rep][i]['adherenceFactors'] for i in range(len(results[0]) - 1)]).T,
             # compliers=np.array([results[rep][i]['compliers'] for i in range(len(results[0]) - 1)]).T,
             # totalPop=len(results[rep][0]['worms']['total']),
-            timePoints=np.array([results[rep][i]['time'] for i in range(len(results[0]) - 1)]),
+            timePoints=np.array([np.array(results[rep][i]['time']) for i in range(len(results[0]) - 1)]),
             # attendanceRecord=results[rep][-1]['attendanceRecord'],
             # ageAtChemo=results[rep][-1]['ageAtChemo'],
             # finalFreeLiving=results[rep][-2]['freeLiving'],
@@ -1396,8 +1392,8 @@ def getAgeCatSampledPrevByVillage(villageList, timeIndex, ageBand, params, nSamp
 
     meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
 
-    ageGroups = pd.cut(x=villageList['ages'][:, timeIndex], bins=np.append(-10, np.append(ageBand, 150)),
-    labels=np.array([1, 2, 3])).to_numpy()
+
+    ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
 
@@ -1437,9 +1433,7 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
     '''
 
     meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
-
-    ageGroups = pd.cut(x=villageList['ages'][:, timeIndex], bins=np.append(-10, np.append(ageBand, 150)),
-    labels=np.array([1, 2, 3])).to_numpy()
+    ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
     
@@ -1463,7 +1457,7 @@ def getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params, nS
 
         low = infected - (medium + heavy)
 
-    return infected, low, medium, heavy, len(currentAgeGroupMeanEggCounts)
+    return np.array(infected), np.array(low), np.array(medium), np.array(heavy), np.array(len(currentAgeGroupMeanEggCounts))
 
 
 def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, params, nSamples=2, Unfertilized=False,
@@ -1494,9 +1488,7 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(villageList, timeIndex, ageBand, pa
     '''
 
     meanEggCounts = getVillageMeanCountsByHost(villageList, timeIndex, params, nSamples, Unfertilized)
-
-    ageGroups = pd.cut(x=villageList['ages'][:, timeIndex], bins=np.append(-10, np.append(ageBand, 150)),
-    labels=np.array([1, 2, 3])).to_numpy()
+    ageGroups = np.digitize(villageList['ages'][:, timeIndex], np.append(-10, np.append(ageBand, 150)))-1
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
 
@@ -1536,8 +1528,8 @@ def getSampledDetectedPrevByVillageAll(hostData, timeIndex, ageBand, params, nSa
     sampled worm prevalence;
     '''
 
-    return np.array([getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params,
-    nSamples, Unfertilized, villageSampleSize) for villageList in hostData])
+    return [getAgeCatSampledPrevByVillageAll(villageList, timeIndex, ageBand, params,
+    nSamples, Unfertilized, villageSampleSize) for villageList in hostData]
 
 def getBurdens(hostData, params, numReps, ageBand, nSamples=2, Unfertilized=False, villageSampleSize=100):
    
@@ -1548,7 +1540,7 @@ def getBurdens(hostData, params, numReps, ageBand, nSamples=2, Unfertilized=Fals
 
     for t in range(len(hostData[0]['timePoints'])): #loop over time points
     # calculate burdens using the same sample
-        newrow = getSampledDetectedPrevByVillageAll(hostData, t, ageBand, params, nSamples, Unfertilized, villageSampleSize)
+        newrow = np.array(getSampledDetectedPrevByVillageAll(hostData, t, ageBand, params, nSamples, Unfertilized, villageSampleSize))
         newrowinfected = newrow[:,0]
         newrowlow = newrow[:,1]
         newrowmedium = newrow[:,2]
@@ -1774,32 +1766,17 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
         age_start = i
         age_end = i + 1
         #year = hostData[0]['timePoints']
-        
+
         if i == 0:
-            df = pd.DataFrame({'Time':hostData[0]['timePoints'], 
+            df = pd.DataFrame({
+                   'Time': hostData[0]['timePoints'],
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
                    'age_end':np.repeat(age_end,len(low_prevalence)), 
                    'intensity':np.repeat('light',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
+                   'species':np.repeat(params['species'], len(low_prevalence)),
                    'measure':np.repeat('prevalence',len(low_prevalence)),
                    'draw_1':low_prevalence})
         
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('moderate',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':moderate_prevalence}))
-                   
-        
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('heavy',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':heavy_prevalence}))
         else:
             df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
                    'age_start': np.repeat(age_start,len(low_prevalence)), 
@@ -1809,21 +1786,21 @@ def getPrevalenceDALYsAll(hostData, params, numReps, nSamples=2, Unfertilized=Fa
                    'measure':np.repeat('prevalence',len(low_prevalence)),
                    'draw_1':low_prevalence}))
             
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('moderate',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':moderate_prevalence}))
-            
-            df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
-                   'age_start': np.repeat(age_start,len(low_prevalence)), 
-                   'age_end':np.repeat(age_end,len(low_prevalence)), 
-                   'intensity':np.repeat('heavy',len(low_prevalence)),
-                   'species':np.repeat(params['species'],len(low_prevalence)),
-                   'measure':np.repeat('prevalence',len(low_prevalence)),
-                   'draw_1':heavy_prevalence}))
+        df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+                'age_start': np.repeat(age_start,len(low_prevalence)), 
+                'age_end':np.repeat(age_end,len(low_prevalence)), 
+                'intensity':np.repeat('moderate',len(low_prevalence)),
+                'species':np.repeat(params['species'],len(low_prevalence)),
+                'measure':np.repeat('prevalence',len(low_prevalence)),
+                'draw_1':moderate_prevalence}))
+        
+        df = df.append(pd.DataFrame({'Time':hostData[0]['timePoints'], 
+                'age_start': np.repeat(age_start,len(low_prevalence)), 
+                'age_end':np.repeat(age_end,len(low_prevalence)), 
+                'intensity':np.repeat('heavy',len(low_prevalence)),
+                'species':np.repeat(params['species'],len(low_prevalence)),
+                'measure':np.repeat('prevalence',len(low_prevalence)),
+                'draw_1':heavy_prevalence}))
             
         # df[str(i)+' Prevalence'] = prevalence
         # df[str(i)+' Low Intensity Prevalence'] = low_prevalence
@@ -1853,7 +1830,8 @@ def outputNumberInAgeGroup(results, params):
             age_counts.append(ages1.count(j))
             
         if (i == 0):
-                numEachAgeGroup = pd.DataFrame({'Time': np.repeat(d['time'], len(age_counts)), 
+                numEachAgeGroup = pd.DataFrame({
+                        'Time': np.repeat(d['time'], len(age_counts)), 
                        'age_start': range(int(params['maxHostAge'])), 
                        'age_end':range(1,1+int(params['maxHostAge'])), 
                        'intensity':np.repeat('All', len(age_counts)),
@@ -1861,7 +1839,8 @@ def outputNumberInAgeGroup(results, params):
                        'measure':np.repeat('number', len(age_counts)),
                        'draw_1':age_counts})
         else:
-                numEachAgeGroup = numEachAgeGroup.append(pd.DataFrame({'Time': np.repeat(d['time'], len(age_counts)), 
+                numEachAgeGroup = numEachAgeGroup.append(pd.DataFrame({
+                        'Time': np.repeat(d['time'], len(age_counts)), 
                        'age_start': range(int(params['maxHostAge'])), 
                        'age_end':range(1,1+int(params['maxHostAge'])), 
                        'intensity':np.repeat('All', len(age_counts)),
