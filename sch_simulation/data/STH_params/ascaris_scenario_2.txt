@@ -1,6 +1,6 @@
 #### Ascaris parameter values. 
-species	ascaris		species name
-unfertilized	True		unfertilized marker
+species	ascaris
+unfertilized  True
 
 ### Model running parameters.
 repNum	1		Number of repetitions
