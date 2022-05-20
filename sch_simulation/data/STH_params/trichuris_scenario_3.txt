@@ -11,7 +11,7 @@ neverTreated	0.1
 
 
 ### Social structure
-contactAgeBreaks	0 5 15 25 70		Contact age group breaks (minus sign necessary to include zero age)
+contactAgeBreaks	0 5 15 25 80		Contact age group breaks (minus sign necessary to include zero age)
 betaValues	0.3 1.28 1 0.17		Relative contact rates (Beta)
 rhoValues	0.3 1.28 1 0.17		Rho, contribution to the reservoir by contact age group. 
 
@@ -28,7 +28,7 @@ reproFuncName	epgFertility	## name of function for reproduction (a string).  [De
 StochSR	TRUE		## Turn SR on or off in the stochastic model. 	[Stochastic]  
 
 ### Treatment parameters. 
-treatmentBreaks	0 2 5 15 70		Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
+treatmentBreaks	0 2 5 15 80		Minimum age of each treatment group (minus sign necessary to include zero age): Infants; Pre-SAC; SAC; Adults
 drugEff	0.499				Drug efficacy
 drugEff1	0.499					Drug efficacy [0-1]
 drugEff2	0.99
