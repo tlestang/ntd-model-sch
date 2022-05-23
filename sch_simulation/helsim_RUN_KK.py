@@ -1111,7 +1111,8 @@ def selectIndividuals(chosenAges, ageGroups, changePoint, groupAges, numIndivsTo
         startPoint += n1
     return chosenIndivs
 
-def multiple_simulations(params, pickleData, simparams, indices, i, wantedPopSize = 3000):
+def multiple_simulations(params, pickleData, simparams, indices, i, 
+                         wantedPopSize = 3000, ageGroups = [0, 1, 2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100]):
     print( f"==> multiple_simulations starting sim {i}" )
     start_time = time.time()
     # copy the parameters
@@ -1128,47 +1129,55 @@ def multiple_simulations(params, pickleData, simparams, indices, i, wantedPopSiz
     times = data['times']
     simData['demography']['birthDate'] = simData['demography']['birthDate'] - times['maxTime']
     simData['demography']['deathDate'] = simData['demography']['deathDate'] - times['maxTime']
-    ages = -simData['demography']['birthDate']
+    
     
     pickleNumIndivs = len(simData['si'])
     if pickleNumIndivs < wantedPopSize:
+        # set population size to wanted population size
         params['N'] = wantedPopSize
+        # get the birth and death ages of representative population
         b = getDesiredAgeDistribution(params, timeLimit = 200)
         chosenAges = b[:, 0]
         deathDate = b[:, 1]
+        # ages of pickle file data
         ages = -simData['demography']['birthDate']
+        # group these ages into age groups
         groupAges = splitSimDataIntoAges(ages, ageGroups)
+        # how many people in each age group do we need to pick to match representative population
         numIndivsToChoose = findNumberOfPeopleEachAgeGroup(chosenAges, ageGroups, groupAges)
+        # choose these people from the pickle data
         chosenIndivs = selectIndividuals(chosenAges, ageGroups, changePoint, groupAges, numIndivsToChoose)
         
+        
+        birthDate = -chosenAges - 0.000001
+        deathDate = deathDate 
+        wormsT = []
+        wormsF = []
+        si = []
     
-    birthDate = -chosenAges - 0.000001
-    deathDate = deathDate 
-    wormsT = []
-    wormsF = []
-    si = []
-    
-    contactAgeGroupIndices = []
-    treatmentAgeGroupIndices = []
-    for k in range(len(chosenIndivs)):
-        l = chosenIndivs[k]
-        si.append(simData['si'][l])
-        wormsT.append(simData['worms']['total'][l])
-        wormsF.append(simData['worms']['female'][l])
-        contactAgeGroupIndices.append(simData['contactAgeGroupIndices'][l])
-        treatmentAgeGroupIndices.append(simData['treatmentAgeGroupIndices'][l])
-    demography = {'birthDate': np.array(birthDate), 'deathDate': np.array(deathDate)}
-    worms = {'total': np.array(wormsT), 'female': np.array(wormsF)}
-    SD = {'si': np.array(si),
-          'worms': worms,
-          'freeLiving': simData['freeLiving'],
-          'demography': demography,
-          'contactAgeGroupIndices': np.array(contactAgeGroupIndices),
-          'treatmentAgeGroupIndices': np.array(treatmentAgeGroupIndices)
-          }
+        contactAgeGroupIndices = []
+        treatmentAgeGroupIndices = []
+        for k in range(len(chosenIndivs)):
+            l = chosenIndivs[k]
+            si.append(simData['si'][l])
+            wormsT.append(simData['worms']['total'][l])
+            wormsF.append(simData['worms']['female'][l])
+            contactAgeGroupIndices.append(simData['contactAgeGroupIndices'][l])
+            treatmentAgeGroupIndices.append(simData['treatmentAgeGroupIndices'][l])
+        demography = {'birthDate': np.array(birthDate), 'deathDate': np.array(deathDate)}
+        worms = {'total': np.array(wormsT), 'female': np.array(wormsF)}
+        SD = {'si': np.array(si),
+              'worms': worms,
+              'freeLiving': simData['freeLiving'],
+              'demography': demography,
+              'contactAgeGroupIndices': np.array(contactAgeGroupIndices),
+              'treatmentAgeGroupIndices': np.array(treatmentAgeGroupIndices)
+              }
 
     
-    simData = copy.deepcopy(SD)
+        simData = copy.deepcopy(SD)
+        
+        
     simData['sv'] = np.zeros(len(simData['si']) ,dtype = int)
     simData['attendanceRecord'] = []
     simData['ageAtChemo'] = []
