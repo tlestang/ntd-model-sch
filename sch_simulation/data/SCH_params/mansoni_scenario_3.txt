@@ -72,4 +72,4 @@ sampleSizeOne	250
 sampleSizeTwo	250
 nSamples	2
 minSurveyAge	5
-maxSurveyAge	14
+maxSurveyAge	15
