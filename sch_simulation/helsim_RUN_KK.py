@@ -1087,7 +1087,7 @@ def splitSimDataIntoAges(ages, ageGroups):
     return groupAges
 
 
-def findNumberOfPeopleEachAgeGroup(chosenAges, ageGroups, groupAges):
+def findNumberOfPeopleEachAgeGroup(chosenAges, groupAges):
     # how many people in each age group are in the wanted distribution
     # chosenAges is the age of people in the wanted distribution
     numIndivsToChoose = []
@@ -1100,7 +1100,7 @@ def findNumberOfPeopleEachAgeGroup(chosenAges, ageGroups, groupAges):
     return numIndivsToChoose
 
 
-def selectIndividuals(chosenAges, ageGroups, changePoint, groupAges, numIndivsToChoose):
+def selectIndividuals(chosenAges,  groupAges, numIndivsToChoose):
     chosenIndivs = np.zeros(sum(numIndivsToChoose) ,dtype = int)
     startPoint = 0
     totalPeople = 0
@@ -1144,9 +1144,9 @@ def multiple_simulations(params, pickleData, simparams, indices, i,
         # group these ages into age groups
         groupAges = splitSimDataIntoAges(ages, ageGroups)
         # how many people in each age group do we need to pick to match representative population
-        numIndivsToChoose = findNumberOfPeopleEachAgeGroup(chosenAges, ageGroups, groupAges)
+        numIndivsToChoose = findNumberOfPeopleEachAgeGroup(chosenAges,  groupAges)
         # choose these people from the pickle data
-        chosenIndivs = selectIndividuals(chosenAges, ageGroups, changePoint, groupAges, numIndivsToChoose)
+        chosenIndivs = selectIndividuals(chosenAges, groupAges, numIndivsToChoose)
         
         
         birthDate = -chosenAges - 0.000001
