@@ -1277,6 +1277,8 @@ def multiple_simulations(
     t = 0
 
     raw_data = dict((key, copy.deepcopy(data[key])) for key in keys)
+    raw_data["demography"]["birthDate"] = raw_data["demography"]["birthDate"] - times["maxTime"]
+    raw_data["demography"]["deathDate"] = raw_data["demography"]["deathDate"]- times["maxTime"]
     worms = Worms(total=raw_data["worms"]["total"], female=raw_data["worms"]["female"])
     demography = Demography(
         birthDate=raw_data["demography"]["birthDate"],
