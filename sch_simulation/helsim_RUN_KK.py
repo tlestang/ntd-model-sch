@@ -766,6 +766,7 @@ def doRealizationSurveyCoveragePickle(
         # If the nextStep is soon, take a smaller multiplier
         # new_multiplier = max(math.floor(min((nextStep - t) * sumRates, multiplier)), 1)
         new_multiplier = min(math.floor(min((1/365) * sumRates, multiplier)), 10)
+        new_multiplier = max(new_multiplier, 10)
         #new_multiplier = 1
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
@@ -1374,9 +1375,9 @@ def multiple_simulations(
     # state = data['state']
 
     # extract the previous simulation times
-    times = data["times"]
-    simData.demography.birthDate = simData.demography.birthDate - times["maxTime"]
-    simData.demography.deathDate = simData.demography.deathDate - times["maxTime"]
+    #times = data["times"]
+    #simData.demography.birthDate = simData.demography.birthDate - times["maxTime"]
+    #simData.demography.deathDate = simData.demography.deathDate - times["maxTime"]
 
     simData.contactAgeGroupIndices = (
         np.digitize(
