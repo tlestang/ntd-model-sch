@@ -980,68 +980,12 @@ def singleSimulationDALYCoverage(params,simData,
     costData = getCostData(results, params)
     df1 = pd.concat([df,numAgeGroup],ignore_index=True)
     df1 = pd.concat([df1, costData], ignore_index=True)
+    df1 = df1.reset_index()
+    df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
     return df1
 
 
 
-def multiple_simulations2(params, pickleData, simparams,i ):
-    print( f"==> multiple_simulations starting sim {i}" )
-    start_time = time.time()
-    # copy the parameters
-    parameters = copy.deepcopy(params)
- 
-    # load the previous simulation results
-    data = pickleData
-
-    # extract the previous simulation output
-    keys = ['si', 'worms', 'freeLiving', 'demography', 'contactAgeGroupIndices', 'treatmentAgeGroupIndices']
-    t = 0
-    
-    simData = dict((key, copy.deepcopy(data[key])) for key in keys)
-    simData['sv'] = np.zeros(len(simData['si']) ,dtype = int)
-    simData['attendanceRecord'] = []
-    simData['ageAtChemo'] = []
-    simData['adherenceFactorAtChemo'] = []
-    simData['vaccCount'] = 0
-    simData['nChemo1'] = 0
-    simData['nChemo2'] = 0
-    simData['numSurvey'] = 0
-    simData['compliers'] = np.random.uniform(low=0, high=1, size=len(simData['si'])) > params['propNeverCompliers']
-    simData['adherenceFactors']= np.random.uniform(low=0, high=1, size=len(simData['si']))
-    # extract the previous random state
-    #state = data['state']
-    
-    # extract the previous simulation times
-    #times = data['times']
-    #simData['demography']['birthDate'] = simData['demography']['birthDate'] - times['maxTime']
-    #simData['demography']['deathDate'] = simData['demography']['deathDate'] - times['maxTime']
-    
-    simData['contactAgeGroupIndices'] = pd.cut(x=t - simData['demography']['birthDate'], bins=parameters['contactAgeGroupBreaks'],
-    labels=np.arange(0, len(parameters['contactAgeGroupBreaks']) - 1)).to_numpy()
-    parameters['N'] = len(simData['si'])
-   
-    # update the parameters
-    #R0 = simparams.iloc[j, 1].tolist()
-    #k = simparams.iloc[j, 2].tolist()
-    #parameters['R0'] = R0
-    #parameters['k'] = k
-
-    # configure the parameters
-    parameters = configure(parameters)
-    parameters['psi'] = getPsi(parameters)
-    parameters['equiData'] = getEquilibrium(parameters)
-    #parameters['moderateIntensityCount'], parameters['highIntensityCount'] = setIntensityCount(paramFileName)
-
-    # add a simulation path
-    # results = doRealizationSurveyCoveragePickle(params, simData, 1)
-    # output = extractHostData(results)
-
-    # transform the output to data frame
-    df = singleSimulationDALYCoverage(parameters, simData, 1)
-    end_time = time.time()
-    total_time = end_time - start_time
-    print( f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s" )
-    return df
 
 
 
