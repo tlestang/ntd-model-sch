@@ -1255,7 +1255,7 @@ def selectIndividuals(chosenAges,  groupAges, numIndivsToChoose):
 
 def multiple_simulations(
     params: Parameters, pickleData, simparams, indices, i, wantedPopSize = 3000,
-    ageGroups = [0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100]
+    ageGroups = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100]
 ) -> pd.DataFrame:
     print(f"==> multiple_simulations starting sim {i}")
     start_time = time.time()
