@@ -666,7 +666,7 @@ def getPrevalenceDALYs(
         numReps,
         np.array([0, 4]),
         nSamples=2,
-        Unfertilized=False,
+        Unfertilized,
         villageSampleSize=100,
     )
 
@@ -682,7 +682,7 @@ def getPrevalenceDALYs(
         numReps,
         np.array([5, 80]),
         nSamples=2,
-        Unfertilized=False,
+        Unfertilized,
         villageSampleSize=100,
     )
 
@@ -698,7 +698,7 @@ def getPrevalenceDALYs(
         numReps,
         np.array([0, 80]),
         nSamples=2,
-        Unfertilized=False,
+        Unfertilized,
         villageSampleSize=100,
     )
 
@@ -773,7 +773,7 @@ def getPrevalenceDALYsAll(
             numReps,
             np.array([i, i + 1]),
             nSamples=2,
-            Unfertilized=False,
+            Unfertilized,
             villageSampleSize=100,
         )
         age_start = i
