@@ -72,8 +72,8 @@ def getVillageMeanCountsByHost(
     villageList: ProcResult,
     timeIndex: int,
     params: Parameters,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
 ) -> NDArray[np.float_]:
     """
     This function returns the mean egg count across readings by host
@@ -123,8 +123,8 @@ def getAgeCatSampledPrevByVillage(
     timeIndex: int,
     ageBand: NDArray[np.int_],
     params: Parameters,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize: int = 100,
 ) -> float:
 
@@ -153,7 +153,7 @@ def getAgeCatSampledPrevByVillage(
     """
 
     meanEggCounts = getVillageMeanCountsByHost(
-        villageList, timeIndex, params, nSamples, Unfertilized
+        villageList, timeIndex, params, Unfertilized, nSamples
     )
 
     ageGroups = (
@@ -183,8 +183,8 @@ def getAgeCatSampledPrevByVillageAll(
     timeIndex: int,
     ageBand: NDArray[np.int_],
     params: Parameters,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize=100,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray]:
 
@@ -213,7 +213,7 @@ def getAgeCatSampledPrevByVillageAll(
     """
 
     meanEggCounts = getVillageMeanCountsByHost(
-        villageList, timeIndex, params, nSamples, Unfertilized
+        villageList, timeIndex, params, Unfertilized, nSamples
     )
     ageGroups = (
         np.digitize(
@@ -268,8 +268,8 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(
     timeIndex: int,
     ageBand: NDArray[np.int_],
     params: Parameters,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize: int = 100,
 ) -> float:
     """
@@ -297,7 +297,7 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(
     """
 
     meanEggCounts = getVillageMeanCountsByHost(
-        villageList, timeIndex, params, nSamples, Unfertilized
+        villageList, timeIndex, params, Unfertilized, nSamples
     )
     ageGroups = (
         np.digitize(
@@ -326,8 +326,8 @@ def getSampledDetectedPrevByVillageAll(
     timeIndex: int,
     ageBand: NDArray[np.int_],
     params: Parameters,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize: int = 100,
 ) -> List[Tuple[ndarray, ndarray, ndarray, ndarray, ndarray]]:
 
@@ -361,8 +361,8 @@ def getSampledDetectedPrevByVillageAll(
             timeIndex,
             ageBand,
             params,
-            nSamples,
             Unfertilized,
+            nSamples,
             villageSampleSize,
         )
         for villageList in hostData
@@ -374,8 +374,8 @@ def getBurdens(
     params: Parameters,
     numReps: int,
     ageBand: NDArray[np.int_],
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize: int = 100,
 ) -> Tuple[
     NDArray[np.float_], NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]
@@ -390,7 +390,7 @@ def getBurdens(
         # calculate burdens using the same sample
         newrow = np.array(
             getSampledDetectedPrevByVillageAll(
-                hostData, t, ageBand, params, nSamples, Unfertilized, villageSampleSize
+                hostData, t, ageBand, params, Unfertilized, nSamples, villageSampleSize
             )
         )
         newrowinfected = newrow[:, 0]
@@ -417,8 +417,8 @@ def getSampledDetectedPrevByVillage(
     timeIndex: int,
     ageBand: NDArray[np.int_],
     params: Parameters,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize: int = 100,
 ) -> NDArray[np.float_]:
 
@@ -453,8 +453,8 @@ def getSampledDetectedPrevByVillage(
                 timeIndex,
                 ageBand,
                 params,
-                nSamples,
                 Unfertilized,
+                nSamples,
                 villageSampleSize,
             )
             for villageList in hostData
@@ -467,8 +467,8 @@ def getSampledDetectedPrevHeavyBurdenByVillage(
     timeIndex: int,
     ageBand: NDArray[np.int_],
     params: Parameters,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize: int = 100,
 ) -> NDArray[np.float_]:
     """
@@ -502,8 +502,8 @@ def getSampledDetectedPrevHeavyBurdenByVillage(
                 timeIndex,
                 ageBand,
                 params,
-                nSamples,
                 Unfertilized,
+                nSamples,
                 villageSampleSize,
             )
             for villageList in hostData
@@ -515,8 +515,8 @@ def getPrevalence(
     hostData: List[ProcResult],
     params: Parameters,
     numReps: int,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize: int = 100,
 ) -> pd.DataFrame:
 
@@ -549,8 +549,8 @@ def getPrevalence(
                 t,
                 np.array([5, 15]),
                 params,
-                nSamples,
                 Unfertilized,
+                nSamples,
                 villageSampleSize,
             )
             for t in range(len(hostData[0].timePoints))
@@ -564,8 +564,8 @@ def getPrevalence(
                 t,
                 np.array([16, 80]),
                 params,
-                nSamples,
                 Unfertilized,
+                nSamples,
                 villageSampleSize,
             )
             for t in range(len(hostData[0].timePoints))
@@ -579,8 +579,8 @@ def getPrevalence(
                 t,
                 np.array([5, 15]),
                 params,
-                nSamples,
                 Unfertilized,
+                nSamples,
                 villageSampleSize,
             )
             for t in range(len(hostData[0].timePoints))
@@ -594,8 +594,8 @@ def getPrevalence(
                 t,
                 np.array([16, 80]),
                 params,
-                nSamples,
                 Unfertilized,
+                nSamples,
                 villageSampleSize,
             )
             for t in range(len(hostData[0].timePoints))
@@ -628,8 +628,8 @@ def getPrevalenceDALYs(
     hostData: List[ProcResult],
     params: Parameters,
     numReps: int,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize: int = 100,
 ) -> pd.DataFrame:
     """
@@ -665,8 +665,8 @@ def getPrevalenceDALYs(
         params,
         numReps,
         np.array([0, 4]),
-        nSamples=2,
         Unfertilized,
+        nSamples=2,
         villageSampleSize=100,
     )
 
@@ -681,8 +681,8 @@ def getPrevalenceDALYs(
         params,
         numReps,
         np.array([5, 80]),
-        nSamples=2,
         Unfertilized,
+        nSamples=2,
         villageSampleSize=100,
     )
 
@@ -697,8 +697,8 @@ def getPrevalenceDALYs(
         params,
         numReps,
         np.array([0, 80]),
-        nSamples=2,
         Unfertilized,
+        nSamples=2,
         villageSampleSize=100,
     )
 
@@ -730,8 +730,8 @@ def getPrevalenceDALYsAll(
     hostData: List[ProcResult],
     params: Parameters,
     numReps: int,
+    Unfertilized: bool,
     nSamples: int = 2,
-    Unfertilized: bool = False,
     villageSampleSize: int = 100,
 ) -> pd.DataFrame:
     """
@@ -772,8 +772,8 @@ def getPrevalenceDALYsAll(
             params,
             numReps,
             np.array([i, i + 1]),
-            nSamples=2,
             Unfertilized,
+            nSamples=2,
             villageSampleSize=100,
         )
         age_start = i
