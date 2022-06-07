@@ -215,14 +215,15 @@ def getAgeCatSampledPrevByVillageAll(
     meanEggCounts = getVillageMeanCountsByHost(
         villageList, timeIndex, params, Unfertilized, nSamples
     )
-    ageGroups = (
-        np.digitize(
-            villageList.ages[:, timeIndex], np.append(-10, np.append(ageBand, 150))
-        )
-        - 1
-    )
-
-    currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
+    ages = villageList.ages[:, timeIndex]
+    #ageGroups = (
+    #    np.digitize(
+    #        villageList.ages[:, timeIndex], np.append(-10, np.append(ageBand, 150))
+    #    )
+    #    - 1
+    #)
+    currentAges = np.where(np.logical_and(ages >= ageBand[0], ages < ageBand[1]))
+    currentAgeGroupMeanEggCounts = meanEggCounts[currentAges]
 
     is_empty = currentAgeGroupMeanEggCounts.size == 0
 
