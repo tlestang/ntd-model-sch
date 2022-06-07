@@ -744,7 +744,9 @@ def doRealizationSurveyCoveragePickle(
         float(nextAgeTime),
         float(nextVaccTime),
     )
-
+    prevNChemo1 = 0
+    prevNChemo2 = 0
+    prevNVacc = 0
     nChemo = 0
     nVacc = 0
     nSurvey = 0
@@ -892,14 +894,17 @@ def doRealizationSurveyCoveragePickle(
                         freeLiving=copy.deepcopy(simData.freeLiving),
                         adherenceFactors=copy.deepcopy(simData.adherenceFactors),
                         compliers=copy.deepcopy(simData.compliers),
-                        nVacc=simData.vaccCount,
-                        nChemo1=simData.nChemo1,
-                        nChemo2=simData.nChemo2,
+                        nVacc=simData.vaccCount - prevNVacc,
+                        nChemo1=simData.nChemo1 - prevNChemo1,
+                        nChemo2=simData.nChemo2 - prevNChemo2,
                         nSurvey=nSurvey,
                         surveyPass=surveyPass,
                         elimination=trueElim,
                     )
                 )
+                prevNChemo1 = simData.nChemo1 
+                prevNChemo2 = simData.nChemo2
+                prevNVacc = simData.vaccCount
                 outTimes[nextOutIndex] = maxTime + 10
                 nextOutIndex = np.argmin(outTimes)
                 nextOutTime = outTimes[nextOutIndex]
@@ -1305,6 +1310,7 @@ def multiple_simulations(
         adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data["si"])),
     )
     pickleNumIndivs = len(simData.si)
+    #print("starting  j =",j)
     if pickleNumIndivs < wantedPopSize:
         # set population size to wanted population size
         params.N = wantedPopSize
@@ -1314,13 +1320,18 @@ def multiple_simulations(
         deathDate = b[:, 1]
         # ages of pickle file data
         ages = -simData.demography.birthDate
+       # print("j =",j, 'chosenAges =', chosenAges)
         # group these ages into age groups
         groupAges = splitSimDataIntoAges(ages, ageGroups)
+       # print("j =",j, 'groupAges =' ,groupAges )
         # how many people in each age group do we need to pick to match representative population
         numIndivsToChoose = findNumberOfPeopleEachAgeGroup(chosenAges,  groupAges)
+       # print("j =",j, 'numIndivsToChoose =', numIndivsToChoose)
         # choose these people from the pickle data
         chosenIndivs = selectIndividuals(chosenAges, groupAges, numIndivsToChoose)
         
+      #  print("done  j =",j)
+        #print("j =",j, 'chosenIndivs =', chosenIndivs)
         
         birthDate = -chosenAges - 0.000001
         deathDate = deathDate 
