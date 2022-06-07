@@ -175,7 +175,9 @@ class Result:
     nSurvey: Optional[int] = None
     surveyPass: Optional[int] = None
     elimination: Optional[int] = None
-
+    propChemo1: Optional[ndarray] = None
+    propChemo2: Optional[ndarray] = None
+    propVacc: Optional[ndarray] = None
 
 @dataclass
 class ProcResult:
