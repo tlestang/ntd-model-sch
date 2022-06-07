@@ -744,6 +744,10 @@ def doRealizationSurveyCoveragePickle(
         float(nextAgeTime),
         float(nextVaccTime),
     )
+    
+    propChemo1 = []
+    propChemo2 = []
+    propVacc = []
     prevNChemo1 = 0
     prevNChemo2 = 0
     prevNVacc = 0
@@ -805,7 +809,12 @@ def doRealizationSurveyCoveragePickle(
                     cov = params.MDA[k].Coverage[index]
                     minAge = params.MDA[k].Age[0]
                     maxAge = params.MDA[k].Age[1]
-                    simData = doChemoAgeRange(params, simData, t, minAge, maxAge, cov)
+                    simData, propTreated1, propTreated2 = doChemoAgeRange(params, simData, t, minAge, maxAge, cov)
+                    if propTreated1 > 0:
+                        propChemo1.append([t, minAge, maxAge, "C1", round(propTreated1,4)])
+                    if propTreated2 > 0:
+                        propChemo2.append([t, minAge, maxAge, "C2", round(propTreated2,4)])
+                    
                 if nChemo == 0:
                     tSurvey = t + params.timeToFirstSurvey
                 nChemo += 1
@@ -834,8 +843,9 @@ def doRealizationSurveyCoveragePickle(
                     cov = params.Vacc[k].Coverage[index]
                     minAge = params.Vacc[k].Age[0]
                     maxAge = params.Vacc[k].Age[1]
-                    simData = doVaccineAgeRange(params, simData, t, minAge, maxAge, cov)
-
+                    simData, pVacc = doVaccineAgeRange(params, simData, t, minAge, maxAge, cov)
+                    propVacc.append([t, minAge, maxAge, round(pVacc,4)])
+                    
                 nVacc += 1
                 params = overWritePostVacc(params, nextVaccAge, nextVaccIndex)
 
@@ -900,6 +910,9 @@ def doRealizationSurveyCoveragePickle(
                         nSurvey=nSurvey,
                         surveyPass=surveyPass,
                         elimination=trueElim,
+                        propChemo1=propChemo1,
+                        propChemo2=propChemo2,
+                        propVacc = propVacc
                     )
                 )
                 prevNChemo1 = simData.nChemo1 
@@ -1005,6 +1018,77 @@ def SCH_Simulation_DALY(
     return df
 
 
+
+def getActualCoverages(results: List[List[Result]], params: Parameters)-> pd.DataFrame:
+    ind = 0
+    pp = len(results[0])
+    for i in range(len(results[0][pp-1].propChemo1)):
+        df = results[0][pp-1].propChemo1[i]
+        if i == 0:
+            df1 = pd.DataFrame(
+                {
+                    "Time": df[0],
+                    "age_start": df[1],
+                    "age_end": df[2],
+                    "intensity": "None",
+                    "species": params.species,
+                    "measure": "Chemo1Cov",
+                    "draw_1": df[4],
+                }, index=[ind]
+            )
+            ind+=1
+        else:
+            assert df1 is not None
+            df1 = df1.append(
+                pd.DataFrame(
+                    {
+                        "Time": df[0],
+                        "age_start": df[1],
+                        "age_end": df[2],
+                        "intensity": "None",
+                        "species": params.species,
+                        "measure": "Chemo1Cov",
+                        "draw_1": df[4],
+                    }, index=[ind]
+                )
+            )
+            ind += 1
+    for i in range(len(results[0][pp-1].propChemo2)):
+        df = results[0][pp-1].propChemo2[i]
+
+        df1 = df1.append(
+                pd.DataFrame(
+                    {
+                        "Time": df[0],
+                        "age_start": df[1],
+                        "age_end": df[2],
+                        "intensity": "None",
+                        "species": params.species,
+                        "measure": "Chemo2Cov",
+                        "draw_1": df[4],
+                    }, index=[ind]
+                )
+        )
+        
+        ind += 1
+    for i in range(len(results[0][pp-1].propVacc)):
+        df = results[0][pp-1].propVacc[i]
+
+        df1 = df1.append(
+                pd.DataFrame(
+                    {
+                        "Time": df[0],
+                        "age_start": df[1],
+                        "age_end": df[2],
+                        "intensity": "None",
+                        "species": params.species,
+                        "measure": "VaccCov",
+                        "draw_1": df[4],
+                    }, index=[ind]
+                )
+        )
+    return df1
+        
 def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame:
     df1 = None
     for i, list_res in enumerate(results):
@@ -1182,8 +1266,10 @@ def singleSimulationDALYCoverage(
     )
     numAgeGroup = outputNumberInAgeGroup(results, params)
     costData = getCostData(results, params)
+    trueCoverageData = getActualCoverages(results, params)
     df1 = pd.concat([df, numAgeGroup], ignore_index=True)
     df1 = pd.concat([df1, costData], ignore_index=True)
+    df1 = pd.concat([df1, trueCoverageData], ignore_index=True)
     df1 = df1.reset_index()
     df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
     df1 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
