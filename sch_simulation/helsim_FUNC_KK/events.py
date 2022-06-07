@@ -379,7 +379,9 @@ def doChemoAgeRange(
     SD: SDEquilibrium
         dataclass containing the updated equilibrium parameter values;
     """
-
+    
+    numChemo1 = 0
+    numChemo2 = 0
     # decide which individuals are treated, treatment is random
     attendance = np.random.uniform(low=0, high=1, size=params.N) < coverage
     # get age of each individual
@@ -431,6 +433,7 @@ def doChemoAgeRange(
         SD.attendanceRecord.append(k)
         assert SD.nChemo1 is not None
         SD.nChemo1 += len(k)
+        numChemo1 += len(k)
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
         dEff = params.DrugEfficacy2
@@ -449,11 +452,13 @@ def doChemoAgeRange(
         SD.attendanceRecord.append(k)
         assert SD.nChemo2 is not None
         SD.nChemo2 += len(k)
-
+        numChemo2 += len(k)
+    propTreated1 = numChemo1 / sum(correctAges)
+    propTreated2 = numChemo2 / sum(correctAges)
     SD.ageAtChemo.append(t - SD.demography.birthDate)
     SD.adherenceFactorAtChemo.append(SD.adherenceFactors)
 
-    return SD
+    return SD, propTreated1, propTreated2
 
 
 def doVaccine(
@@ -532,8 +537,9 @@ def doVaccineAgeRange(
     vaccNow = np.logical_and(vaccNow, correctAges)
     SD.sv[vaccNow] = 1
     SD.vaccCount += sum(vaccNow)
+    propVacc = sum(vaccNow)/sum(correctAges)
 
-    return SD
+    return SD, propVacc
 
 
 def conductSurvey(
