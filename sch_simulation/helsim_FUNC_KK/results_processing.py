@@ -233,25 +233,34 @@ def getAgeCatSampledPrevByVillageAll(
         medium = np.nan
         heavy = np.nan
     else:
-        if villageSampleSize < len(currentAgeGroupMeanEggCounts):
-            mySample = np.random.choice(
-                a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=False
-            )
+        # if villageSampleSize < len(currentAgeGroupMeanEggCounts):
+        #     mySample = np.random.choice(
+        #         a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=False
+        #     )
 
-        else:
-            mySample = np.random.choice(
-                a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True
-            )
+        # else:
+        #     mySample = np.random.choice(
+        #         a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True
+        #     )
 
-        infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
+        # infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
+        infected = np.sum(currentAgeGroupMeanEggCounts>0)/len(currentAgeGroupMeanEggCounts)
+        # medium = (
+        #     np.sum(
+        #         (mySample >= params.mediumThreshold)
+        #         & (mySample <= params.heavyThreshold)
+        #     )
+        #     / villageSampleSize
+        # )
         medium = (
             np.sum(
-                (mySample >= params.mediumThreshold)
-                & (mySample <= params.heavyThreshold)
+                (currentAgeGroupMeanEggCounts >= params.mediumThreshold)
+                & (currentAgeGroupMeanEggCounts <= params.heavyThreshold)
             )
-            / villageSampleSize
+            /len(currentAgeGroupMeanEggCounts)
         )
-        heavy = np.sum(mySample > params.heavyThreshold) / villageSampleSize
+        # heavy = np.sum(mySample > params.heavyThreshold) / villageSampleSize
+        heavy = np.sum(currentAgeGroupMeanEggCounts > params.heavyThreshold) / len(currentAgeGroupMeanEggCounts)
 
         low = infected - (medium + heavy)
 
