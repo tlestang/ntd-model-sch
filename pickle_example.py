@@ -55,14 +55,16 @@ params = readCoverageFile(coverageTextFileStorageName, params)
 num_cores = multiprocessing.cpu_count()
 
 # number of simulations to run
-numSims = num_cores * 3
-numSims = 2
+
+numSims = 200
 print( f'Running {numSims} simulations on {num_cores} cores' )
 
 
 # randomly pick indices for number of simulations
-indices = np.random.choice(a=range(200), size = numSims, replace=False)
+#indices = np.random.choice(a=range(200), size = numSims, replace=False)
 
+# pick parameters and saved populations in order
+indices = range(200)
 start_time = time.time()
 
 # run simulations in parallel
