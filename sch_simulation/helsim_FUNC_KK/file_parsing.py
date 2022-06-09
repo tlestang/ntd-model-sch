@@ -329,12 +329,31 @@ def nextMDAVaccInfo(
     chemoTiming = {}
     assert params.MDA is not None
     assert params.Vacc is not None
-
+    
+    for i in range(len(params.Vacc)):
+        k = copy.deepcopy(params.Vacc[i])
+        if type(k.Years) == float:
+            y1 = k.Years
+            c1 = k.Coverage
+            k.Years = [y1,1000]
+            k.Coverage = [c1, 0]
+            params.Vacc[i] = k
+            
+            
+    
+    for i in range(len(params.MDA)):
+        k = copy.deepcopy(params.MDA[i])
+        if type(k.Years) == float:
+            y1 = k.Years
+            c1 = k.Coverage
+            k.Years = [y1,1000]
+            k.Coverage = [c1, 0]
+            params.MDA[i] = k
     for i, mda in enumerate(params.MDA):
         chemoTiming["Age{0}".format(i)] = copy.deepcopy(mda.Years)
     VaccTiming = {}
     for i, vacc in enumerate(params.Vacc):
-        VaccTiming["Age{0}".format(i)] = copy.deepcopy(vacc.Years)
+        VaccTiming["Age{0}".format(i)] = copy.deepcopy(np.array(vacc.Years))
     #  currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
 
     nextChemoTime = 10000
