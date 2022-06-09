@@ -1065,7 +1065,7 @@ def getActualCoverages(results: List[List[Result]], params: Parameters)-> pd.Dat
                         "intensity": "None",
                         "species": params.species,
                         "measure": "Chemo2Cov",
-                        "draw_1": df[4],
+                        "draw_1": df[3],
                     }, index=[ind]
                 )
         )
