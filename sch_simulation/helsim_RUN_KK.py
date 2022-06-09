@@ -1019,74 +1019,100 @@ def SCH_Simulation_DALY(
 
 
 
-def getActualCoverages(results: List[List[Result]], params: Parameters)-> pd.DataFrame:
+def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes)-> pd.DataFrame:
+    
     ind = 0
+    p = copy.deepcopy(params.MDA)
+    for i in range(len(p)):
+        a1 = p[i].Age[0]
+        a2 = p[i].Age[1]
+        if i == 0:
+            df1 = pd.DataFrame(
+                        {
+                            "Time": allTimes,
+                            "age_start": np.repeat(a1, len(allTimes)),
+                            "age_end": np.repeat(a2, len(allTimes)),
+                            "intensity": np.repeat("None", len(allTimes)),
+                            "species": np.repeat(params.species, len(allTimes)),
+                            "measure": np.repeat("Chemo1Cov", len(allTimes)),
+                            "draw_1": np.repeat(0, len(allTimes)),
+                        }
+                    )
+                                                 
+        else:
+            df1 = df1.append(pd.DataFrame(
+                        {
+                            "Time": allTimes,
+                            "age_start": np.repeat(a1, len(allTimes)),
+                            "age_end": np.repeat(a2, len(allTimes)),
+                            "intensity": np.repeat("None", len(allTimes)),
+                            "species": np.repeat(params.species, len(allTimes)),
+                            "measure": np.repeat("Chemo1Cov", len(allTimes)),
+                            "draw_1": np.repeat(0, len(allTimes)),
+                        }
+                    ))
+            
+        df1 = df1.append(pd.DataFrame(
+                        {
+                            "Time": allTimes,
+                            "age_start": np.repeat(a1, len(allTimes)),
+                            "age_end": np.repeat(a2, len(allTimes)),
+                            "intensity": np.repeat("None", len(allTimes)),
+                            "species": np.repeat(params.species, len(allTimes)),
+                            "measure": np.repeat("Chemo2Cov", len(allTimes)),
+                            "draw_1": np.repeat(0, len(allTimes)),
+                        }
+                    ))
+    p = copy.deepcopy(params.Vacc)
+    for i in range(len(p)):
+        a1 = p[i].Age[0]
+        a2 = p[i].Age[1]
+        
+            
+        df1 = df1.append(pd.DataFrame(
+                        {
+                            "Time": allTimes,
+                            "age_start": np.repeat(a1, len(allTimes)),
+                            "age_end": np.repeat(a2, len(allTimes)),
+                            "intensity": np.repeat("None", len(allTimes)),
+                            "species": np.repeat(params.species, len(allTimes)),
+                            "measure": np.repeat("VaccCov", len(allTimes)),
+                            "draw_1": np.repeat(0, len(allTimes)),
+                        }
+                    ))
+
+        
     pp = len(results[0])
     for i in range(len(results[0][pp-1].propChemo1)):
         df = results[0][pp-1].propChemo1[i]
-        if i == 0:
-            df1 = pd.DataFrame(
-                {
-                    "Time": df[0],
-                    "age_start": df[1],
-                    "age_end": df[2],
-                    "intensity": "None",
-                    "species": params.species,
-                    "measure": "Chemo1Cov",
-                    "draw_1": df[4],
-                }, index=[ind]
-            )
-            ind+=1
-        else:
-            assert df1 is not None
-            df1 = df1.append(
-                pd.DataFrame(
-                    {
-                        "Time": df[0],
-                        "age_start": df[1],
-                        "age_end": df[2],
-                        "intensity": "None",
-                        "species": params.species,
-                        "measure": "Chemo1Cov",
-                        "draw_1": df[4],
-                    }, index=[ind]
-                )
-            )
-            ind += 1
+        t = df[0]
+        a1 = df[1]
+        a2 = df[2]
+        k = np.where(np.logical_and(df1.measure == "Chemo1Cov", np.logical_and(np.logical_and(df1.Time == t, df1.age_start == a1), df1.age_end == a2)))
+        
+        df1.draw_1.iloc[k] = df[4]
+        
+            
     for i in range(len(results[0][pp-1].propChemo2)):
         df = results[0][pp-1].propChemo2[i]
-
-        df1 = df1.append(
-                pd.DataFrame(
-                    {
-                        "Time": df[0],
-                        "age_start": df[1],
-                        "age_end": df[2],
-                        "intensity": "None",
-                        "species": params.species,
-                        "measure": "Chemo2Cov",
-                        "draw_1": df[3],
-                    }, index=[ind]
-                )
-        )
+        t = df[0]
+        a1 = df[1]
+        a2 = df[2]
+        k = np.where(np.logical_and(df1.measure == "Chemo2Cov", np.logical_and(np.logical_and(df1.Time == t, df1.age_start == a1), df1.age_end == a2)))
         
-        ind += 1
+        df1.draw_1.iloc[k] = df[4]
+        
+            
     for i in range(len(results[0][pp-1].propVacc)):
         df = results[0][pp-1].propVacc[i]
-
-        df1 = df1.append(
-                pd.DataFrame(
-                    {
-                        "Time": df[0],
-                        "age_start": df[1],
-                        "age_end": df[2],
-                        "intensity": "None",
-                        "species": params.species,
-                        "measure": "VaccCov",
-                        "draw_1": df[4],
-                    }, index=[ind]
-                )
-        )
+        t = df[0]
+        a1 = df[1]
+        a2 = df[2]
+        k = np.where(np.logical_and(df1.measure == "VaccCov", np.logical_and(np.logical_and(df1.Time == t, df1.age_start == a1), df1.age_end == a2)))
+        
+        df1.draw_1.iloc[k] = df[3]
+        
+            
     return df1
         
 def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame:
@@ -1266,7 +1292,8 @@ def singleSimulationDALYCoverage(
     )
     numAgeGroup = outputNumberInAgeGroup(results, params)
     costData = getCostData(results, params)
-    trueCoverageData = getActualCoverages(results, params)
+    allTimes = np.unique(numAgeGroup.Time)
+    trueCoverageData = getActualCoverages(results, params, allTimes)
     df1 = pd.concat([df, numAgeGroup], ignore_index=True)
     df1 = pd.concat([df1, costData], ignore_index=True)
     df1 = pd.concat([df1, trueCoverageData], ignore_index=True)
