@@ -410,27 +410,28 @@ def doChemoAgeRange(
 
     # assign which drug each person will take
     drug = np.ones(int(sum(toTreatNow)))
+
     if d2Share > 0:
         k = random.sample(range(int(sum(drug))), int(sum(drug) * d2Share))
         drug[k] = 2
-    # calculate the number of dead worms
-
+# calculate the number of dead worms
+    ll = np.where(toTreatNow==1)[0]
     # if drug 1 share is > 0, then treat the appropriate individuals with drug 1
     if d1Share > 0:
         dEff = params.DrugEfficacy1
         k = np.where(drug == 1)[0]
         femaleToDie = np.random.binomial(
-            size=len(k), n=np.array(SD.worms.female[k], dtype="int32"), p=dEff
+            size=len(k), n=np.array(SD.worms.female[ll[k]], dtype="int32"), p=dEff
         )
         maleToDie = np.random.binomial(
             size=len(k),
-            n=np.array(SD.worms.total[k] - SD.worms.female[k], dtype="int32"),
+            n=np.array(SD.worms.total[ll[k]] - SD.worms.female[ll[k]], dtype="int32"),
             p=dEff,
         )
-        SD.worms.female[k] -= femaleToDie
-        SD.worms.total[k] -= maleToDie + femaleToDie
+        SD.worms.female[ll[k]] -= femaleToDie
+        SD.worms.total[ll[k]] -= maleToDie + femaleToDie
         # save actual attendance record and the age of each host when treated
-        SD.attendanceRecord.append(k)
+        SD.attendanceRecord.append(ll[k])
         assert SD.nChemo1 is not None
         SD.nChemo1 += len(k)
         numChemo1 += len(k)
@@ -439,15 +440,15 @@ def doChemoAgeRange(
         dEff = params.DrugEfficacy2
         k = np.where(drug == 2)[0]
         femaleToDie = np.random.binomial(
-            size=len(k), n=np.array(SD.worms.female[k], dtype="int32"), p=dEff
+            size=len(k), n=np.array(SD.worms.female[ll[k]], dtype="int32"), p=dEff
         )
         maleToDie = np.random.binomial(
             size=len(k),
-            n=np.array(SD.worms.total[k] - SD.worms.female[k], dtype="int32"),
+            n=np.array(SD.worms.total[ll[k]] - SD.worms.female[ll[k]], dtype="int32"),
             p=dEff,
         )
-        SD.worms.female[k] -= femaleToDie
-        SD.worms.total[k] -= maleToDie + femaleToDie
+        SD.worms.female[ll[k]] -= femaleToDie
+        SD.worms.total[ll[k]] -= maleToDie + femaleToDie
         # save actual attendance record and the age of each host when treated
         SD.attendanceRecord.append(k)
         assert SD.nChemo2 is not None
