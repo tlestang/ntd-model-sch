@@ -186,7 +186,7 @@ def getAgeCatSampledPrevByVillageAll(
     Unfertilized: bool,
     nSamples: int = 2,
     villageSampleSize=100,
-) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray]:
+) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, ndarray]:
 
     """
     This function provides sampled, age-cat worm prevalence
@@ -226,32 +226,17 @@ def getAgeCatSampledPrevByVillageAll(
     currentAgeGroupMeanEggCounts = meanEggCounts[currentAges]
 
     is_empty = currentAgeGroupMeanEggCounts.size == 0
-
+    
     if is_empty:
         infected = np.nan
         low = np.nan
         medium = np.nan
         heavy = np.nan
+        meanEggs = np.nan
     else:
-        # if villageSampleSize < len(currentAgeGroupMeanEggCounts):
-        #     mySample = np.random.choice(
-        #         a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=False
-        #     )
 
-        # else:
-        #     mySample = np.random.choice(
-        #         a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True
-        #     )
-
-        # infected = np.sum(nSamples * mySample > 0.9) / villageSampleSize
         infected = np.sum(currentAgeGroupMeanEggCounts>0)/len(currentAgeGroupMeanEggCounts)
-        # medium = (
-        #     np.sum(
-        #         (mySample >= params.mediumThreshold)
-        #         & (mySample <= params.heavyThreshold)
-        #     )
-        #     / villageSampleSize
-        # )
+ 
         medium = (
             np.sum(
                 (currentAgeGroupMeanEggCounts >= params.mediumThreshold)
@@ -259,17 +244,18 @@ def getAgeCatSampledPrevByVillageAll(
             )
             /len(currentAgeGroupMeanEggCounts)
         )
-        # heavy = np.sum(mySample > params.heavyThreshold) / villageSampleSize
+
         heavy = np.sum(currentAgeGroupMeanEggCounts > params.heavyThreshold) / len(currentAgeGroupMeanEggCounts)
 
         low = infected - (medium + heavy)
-
+        meanEggs = np.mean(currentAgeGroupMeanEggCounts)
     return (
         np.array(infected),
         np.array(low),
         np.array(medium),
         np.array(heavy),
         np.array(len(currentAgeGroupMeanEggCounts)),
+        np.array(meanEggs)
     )
 
 
@@ -339,7 +325,7 @@ def getSampledDetectedPrevByVillageAll(
     Unfertilized: bool,
     nSamples: int = 2,
     villageSampleSize: int = 100,
-) -> List[Tuple[ndarray, ndarray, ndarray, ndarray, ndarray]]:
+) -> List[Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, ndarray]]:
 
     """
     This function provides sampled, age-cat worm prevalence
@@ -395,7 +381,7 @@ def getBurdens(
     low_results = np.empty((0, numReps))
     medium_results = np.empty((0, numReps))
     heavy_results = np.empty((0, numReps))
-
+    mean_eggs = np.empty((0, numReps))
     for t in range(len(hostData[0].timePoints)):  # loop over time points
         # calculate burdens using the same sample
         newrow = np.array(
@@ -407,19 +393,21 @@ def getBurdens(
         newrowlow = newrow[:, 1]
         newrowmedium = newrow[:, 2]
         newrowheavy = newrow[:, 3]
+        newroweggs = newrow[:, 5]
         # append row
         results = np.vstack([results, newrowinfected])
         low_results = np.vstack([low_results, newrowlow])
         medium_results = np.vstack([medium_results, newrowmedium])
         heavy_results = np.vstack([heavy_results, newrowheavy])
-
+        mean_eggs = np.vstack([mean_eggs, newroweggs])
     # calculate proportion across number of repetitions
     prevalence: NDArray[np.float_] = np.sum(results, axis=1) / numReps
     low_prevalence: NDArray[np.float_] = np.sum(low_results, axis=1) / numReps
     medium_prevalence: NDArray[np.float_] = np.sum(medium_results, axis=1) / numReps
     heavy_prevalence: NDArray[np.float_] = np.sum(heavy_results, axis=1) / numReps
-
-    return prevalence, low_prevalence, medium_prevalence, heavy_prevalence
+    mean_egg_res: NDArray[np.float_] = np.sum(mean_eggs, axis=1) / numReps
+    
+    return prevalence, low_prevalence, medium_prevalence, heavy_prevalence, mean_egg_res
 
 
 def getSampledDetectedPrevByVillage(
@@ -777,7 +765,7 @@ def getPrevalenceDALYsAll(
     df = None
     for i in range(0, 80):  # loop over yearly age bins
 
-        prevalence, low_prevalence, moderate_prevalence, heavy_prevalence = getBurdens(
+        prevalence, low_prevalence, moderate_prevalence, heavy_prevalence, meanEggs = getBurdens(
             hostData,
             params,
             numReps,
@@ -843,6 +831,20 @@ def getPrevalenceDALYsAll(
                     "species": np.repeat(params.species, len(low_prevalence)),
                     "measure": np.repeat("prevalence", len(low_prevalence)),
                     "draw_1": heavy_prevalence,
+                }
+            )
+        )
+        
+        df = df.append(
+            pd.DataFrame(
+                {
+                    "Time": hostData[0].timePoints,
+                    "age_start": np.repeat(age_start, len(low_prevalence)),
+                    "age_end": np.repeat(age_end, len(low_prevalence)),
+                    "intensity": np.repeat("None", len(low_prevalence)),
+                    "species": np.repeat(params.species, len(low_prevalence)),
+                    "measure": np.repeat("meanEggs", len(low_prevalence)),
+                    "draw_1": meanEggs,
                 }
             )
         )
