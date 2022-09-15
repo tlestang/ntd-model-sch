@@ -679,20 +679,24 @@ def doRealizationSurveyCoveragePickle(
 ) -> List[Result]:
     """
     This function generates a single simulation path.
+
     Parameters
     ----------
     params: Parameters
         dataclass containing the parameter names and values;
+
     simData: SDEquilibrium
         dataclass containing the initial equilibrium parameter values;
+
     i: int
         iteration number;
+
     Returns
     -------
     results: list
         list with simulation results;
     """
-
+    
     # start time
     t: float = 0
 
@@ -726,7 +730,7 @@ def doRealizationSurveyCoveragePickle(
     ) = nextMDAVaccInfo(params)
 
     # next event
-
+    
     nextStep = min(
         float(nextOutTime),
         float(t + maxStep),
@@ -749,13 +753,16 @@ def doRealizationSurveyCoveragePickle(
     results = []  # initialise empty list to store results
     print_t_interval = 0.5
     print_t = 0
+  
     # run stochastic algorithm
     multiplier = math.floor(
         params.N / 50
     )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
     while t < maxTime:
+        
         if t > print_t:
             print_t += print_t_interval
+            #print(t)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
@@ -824,7 +831,7 @@ def doRealizationSurveyCoveragePickle(
 
             # vaccination
             if timeBarrier >= nextVaccTime:
-
+           #     break
                 simData = doDeath(params, simData, t)
                 assert params.Vacc is not None
                 for i in range(len(nextVaccAge)):
@@ -865,7 +872,7 @@ def doRealizationSurveyCoveragePickle(
                     assert params.Vacc is not None
                     for vacc in params.Vacc:
                         vacc.Years = np.array([maxTime + 10])
-
+                        
                     tSurvey = maxTime + 10
                 else:
                     tSurvey = t + params.timeToNextSurvey
@@ -882,8 +889,11 @@ def doRealizationSurveyCoveragePickle(
                 ) = nextMDAVaccInfo(params)
 
             if timeBarrier >= nextOutTime:
+
+
                 a, truePrev = conductSurvey(simData, params, t, params.N, 2)
                 trueElim = int(1 - truePrev)
+                
                 results.append(
                     Result(
                         iteration=i,
@@ -894,6 +904,9 @@ def doRealizationSurveyCoveragePickle(
                         freeLiving=copy.deepcopy(simData.freeLiving),
                         adherenceFactors=copy.deepcopy(simData.adherenceFactors),
                         compliers=copy.deepcopy(simData.compliers),
+                        si=copy.deepcopy(simData.si),
+                        sv=copy.deepcopy(simData.sv),
+                        contactAgeGroupIndices=copy.deepcopy(simData.contactAgeGroupIndices),
                         nVacc=simData.vaccCount - prevNVacc,
                         nChemo1=simData.nChemo1 - prevNChemo1,
                         nChemo2=simData.nChemo2 - prevNChemo2,
@@ -919,13 +932,13 @@ def doRealizationSurveyCoveragePickle(
                 float(nextAgeTime),
                 float(nextVaccTime),
             )
-
+  
     # results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
     #     # ageAtChemo=np.array(simData['ageAtChemo']),
     #     # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
     # ))
-
-    return results
+  
+    return results, simData
 
 
 def SCH_Simulation(
