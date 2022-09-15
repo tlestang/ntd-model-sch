@@ -1268,11 +1268,10 @@ def singleSimulationDALYCoverage(
         numReps = params.numReps
 
     # run the simulations
-    results: List[List[Result]] = Parallel(n_jobs=num_cores)(
-        delayed(doRealizationSurveyCoveragePickle)(params, simData, i)
-        for i in range(numReps)
-    )
-
+    results, SD = doRealizationSurveyCoveragePickle(params, simData, 1)
+    
+ 
+    results = [results]
     # process the output
     output = extractHostData(results)
 
@@ -1280,6 +1279,8 @@ def singleSimulationDALYCoverage(
     df = getPrevalenceDALYsAll(
         output, params, numReps, Unfertilized=params.Unfertilized
     )
+         
+     
     numAgeGroup = outputNumberInAgeGroup(results, params)
     costData = getCostData(results, params)
     allTimes = np.unique(numAgeGroup.Time)
@@ -1290,7 +1291,7 @@ def singleSimulationDALYCoverage(
     df1 = df1.reset_index()
     df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
     df1 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
-    return df1
+    return df1, SD
 
 
 
