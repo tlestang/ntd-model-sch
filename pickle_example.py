@@ -68,8 +68,15 @@ indices = range(200)
 start_time = time.time()
 
 # run simulations in parallel
-results = Parallel(n_jobs=num_cores)(
-        delayed(multiple_simulations)(params, pickleData, simparams, indices, i) for i in range(numSims))
+# run simulations in parallel
+res = Parallel(n_jobs=num_cores)(
+         delayed(multiple_simulations)(params, pickleData, simparams, indices, i) for i in range(numSims))
+results=[item[0] for item in res]
+simData=[item[1] for item in res]
+#results = Parallel(n_jobs=1)(
+ #        delayed(multiple_simulations)(params, pickleData, simparams, indices, i) for i in range(numSims))
+newOutputSimDataFilePath = 'SDPickles.pkl'
+pickle.dump( simData, open( newOutputSimDataFilePath, 'wb' ) )
     
 end_time = time.time()
 
