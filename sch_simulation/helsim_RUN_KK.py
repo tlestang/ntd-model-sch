@@ -243,15 +243,12 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
 def doRealizationSurvey(params: Parameters, i: int) -> List[Result]:
     """
     This function generates a single simulation path.
-
     Parameters
     ----------
     params: Parameters
         dataclass containing the parameter names and values;
-
     i: int
         iteration number;
-
     Returns
     -------
     results: list
@@ -462,15 +459,12 @@ def doRealizationSurvey(params: Parameters, i: int) -> List[Result]:
 def doRealizationSurveyCoverage(params: Parameters, i: int) -> List[Result]:
     """
     This function generates a single simulation path.
-
     Parameters
     ----------
     params: Parameters
         dataclass containing the parameter names and values;
-
     i: int
         iteration number;
-
     Returns
     -------
     results: list
@@ -702,7 +696,7 @@ def doRealizationSurveyCoveragePickle(
     results: list
         list with simulation results;
     """
-
+    
     # start time
     t: float = 0
 
@@ -736,7 +730,7 @@ def doRealizationSurveyCoveragePickle(
     ) = nextMDAVaccInfo(params)
 
     # next event
-
+    
     nextStep = min(
         float(nextOutTime),
         float(t + maxStep),
@@ -759,13 +753,16 @@ def doRealizationSurveyCoveragePickle(
     results = []  # initialise empty list to store results
     print_t_interval = 0.5
     print_t = 0
+  
     # run stochastic algorithm
     multiplier = math.floor(
         params.N / 50
     )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
     while t < maxTime:
+        
         if t > print_t:
             print_t += print_t_interval
+            #print(t)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
@@ -834,7 +831,7 @@ def doRealizationSurveyCoveragePickle(
 
             # vaccination
             if timeBarrier >= nextVaccTime:
-
+           #     break
                 simData = doDeath(params, simData, t)
                 assert params.Vacc is not None
                 for i in range(len(nextVaccAge)):
@@ -875,7 +872,7 @@ def doRealizationSurveyCoveragePickle(
                     assert params.Vacc is not None
                     for vacc in params.Vacc:
                         vacc.Years = np.array([maxTime + 10])
-
+                        
                     tSurvey = maxTime + 10
                 else:
                     tSurvey = t + params.timeToNextSurvey
@@ -892,8 +889,11 @@ def doRealizationSurveyCoveragePickle(
                 ) = nextMDAVaccInfo(params)
 
             if timeBarrier >= nextOutTime:
+
+
                 a, truePrev = conductSurvey(simData, params, t, params.N, 2)
                 trueElim = int(1 - truePrev)
+                
                 results.append(
                     Result(
                         iteration=i,
@@ -904,6 +904,9 @@ def doRealizationSurveyCoveragePickle(
                         freeLiving=copy.deepcopy(simData.freeLiving),
                         adherenceFactors=copy.deepcopy(simData.adherenceFactors),
                         compliers=copy.deepcopy(simData.compliers),
+                        si=copy.deepcopy(simData.si),
+                        sv=copy.deepcopy(simData.sv),
+                        contactAgeGroupIndices=copy.deepcopy(simData.contactAgeGroupIndices),
                         nVacc=simData.vaccCount - prevNVacc,
                         nChemo1=simData.nChemo1 - prevNChemo1,
                         nChemo2=simData.nChemo2 - prevNChemo2,
@@ -929,13 +932,13 @@ def doRealizationSurveyCoveragePickle(
                 float(nextAgeTime),
                 float(nextVaccTime),
             )
-
+  
     # results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
     #     # ageAtChemo=np.array(simData['ageAtChemo']),
     #     # adherenceFactorAtChemo=np.array(simData['adherenceFactorAtChemo'])
     # ))
-
-    return results
+  
+    return results, simData
 
 
 def SCH_Simulation(
@@ -1278,11 +1281,10 @@ def singleSimulationDALYCoverage(
         numReps = params.numReps
 
     # run the simulations
-    results: List[List[Result]] = Parallel(n_jobs=num_cores)(
-        delayed(doRealizationSurveyCoveragePickle)(params, simData, i)
-        for i in range(numReps)
-    )
-
+    results, SD = doRealizationSurveyCoveragePickle(params, simData, 1)
+    
+ 
+    results = [results]
     # process the output
     output = extractHostData(results)
 
@@ -1290,6 +1292,8 @@ def singleSimulationDALYCoverage(
     df = getPrevalenceDALYsAll(
         output, params, numReps, Unfertilized=params.Unfertilized
     )
+         
+     
     numAgeGroup = outputNumberInAgeGroup(results, params)
     costData = getCostData(results, params)
     allTimes = np.unique(numAgeGroup.Time)
@@ -1300,7 +1304,7 @@ def singleSimulationDALYCoverage(
     df1 = df1.reset_index()
     df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
     df1 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]
-    return df1
+    return df1, SD
 
 
 
@@ -1371,6 +1375,7 @@ def selectIndividuals(chosenAges,  groupAges, numIndivsToChoose):
     return chosenIndivs
 
 
+
 def multiple_simulations(
     params: Parameters, pickleData, simparams, indices, i, wantedPopSize = 3000,
     ageGroups = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100]
@@ -1433,25 +1438,17 @@ def multiple_simulations(
         deathDate = b[:, 1]
         # ages of pickle file data
         ages = -simData.demography.birthDate
-       # print("j =",j, 'chosenAges =', chosenAges)
         # group these ages into age groups
         groupAges = splitSimDataIntoAges(ages, ageGroups)
-       # print("j =",j, 'groupAges =' ,groupAges )
         # how many people in each age group do we need to pick to match representative population
         numIndivsToChoose = findNumberOfPeopleEachAgeGroup(chosenAges,  groupAges)
-       # print("j =",j, 'numIndivsToChoose =', numIndivsToChoose)
         # choose these people from the pickle data
         chosenIndivs = selectIndividuals(chosenAges, groupAges, numIndivsToChoose)
-        
-      #  print("done  j =",j)
-        #print("j =",j, 'chosenIndivs =', chosenIndivs)
-        
         birthDate = -chosenAges - 0.000001
         deathDate = deathDate 
         wormsT = []
         wormsF = []
         si = []
-    
         contactAgeGroupIndices = []
         treatmentAgeGroupIndices = []
         for k in range(len(chosenIndivs)):
@@ -1461,19 +1458,11 @@ def multiple_simulations(
             wormsF.append(simData.worms.female[l])
             contactAgeGroupIndices.append(simData.contactAgeGroupIndices[l])
             treatmentAgeGroupIndices.append(simData.treatmentAgeGroupIndices[l])
-        #demography = {'birthDate': np.array(birthDate), 'deathDate': np.array(deathDate)}
         demography = Demography(
         birthDate=np.array(birthDate),
         deathDate=np.array(deathDate),
         )
         worms = Worms(total=np.array(wormsT), female=np.array(wormsF))
-        #SD = {'si': np.array(si),
-        #      'worms': worms,
-        #      'freeLiving': simData['freeLiving'],
-        #      'demography': demography,
-        #      'contactAgeGroupIndices': np.array(contactAgeGroupIndices),
-        #      'treatmentAgeGroupIndices': np.array(treatmentAgeGroupIndices)
-        #      }
 
         SD = SDEquilibrium(
         si=np.array(si),
@@ -1500,11 +1489,7 @@ def multiple_simulations(
 
     # extract the previous random state
     # state = data['state']
-
     # extract the previous simulation times
-    #times = data["times"]
-    #simData.demography.birthDate = simData.demography.birthDate - times["maxTime"]
-    #simData.demography.deathDate = simData.demography.deathDate - times["maxTime"]
 
     simData.contactAgeGroupIndices = (
         np.digitize(
@@ -1532,11 +1517,11 @@ def multiple_simulations(
     # output = extractHostData(results)
 
     # transform the output to data frame
-    df = singleSimulationDALYCoverage(parameters, simData, 1)
+    df, simData = singleSimulationDALYCoverage(parameters, simData, 1)
     end_time = time.time()
     total_time = end_time - start_time
     print(f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s")
-    return df
+    return df, simData
 
 
 

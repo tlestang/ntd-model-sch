@@ -167,7 +167,9 @@ class Result:
     freeLiving: float
     adherenceFactors: ndarray
     compliers: ndarray
-    sex_id: Optional[ndarray] = None
+    si: NDArray[np.float_]
+    sv: ndarray
+    contactAgeGroupIndices: ndarray
     nVacc: Optional[int] = None
     nChemo: Optional[int] = None
     nChemo1: Optional[int] = None
@@ -178,6 +180,10 @@ class Result:
     propChemo1: Optional[ndarray] = None
     propChemo2: Optional[ndarray] = None
     propVacc: Optional[ndarray] = None
+    
+    
+    
+    
 
 @dataclass
 class ProcResult:
@@ -186,3 +192,4 @@ class ProcResult:
     femaleWormsOverTime: ndarray
     ages: ndarray
     timePoints: ndarray
+    
