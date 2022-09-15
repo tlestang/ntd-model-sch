@@ -1375,6 +1375,7 @@ def selectIndividuals(chosenAges,  groupAges, numIndivsToChoose):
     return chosenIndivs
 
 
+
 def multiple_simulations(
     params: Parameters, pickleData, simparams, indices, i, wantedPopSize = 3000,
     ageGroups = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100]
@@ -1437,25 +1438,17 @@ def multiple_simulations(
         deathDate = b[:, 1]
         # ages of pickle file data
         ages = -simData.demography.birthDate
-       # print("j =",j, 'chosenAges =', chosenAges)
         # group these ages into age groups
         groupAges = splitSimDataIntoAges(ages, ageGroups)
-       # print("j =",j, 'groupAges =' ,groupAges )
         # how many people in each age group do we need to pick to match representative population
         numIndivsToChoose = findNumberOfPeopleEachAgeGroup(chosenAges,  groupAges)
-       # print("j =",j, 'numIndivsToChoose =', numIndivsToChoose)
         # choose these people from the pickle data
         chosenIndivs = selectIndividuals(chosenAges, groupAges, numIndivsToChoose)
-        
-      #  print("done  j =",j)
-        #print("j =",j, 'chosenIndivs =', chosenIndivs)
-        
         birthDate = -chosenAges - 0.000001
         deathDate = deathDate 
         wormsT = []
         wormsF = []
         si = []
-    
         contactAgeGroupIndices = []
         treatmentAgeGroupIndices = []
         for k in range(len(chosenIndivs)):
@@ -1465,19 +1458,11 @@ def multiple_simulations(
             wormsF.append(simData.worms.female[l])
             contactAgeGroupIndices.append(simData.contactAgeGroupIndices[l])
             treatmentAgeGroupIndices.append(simData.treatmentAgeGroupIndices[l])
-        #demography = {'birthDate': np.array(birthDate), 'deathDate': np.array(deathDate)}
         demography = Demography(
         birthDate=np.array(birthDate),
         deathDate=np.array(deathDate),
         )
         worms = Worms(total=np.array(wormsT), female=np.array(wormsF))
-        #SD = {'si': np.array(si),
-        #      'worms': worms,
-        #      'freeLiving': simData['freeLiving'],
-        #      'demography': demography,
-        #      'contactAgeGroupIndices': np.array(contactAgeGroupIndices),
-        #      'treatmentAgeGroupIndices': np.array(treatmentAgeGroupIndices)
-        #      }
 
         SD = SDEquilibrium(
         si=np.array(si),
@@ -1504,11 +1489,7 @@ def multiple_simulations(
 
     # extract the previous random state
     # state = data['state']
-
     # extract the previous simulation times
-    #times = data["times"]
-    #simData.demography.birthDate = simData.demography.birthDate - times["maxTime"]
-    #simData.demography.deathDate = simData.demography.deathDate - times["maxTime"]
 
     simData.contactAgeGroupIndices = (
         np.digitize(
@@ -1536,11 +1517,11 @@ def multiple_simulations(
     # output = extractHostData(results)
 
     # transform the output to data frame
-    df = singleSimulationDALYCoverage(parameters, simData, 1)
+    df, simData = singleSimulationDALYCoverage(parameters, simData, 1)
     end_time = time.time()
     total_time = end_time - start_time
     print(f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s")
-    return df
+    return df, simData
 
 
 
