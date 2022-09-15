@@ -14,6 +14,7 @@ np.seterr(divide="ignore")
 def getSetOfEggCounts(
     total: NDArray[np.int_],
     female: NDArray[np.int_],
+    vaccState:NDArray[np.int_],
     params: Parameters,
     Unfertilized: bool = False,
 ) -> NDArray[np.int_]:
@@ -38,12 +39,12 @@ def getSetOfEggCounts(
 
     if Unfertilized:
 
-        meanCount = female * params.lambda_egg * params.z**female
+        meanCount = female * params.lambda_egg * params.z**female * params.v2[vaccState]
 
     else:
 
         eggProducers = np.where(total == female, 0, female)
-        meanCount = eggProducers * params.lambda_egg * params.z**eggProducers
+        meanCount = eggProducers * params.lambda_egg * params.z**eggProducers * params.v2[vaccState]
 
     return np.random.negative_binomial(
         size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg

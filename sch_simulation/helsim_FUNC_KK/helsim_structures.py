@@ -181,6 +181,7 @@ class Result:
 
 @dataclass
 class ProcResult:
+    vaccState: ndarray
     wormsOverTime: ndarray
     femaleWormsOverTime: ndarray
     ages: ndarray

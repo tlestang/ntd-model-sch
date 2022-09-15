@@ -38,6 +38,9 @@ def extractHostData(results: List[List[Result]]) -> List[ProcResult]:
 
         output.append(
             ProcResult(
+                vaccState = np.array(
+                    [result[i].vaccState for i in range(len(results[0]) - 1)]
+                ).T,
                 wormsOverTime=np.array(
                     [result[i].worms.total for i in range(len(results[0]) - 1)]
                 ).T,
@@ -97,6 +100,7 @@ def getVillageMeanCountsByHost(
         getSetOfEggCounts(
             villageList.wormsOverTime[:, timeIndex],
             villageList.femaleWormsOverTime[:, timeIndex],
+            villageList.vaccState[:, timeIndex],
             params,
             Unfertilized,
         )
@@ -109,6 +113,7 @@ def getVillageMeanCountsByHost(
             getSetOfEggCounts(
                 villageList.wormsOverTime[:, timeIndex],
                 villageList.femaleWormsOverTime[:, timeIndex],
+                villageList.vaccState[:, timeIndex],
                 params,
                 Unfertilized,
             )
