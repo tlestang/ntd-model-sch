@@ -387,7 +387,7 @@ def doChemoAgeRange(
     # get age of each individual
     ages = t - SD.demography.birthDate
     # choose individuals in correct age range
-    correctAges = np.logical_and(ages <= maxAge, ages >= minAge)
+    correctAges = np.logical_and(ages < maxAge, ages >= minAge)
     # they're compliers, in the right age group and it's their turn
     toTreatNow = np.logical_and(attendance, SD.compliers)
     toTreatNow = np.logical_and(toTreatNow, correctAges)
@@ -492,7 +492,6 @@ def doVaccine(
     Hosts4Vaccination = []
     for i in SD.VaccTreatmentAgeGroupIndices:
         Hosts4Vaccination.append(i in indicesToVaccinate)
-
     vaccNow = np.logical_and(Hosts4Vaccination, vaccinate)
     SD.sv[vaccNow] = 1
     SD.vaccCount += sum(Hosts4Vaccination) + sum(vaccinate)
@@ -534,8 +533,8 @@ def doVaccineAgeRange(
     ages = t - SD.demography.birthDate
     correctAges = np.logical_and(ages <= maxAge, ages >= minAge)
     # they're compliers and it's their turn
-    vaccNow = np.logical_and(vaccinate, SD.compliers)
-    vaccNow = np.logical_and(vaccNow, correctAges)
+    #vaccNow = np.logical_and(vaccinate, SD.compliers)
+    vaccNow = np.logical_and(vaccinate, correctAges)
     SD.sv[vaccNow] = 1
     SD.vaccCount += sum(vaccNow)
     propVacc = sum(vaccNow)/sum(correctAges)
@@ -556,7 +555,7 @@ def conductSurvey(
         raise ValueError("nSamples < 1")
 
     eggCounts = getSetOfEggCounts(
-        SD.worms.total, SD.worms.female, params, Unfertilized=params.Unfertilized
+        SD.worms.total, SD.worms.female, SD.sv, params, Unfertilized=params.Unfertilized
     )
     for _ in range(nSamples - 1):
         eggCounts = np.add(
@@ -564,6 +563,7 @@ def conductSurvey(
             getSetOfEggCounts(
                 SD.worms.total,
                 SD.worms.female,
+                SD.sv,
                 params,
                 Unfertilized=params.Unfertilized,
             ),
@@ -597,7 +597,7 @@ def conductSurveyTwo(
     if nSamples < 1:
         raise ValueError("nSamples < 1")
     eggCounts = getSetOfEggCounts(
-        SD.worms.total, SD.worms.female, params, Unfertilized=params.Unfertilized
+        SD.worms.total, SD.worms.female, SD.sv, params, Unfertilized=params.Unfertilized
     )
     for _ in range(nSamples):
         eggCounts = np.add(
@@ -605,6 +605,7 @@ def conductSurveyTwo(
             getSetOfEggCounts(
                 SD.worms.total,
                 SD.worms.female,
+                SD.sv,
                 params,
                 Unfertilized=params.Unfertilized,
             ),
