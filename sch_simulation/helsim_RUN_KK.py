@@ -1526,6 +1526,40 @@ def multiple_simulations(
 
 
 
+def BurnInSimulations(
+    params: Parameters, simparams, i
+) -> pd.DataFrame:
+    print(f"==> multiple_simulations starting sim {i}")
+    start_time = time.time()
+    #copy parameters
+    parameters = copy.deepcopy(params)
+
+    # update the parameters
+    R0 = simparams.iloc[i, 1].tolist()
+    k = simparams.iloc[i, 2].tolist()
+    
+    parameters.R0 = R0
+    parameters.k = k
+    # configure the parameters
+    parameters = configure(parameters)
+    parameters.psi = getPsi(parameters)
+    parameters.equiData = getEquilibrium(parameters)
+    
+    # setup starting point form simulation
+    simData = setupSD(parameters)
+    simData.vaccCount=0
+    simData.nChemo1=0
+    simData.nChemo2=0
+    simData.numSurvey=0
+
+
+    df, simData = singleSimulationDALYCoverage(parameters, simData, 1)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print(f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s")
+    return df, simData
+
+
 def getLifeSpans(nSpans: int, params: Parameters) -> float:
 
     """
