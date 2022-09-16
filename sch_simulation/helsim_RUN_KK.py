@@ -1525,6 +1525,89 @@ def multiple_simulations(
 
 
 
+def multiple_simulations_after_burnin(
+    params: Parameters, pickleData, simparams, indices, i, burnInTime
+) -> pd.DataFrame:
+    print(f"==> multiple_simulations starting sim {i}")
+    start_time = time.time()
+    # copy the parameters
+    parameters = copy.deepcopy(params)
+    j = indices[i]
+    # load the previous simulation results
+    raw_data = pickleData[j]
+
+    
+    t = 0
+
+    
+
+    raw_data.demography.birthDate = raw_data.demography.birthDate - burnInTime
+    raw_data.demography.deathDate = raw_data.demography.deathDate - burnInTime
+    worms = Worms(total=raw_data.worms.total, female=raw_data.worms.female)
+    demography = Demography(
+        birthDate=raw_data.demography.birthDate,
+        deathDate=raw_data.demography.deathDate,
+    )
+    simData = SDEquilibrium(
+        si=raw_data.si,
+        worms=worms,
+        freeLiving=raw_data.freeLiving,
+        demography=demography,
+        contactAgeGroupIndices=raw_data.contactAgeGroupIndices,
+        treatmentAgeGroupIndices=raw_data.treatmentAgeGroupIndices,
+        sv=np.zeros(len(raw_data.si), dtype=int),
+        attendanceRecord=[],
+        ageAtChemo=[],
+        adherenceFactorAtChemo=[],
+        vaccCount=0,
+        nChemo1=0,
+        nChemo2=0,
+        numSurvey=0,
+        compliers=np.random.uniform(low=0, high=1, size=len(raw_data.si))
+        > params.propNeverCompliers,
+        adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data.si)),
+    )
+    
+    # Convert all layers to correct data format
+
+    # extract the previous random state
+    # state = data['state']
+    # extract the previous simulation times
+
+    simData.contactAgeGroupIndices = (
+        np.digitize(
+            np.array(t - simData.demography.birthDate),
+            np.array(parameters.contactAgeGroupBreaks),
+        )
+        - 1
+    )
+    parameters.N = len(simData.si)
+
+    # update the parameters
+    R0 = simparams.iloc[j, 1].tolist()
+    k = simparams.iloc[j, 2].tolist()
+    parameters.R0 = R0
+    parameters.k = k
+
+    # configure the parameters
+    parameters = configure(parameters)
+    parameters.psi = getPsi(parameters)
+    parameters.equiData = getEquilibrium(parameters)
+    # parameters['moderateIntensityCount'], parameters['highIntensityCount'] = setIntensityCount(paramFileName)
+
+    # add a simulation path
+    # results = doRealizationSurveyCoveragePickle(params, simData, 1)
+    # output = extractHostData(results)
+
+    # transform the output to data frame
+    df, simData = singleSimulationDALYCoverage(parameters, simData, 1)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print(f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s")
+    return df, simData
+
+
+
 
 def BurnInSimulations(
     params: Parameters, simparams, i
