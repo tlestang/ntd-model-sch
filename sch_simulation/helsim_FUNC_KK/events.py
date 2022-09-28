@@ -408,6 +408,12 @@ def doChemoAgeRange(
         j = np.where(params.drug2Years == t)[0][0]
         d2Share = params.drug2Split[j]
 
+    # ensure that a drug is assigned even if missed in the coverage file    
+    if np.logical_and(d1Share == 0, d2Share == 0):
+        if max(params.drug1Years) < t:
+            d2Share = 1
+        else:
+            d1Share = 1
     # assign which drug each person will take
     drug = np.ones(int(sum(toTreatNow)))
 
