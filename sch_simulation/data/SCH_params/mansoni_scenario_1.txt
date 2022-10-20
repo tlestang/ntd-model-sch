@@ -11,8 +11,8 @@ neverTreated	0.17
 
 ### Social structure
 contactAgeBreaks	0 5 10 16 80		Contact age group breaks (minus sign necessary to include zero age) anderson et al 2016 chp Iietune
-betaValues	0.01 1.2 1 0.02			Relative contact rates (Beta) anderson et al 2016 chp Iietune 
-rhoValues	0.01 1.2 1 0.02				Rho, contribution to the reservoir by contact age group.
+betaValues	0.01 0.61 1 0.12				Relative contact rates (Beta) anderson et al 2016 chp Iietune 
+rhoValues	0.01 0.61 1 0.12				Rho, contribution to the reservoir by contact age group.
 
 ### Epidemiological parameters. 
 k	0.24			Shape parameter of assumed negative binomial distribution of worms amongst host (k). Lower this value for moderate and low prevalence settings -anderson et al 2016 chp -used for papers
