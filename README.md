@@ -42,9 +42,9 @@ $ pipenv shell # sets up/runs a per-project python environment ('virtualenv'/'ve
 
 ## Endgame inputs
 
-There are two files which need to be passed: 
-- parameters are passed in a text file e.g. ascaris_scenario_3a.txt
-- intervention timings and coverage are passed in a spreadsheet e.g. ascaris_coverage_scenario_3a.xlsx
+There are two input files required to run endgame simulations :
+-  a text file containing the parameters e.g. ascaris_scenario_3a.txt
+-  a spreadsheet containing the intervention timings and coverage e.g. ascaris_coverage_scenario_3a.xlsx
 
 
 ## Text file
