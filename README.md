@@ -47,7 +47,7 @@ There are two input files required to run endgame simulations :
 -  a spreadsheet containing the intervention timings and coverage e.g. ascaris_coverage_scenario_3a.xlsx
 
 
-## Text file
+### Text file
 The text file must contain the following categories of parameters : 
 
 #### Run time parameters
@@ -120,3 +120,35 @@ Currently the vaccine information can be passed either within the .txt file or i
 `minSurveyAge` : minimum survey age\
 `maxSurveyAge` : maximum survey age 
 
+### Spreadsheet
+
+The treatment and vaccination timings and coverages can be passed in a .xlsx file. The spreadsheet consists of two tabs:
+- PlatformCoverage
+- MarketShare
+
+The PlatformCoverage tab must contain the following columns:
+- InterventionType : the type of intervention, Treatment, Vaccine
+- min age : the minimum age of the intervention recipients 
+- max age : the maximum age of the intervention recipients 
+Then one column for each time point of application of the intervention, containing the coverage percentage
+
+Example row:
+
+| Country/Region | Intervention Type| Platform Type | Cohort (if not total pop in country/region) |min age | max age | 2018 | 2018.5 |2019 |2019.5 | 
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | 
+| All | Treatment | Campaign | |  5 | 15 | 0.6 |  0| 0.6| 0|
+
+The columns “Country/Region”, “Platform Type” and “Platform” are currently optional.
+
+The MarketShare tab must contain the following columns: 
+- Product : one of ‘New Product A’ or ‘Old Product B (SOC)’
+- Then one column for each time point of application of mass treatment, containing market share percentage of ‘New Product A’ or ‘Old Product B (SOC)’
+
+Example row:
+
+| Country/Region | Platform| Product | 2018 | 2018.5 |2019 |2019.5 | 
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | 
+| DRC| MDA | New Product A | |  | 0.5 | 1|  1|
+| DRC| MDA |Old Product B (SOC) | 1 | 1 | 0.5 | |  |
+
+The columns “Country/Region” and “Platform” are currently optional.
