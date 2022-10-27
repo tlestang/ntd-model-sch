@@ -87,6 +87,7 @@ The text file must contain the following categories of parameters :
 `drugEff2` : Drug efficacy of new product if more than one drug is used 
 
 Currently the coverage and treatment information can be passed either within the .txt file or in the spreadsheet (see section below). If the coverage information is passed in the text file, the following parameters must be specified: 
+
 `treatInterval1`	: interval between treatments in years, pre-COVID \
 `treatInterval2`	: interval between treatments in years, post-COVID \
 `treatStart1`	: Treatment year start, pre-COVID \
@@ -130,7 +131,7 @@ The PlatformCoverage tab must contain the following columns:
 - InterventionType : the type of intervention, Treatment, Vaccine
 - min age : the minimum age of the intervention recipients 
 - max age : the maximum age of the intervention recipients 
-Then one column for each time point of application of the intervention, containing the coverage percentage
+- Then one column for each time point of application of the intervention, containing the coverage percentage.
 
 Example row:
 
