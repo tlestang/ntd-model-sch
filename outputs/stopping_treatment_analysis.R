@@ -1,5 +1,4 @@
 source("analyse_simulations.R")
-IUs <- read.csv("mansoniIUs.csv")
 
 IU_data <- read.csv("mansoniIUs_scenario3.csv")
 
