@@ -93,6 +93,13 @@ read_and_get_number_infecteds <- function(ihme_name, interval = FALSE, pop_size 
   }
 }
 
+binom_int <- function(p_hat, n){
+  z <- 1.96
+  interval <- z * sqrt((p_hat*(1-p_hat))/n)
+  return(c(p_hat - interval ,p_hat + interval))
+}
+
+
 read_and_get_number_mda_finished <- function(IU, ipm_name, IU_data, 
                                              interval = FALSE, single_IU = FALSE){
   if(file.exists(ipm_name)){
@@ -107,8 +114,8 @@ read_and_get_number_mda_finished <- function(IU, ipm_name, IU_data,
     }else{
       means <- rowMeans(num_mda_finished)*num_IUs
     }
-    if(interval == TRUE) {
-      lower_upper <- sapply(1:dim(num_mda_finished)[1], function(x) prop.test(x = sum(num_mda_finished[x,]), n = length(num_mda_finished[x,]), conf.level = .95)$conf.int)
+    if(interval == TRUE & single_IU ==TRUE) {
+      lower_upper <- sapply(1:dim(num_mda_finished)[1], function(x) binom_int(p_hat = sum(num_mda_finished[x,])/length(num_mda_finished[x,]), n = length(num_mda_finished[x,])))
       return(list(means = means, interval = lower_upper))
     }else{
       return(list(means = means))
@@ -224,6 +231,7 @@ get_number_mda_stopped_multiple_IUS <- function(scenario, IU_data, path_header, 
   return(list(num_finished_1=num_finished_1,num_finished_2=num_finished_2,
               totalIUS_1 = totalIUS_1, totalIUS_2 = totalIUS_2))
 }
+
 
 get_data_over_years_trachoma<- function(d, years){
   k = which(colnames(ihme1) == 'draw_0')
