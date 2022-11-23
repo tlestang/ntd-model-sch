@@ -35,6 +35,10 @@ class Coverage:
     Years: ndarray  # 1-D array lower/upper
     Coverage: ndarray  # 1-D array
 
+@dataclass
+class VecControl:
+    Years: ndarray  # 1-D array lower/upper
+    Coverage: ndarray  # 1-D array
 
 @dataclass
 class Parameters:
