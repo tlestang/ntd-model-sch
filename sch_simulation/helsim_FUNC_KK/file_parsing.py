@@ -7,7 +7,7 @@ import pandas as pd
 import pkg_resources
 from numpy.typing import NDArray
 
-from sch_simulation.helsim_FUNC_KK.helsim_structures import Coverage, Parameters
+from sch_simulation.helsim_FUNC_KK.helsim_structures import Coverage, Parameters, VecControl
 
 warnings.filterwarnings("ignore")
 
@@ -323,101 +323,60 @@ def parse_coverage_input(
     return coverageText
 
 
-def nextMDAVaccInfo(
+def parse_vector_control_input(
+    coverageFileName: str,
     params: Parameters,
-) -> Tuple[Dict, Dict, int, List[int], List[int], int, List[int], List[int]]:
-    chemoTiming = {}
-    assert params.MDA is not None
-    assert params.Vacc is not None
-    
-    for i in range(len(params.Vacc)):
-        k = copy.deepcopy(params.Vacc[i])
-        if type(k.Years) == float:
-            y1 = k.Years
-            c1 = k.Coverage
-            k.Years = [y1,1000]
-            k.Coverage = [c1, 0]
-            params.Vacc[i] = k
-            
-            
-    
-    for i in range(len(params.MDA)):
-        k = copy.deepcopy(params.MDA[i])
-        if type(k.Years) == float:
-            y1 = k.Years
-            c1 = k.Coverage
-            k.Years = [y1,1000]
-            k.Coverage = [c1, 0]
-            params.MDA[i] = k
-    for i, mda in enumerate(params.MDA):
-        chemoTiming["Age{0}".format(i)] = copy.deepcopy(mda.Years)
-    VaccTiming = {}
-    for i, vacc in enumerate(params.Vacc):
-        VaccTiming["Age{0}".format(i)] = copy.deepcopy(np.array(vacc.Years))
-    #  currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
+):
+    """
+    This function extracts the vector control years and coverage
 
-    nextChemoTime = 10000
-    for i, mda in enumerate(params.MDA):
-        nextChemoTime = min(nextChemoTime, min(chemoTiming["Age{0}".format(i)]))
-    nextMDAAge = []
-    for i, mda in enumerate(params.MDA):
-        if nextChemoTime == min(chemoTiming["Age{0}".format(i)]):
-            nextMDAAge.append(i)
-    nextChemoIndex = []
-    for i in range(len(nextMDAAge)):
-        k = nextMDAAge[i]
-        nextChemoIndex.append(np.argmin(np.array(chemoTiming["Age{0}".format(k)])))
+    Parameters
+    ----------
+    coverageFileName: str
+        name of the input text file;
 
-    nextVaccTime = 10000
-    for i, vacc in enumerate(params.Vacc):
-        nextVaccTime = min(nextVaccTime, min(VaccTiming["Age{0}".format(i)]))
-    nextVaccAge = []
-    for i, vacc in enumerate(params.Vacc):
-        if nextVaccTime == min(VaccTiming["Age{0}".format(i)]):
-            nextVaccAge.append(i)
-    nextVaccIndex = []
-    for i in range(len(nextVaccAge)):
-        k = nextVaccAge[i]
-        nextVaccIndex.append(np.argmin(np.array(VaccTiming["Age{0}".format(k)])))
+    Returns
+    -------
+    params: Parameters
+        return the parameters object with added information about the vector control strategy
+    """
 
-    return (
-        chemoTiming,
-        VaccTiming,
-        nextChemoTime,
-        nextMDAAge,
-        nextChemoIndex,
-        nextVaccTime,
-        nextVaccAge,
-        nextVaccIndex,
+    # read in Coverage spreadsheet
+    DATA_PATH = pkg_resources.resource_filename("sch_simulation", "data/")
+    PlatCov = pd.read_excel(
+        DATA_PATH + coverageFileName, sheet_name="Platform Coverage"
     )
+    # which rows are for MDA and vaccine
+    intervention_array = PlatCov["Intervention Type"]
+    VectorControl = np.where(np.array(intervention_array == "Vector Control"))[0]
 
-
-def overWritePostVacc(
-    params: Parameters,
-    nextVaccAge: Union[NDArray[np.int_], List[int]],
-    nextVaccIndex: Union[NDArray[np.int_], List[int]],
-):
-    assert params.Vacc is not None
-    for i in range(len(nextVaccAge)):
-        k = nextVaccIndex[i]
-        j = nextVaccAge[i]
-        params.Vacc[j].Years[k] = 10000
+    # we want to find which is the first year specified in the coverage data, along with which
+    # column of the data set this corresponds to
+    fy = 10000
+    fy_index = 10000
+    for i in range(len(PlatCov.columns)):
+        if type(PlatCov.columns[i]) == int:
+            fy = min(fy, PlatCov.columns[i])
+            fy_index = min(fy_index, i)
+           
+    
+    VecControlInfo = VecControl(Years = [], Coverage = [])
+    
+    
+    # for each non-zero entry of the vector control data add an entry to the parameters object
+    for i in range(len(VectorControl)):
+        k = VectorControl[i]
+        w = PlatCov.iloc[k, :]
+        for j in range(fy_index, len(PlatCov.columns)):
+            cname = PlatCov.columns[j]
+            if w[cname] > 0:
+                VecControlInfo.Years.append(cname-fy)
+                VecControlInfo.Coverage.append(w[cname])
+               
+    params.VecControl = [VecControlInfo]
 
     return params
 
-
-def overWritePostMDA(
-    params: Parameters,
-    nextMDAAge: Union[NDArray[np.int_], List[int]],
-    nextChemoIndex: Union[NDArray[np.int_], List[int]],
-):
-    assert params.MDA is not None
-    for i in range(len(nextMDAAge)):
-        k = nextChemoIndex[i]
-        j = nextMDAAge[i]
-        params.MDA[j].Years[k] = 10000
-
-    return params
 
 
 def readCoverageFile(
@@ -451,6 +410,133 @@ def readCoverageFile(
     params.drug2Years = np.array(coverage["drug2Years"] - 2018)
     params.drug2Split = np.array(coverage["drug2Split"])
     return params
+
+
+
+def nextMDAVaccInfo(
+    params: Parameters,
+) -> Tuple[Dict, Dict, int, List[int], List[int], int, List[int], List[int]]:
+    chemoTiming = {}
+    assert params.MDA is not None
+    assert params.Vacc is not None
+    
+    for i in range(len(params.Vacc)):
+        k = copy.deepcopy(params.Vacc[i])
+        if type(k.Years) == float:
+            y1 = k.Years
+            c1 = k.Coverage
+            k.Years = [y1,1000]
+            k.Coverage = [c1, 0]
+            params.Vacc[i] = k
+            
+            
+    
+    for i in range(len(params.MDA)):
+        k = copy.deepcopy(params.MDA[i])
+        if type(k.Years) == float:
+            y1 = k.Years
+            c1 = k.Coverage
+            k.Years = [y1,1000]
+            k.Coverage = [c1, 0]
+            params.MDA[i] = k
+    chemoTiming = {}
+    for i, mda in enumerate(params.MDA):
+        chemoTiming["Age{0}".format(i)] = copy.deepcopy(mda.Years)
+    VaccTiming = {}
+    for i, vacc in enumerate(params.Vacc):
+        VaccTiming["Age{0}".format(i)] = copy.deepcopy(np.array(vacc.Years))
+    VecControlTiming = {}
+    for i, vecControl in enumerate(params.VecControl):
+        VecControlTiming["Time".format(i)] = copy.deepcopy(vecControl.Years)    
+    #  currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
+
+    nextChemoTime = 10000
+    for i, mda in enumerate(params.MDA):
+        nextChemoTime = min(nextChemoTime, min(chemoTiming["Age{0}".format(i)]))
+    nextMDAAge = []
+    for i, mda in enumerate(params.MDA):
+        if nextChemoTime == min(chemoTiming["Age{0}".format(i)]):
+            nextMDAAge.append(i)
+    nextChemoIndex = []
+    for i in range(len(nextMDAAge)):
+        k = nextMDAAge[i]
+        nextChemoIndex.append(np.argmin(np.array(chemoTiming["Age{0}".format(k)])))
+
+    nextVaccTime = 10000
+    for i, vacc in enumerate(params.Vacc):
+        nextVaccTime = min(nextVaccTime, min(VaccTiming["Age{0}".format(i)]))
+    nextVaccAge = []
+    for i, vacc in enumerate(params.Vacc):
+        if nextVaccTime == min(VaccTiming["Age{0}".format(i)]):
+            nextVaccAge.append(i)
+    nextVaccIndex = []
+    for i in range(len(nextVaccAge)):
+        k = nextVaccAge[i]
+        nextVaccIndex.append(np.argmin(np.array(VaccTiming["Age{0}".format(k)])))
+      
+    nextVecControlTime = 10000
+    for i, vecControl in enumerate(params.VecControl):
+        nextVecControlTime = min(nextVecControlTime, min(VecControlTiming ["Time".format(i)]))
+    nextVecControlIndex = []
+    for i in range(len(VecControlTiming['Time'])):
+        k = copy.deepcopy(VecControlTiming['Time'][i])
+        if k == nextVecControlTime:
+            nextVecControlIndex = i
+
+    return (
+        chemoTiming,
+        VaccTiming,
+        nextChemoTime,
+        nextMDAAge,
+        nextChemoIndex,
+        nextVaccTime,
+        nextVaccAge,
+        nextVaccIndex,
+        nextVecControlTime,
+        nextVecControlIndex,
+    )
+
+
+def overWritePostVacc(
+    params: Parameters,
+    nextVaccAge: Union[NDArray[np.int_], List[int]],
+    nextVaccIndex: Union[NDArray[np.int_], List[int]],
+):
+    assert params.Vacc is not None
+    for i in range(len(nextVaccAge)):
+        k = nextVaccIndex[i]
+        j = nextVaccAge[i]
+        params.Vacc[j].Years[k] = 10000
+
+    return params
+
+
+
+def overWritePostMDA(
+    params: Parameters,
+    nextMDAAge: Union[NDArray[np.int_], List[int]],
+    nextChemoIndex: Union[NDArray[np.int_], List[int]],
+):
+    assert params.MDA is not None
+    for i in range(len(nextMDAAge)):
+        k = nextChemoIndex[i]
+        j = nextMDAAge[i]
+        params.MDA[j].Years[k] = 10000
+
+    return params
+
+
+
+def overWritePostVecControl(
+    params: Parameters,
+    nextVecControlIndex:int,
+):
+    assert params.VecControl is not None
+    
+    params.VecControl[0].Years[nextVecControlIndex] = 10000
+
+    return params
+
 
 
 def readParams(
