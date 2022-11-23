@@ -12,14 +12,17 @@ from sch_simulation.helsim_FUNC_KK.events import (
     doFreeLive,
     doVaccine,
     doVaccineAgeRange,
+    doVectorControl,
 )
 from sch_simulation.helsim_FUNC_KK.file_parsing import (
     nextMDAVaccInfo,
     overWritePostMDA,
     overWritePostVacc,
+    overWritePostVecControl,
     parse_coverage_input,
     readCoverageFile,
     readParams,
+    parse_vector_control_input,
 )
 from sch_simulation.helsim_FUNC_KK.helsim_structures import (
     Demography,
