@@ -548,6 +548,33 @@ def doVaccineAgeRange(
     return SD, propVacc
 
 
+def doVectorControl(
+    params: Parameters,
+    SD: SDEquilibrium,
+    vectorCoverage: ndarray,
+    ) -> SDEquilibrium:
+    """
+    Vector control function.
+    Parameters
+    ----------
+    params: Parameters
+        dataclass containing the parameter names and values;
+    SD: SDEquilibrium
+        dataclass containing the initial equilibrium parameter values;
+    vectorCoverage: array
+        amount that freeliving larvae is reduced by;
+    Returns
+    -------
+    SD: SDEquilibrium
+        dataclass containing the updated equilibrium parameter values;
+    """
+    SD.freeLiving = SD.freeLiving * (1 - vectorCoverage)
+    
+    return SD
+
+
+
+
 def conductSurvey(
     SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int
 ) -> Tuple[SDEquilibrium, float]:
