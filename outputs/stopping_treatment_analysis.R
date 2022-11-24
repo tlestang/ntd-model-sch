@@ -19,7 +19,7 @@ res <- read_and_get_number_mda_finished(IU, ipm_name, IU_data, interval = TRUE,
                                         single_IU = TRUE)
 years <- 2018:2041
 plot(years, res$means, type = 'l', lwd = 4, 
-     xlab = 'year', ylab = 'proportion IUs stop MDA',
+     xlab = 'year', ylab = 'proportion simulations stopping MDA',
      col = colours[1],
      bty = 'n', 
      ylim = c(0,max(res$interval)),
