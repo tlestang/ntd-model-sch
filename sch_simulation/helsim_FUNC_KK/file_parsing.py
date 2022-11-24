@@ -315,7 +315,7 @@ def parse_coverage_input(
             else:
                 MDA_txt = MDA_txt + str(MDAYearSplit[k]) + " "
 
-    coverageText = MDA_txt + Vacc_txt
+    coverageText = MDA_txt + Vacc_txt + 'start_year\t'+ str(fy) +"\n"
     # store the Coverage data in a text file
     with open(coverageTextFileStorageName, "w", encoding="utf-8") as f:
         f.write(coverageText)
@@ -388,10 +388,11 @@ def readCoverageFile(
     nMDAAges = int(coverage["nMDAAges"])
     nVaccAges = int(coverage["nVaccAges"])
     mda_covs = []
+    
     for i in range(nMDAAges):
         cov = Coverage(
             Age=coverage["MDA_age" + str(i + 1)],
-            Years=coverage["MDA_Years" + str(i + 1)] - 2018,
+            Years=coverage["MDA_Years" + str(i + 1)] - coverage["start_year"],
             Coverage=coverage["MDA_Coverage" + str(i + 1)],
         )
         mda_covs.append(cov)
@@ -400,14 +401,14 @@ def readCoverageFile(
     for i in range(nVaccAges):
         cov = Coverage(
             Age=coverage["Vacc_age" + str(i + 1)],
-            Years=coverage["Vacc_Years" + str(i + 1)] - 2018,
+            Years=coverage["Vacc_Years" + str(i + 1)] - coverage["start_year"],
             Coverage=coverage["Vacc_Coverage" + str(i + 1)],
         )
         vacc_covs.append(cov)
     params.Vacc = vacc_covs
-    params.drug1Years = np.array(coverage["drug1Years"] - 2018)
+    params.drug1Years = np.array(coverage["drug1Years"] - coverage["start_year"])
     params.drug1Split = np.array(coverage["drug1Split"])
-    params.drug2Years = np.array(coverage["drug2Years"] - 2018)
+    params.drug2Years = np.array(coverage["drug2Years"] - coverage["start_year"])
     params.drug2Split = np.array(coverage["drug2Split"])
     return params
 
