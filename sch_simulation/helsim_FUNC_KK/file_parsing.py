@@ -7,7 +7,7 @@ import pandas as pd
 import pkg_resources
 from numpy.typing import NDArray
 
-from sch_simulation.helsim_FUNC_KK.helsim_structures import Coverage, Parameters
+from sch_simulation.helsim_FUNC_KK.helsim_structures import Coverage, Parameters, VecControl
 
 warnings.filterwarnings("ignore")
 
@@ -315,12 +315,103 @@ def parse_coverage_input(
             else:
                 MDA_txt = MDA_txt + str(MDAYearSplit[k]) + " "
 
-    coverageText = MDA_txt + Vacc_txt
+    coverageText = MDA_txt + Vacc_txt + 'start_year\t'+ str(fy) +"\n"
     # store the Coverage data in a text file
     with open(coverageTextFileStorageName, "w", encoding="utf-8") as f:
         f.write(coverageText)
 
     return coverageText
+
+
+def parse_vector_control_input(
+    coverageFileName: str,
+    params: Parameters,
+):
+    """
+    This function extracts the vector control years and coverage
+
+    Parameters
+    ----------
+    coverageFileName: str
+        name of the input text file;
+
+    Returns
+    -------
+    params: Parameters
+        return the parameters object with added information about the vector control strategy
+    """
+
+    # read in Coverage spreadsheet
+    DATA_PATH = pkg_resources.resource_filename("sch_simulation", "data/")
+    PlatCov = pd.read_excel(
+        DATA_PATH + coverageFileName, sheet_name="Platform Coverage"
+    )
+    # which rows are for MDA and vaccine
+    intervention_array = PlatCov["Intervention Type"]
+    VectorControl = np.where(np.array(intervention_array == "Vector Control"))[0]
+
+    # we want to find which is the first year specified in the coverage data, along with which
+    # column of the data set this corresponds to
+    fy = 10000
+    fy_index = 10000
+    for i in range(len(PlatCov.columns)):
+        if type(PlatCov.columns[i]) == int:
+            fy = min(fy, PlatCov.columns[i])
+            fy_index = min(fy_index, i)
+           
+    
+    VecControlInfo = VecControl(Years = [], Coverage = [])
+    
+    
+    # for each non-zero entry of the vector control data add an entry to the parameters object
+    for i in range(len(VectorControl)):
+        k = VectorControl[i]
+        w = PlatCov.iloc[k, :]
+        for j in range(fy_index, len(PlatCov.columns)):
+            cname = PlatCov.columns[j]
+            if w[cname] > 0:
+                VecControlInfo.Years.append(cname-fy)
+                VecControlInfo.Coverage.append(w[cname])
+               
+    params.VecControl = [VecControlInfo]
+
+    return params
+
+
+
+def readCoverageFile(
+    coverageTextFileStorageName: str, params: Parameters
+) -> Parameters:
+
+    coverage = readCovFile(coverageTextFileStorageName)
+
+    nMDAAges = int(coverage["nMDAAges"])
+    nVaccAges = int(coverage["nVaccAges"])
+    mda_covs = []
+    
+    for i in range(nMDAAges):
+        cov = Coverage(
+            Age=coverage["MDA_age" + str(i + 1)],
+            Years=coverage["MDA_Years" + str(i + 1)] - coverage["start_year"],
+            Coverage=coverage["MDA_Coverage" + str(i + 1)],
+        )
+        mda_covs.append(cov)
+    params.MDA = mda_covs
+    vacc_covs = []
+    for i in range(nVaccAges):
+        cov = Coverage(
+            Age=coverage["Vacc_age" + str(i + 1)],
+            Years=coverage["Vacc_Years" + str(i + 1)] - coverage["start_year"],
+            Coverage=coverage["Vacc_Coverage" + str(i + 1)],
+        )
+        vacc_covs.append(cov)
+    params.Vacc = vacc_covs
+    params.drug1Years = np.array(coverage["drug1Years"] - coverage["start_year"])
+    params.drug1Split = np.array(coverage["drug1Split"])
+    params.drug2Years = np.array(coverage["drug2Years"] - coverage["start_year"])
+    params.drug2Split = np.array(coverage["drug2Split"])
+    return params
+
 
 
 def nextMDAVaccInfo(
@@ -349,11 +440,15 @@ def nextMDAVaccInfo(
             k.Years = [y1,1000]
             k.Coverage = [c1, 0]
             params.MDA[i] = k
+    chemoTiming = {}
     for i, mda in enumerate(params.MDA):
         chemoTiming["Age{0}".format(i)] = copy.deepcopy(mda.Years)
     VaccTiming = {}
     for i, vacc in enumerate(params.Vacc):
         VaccTiming["Age{0}".format(i)] = copy.deepcopy(np.array(vacc.Years))
+    VecControlTiming = {}
+    for i, vecControl in enumerate(params.VecControl):
+        VecControlTiming["Time".format(i)] = copy.deepcopy(vecControl.Years)    
     #  currentVaccineTimings = copy.deepcopy(params['VaccineTimings'])
 
     nextChemoTime = 10000
@@ -379,6 +474,15 @@ def nextMDAVaccInfo(
     for i in range(len(nextVaccAge)):
         k = nextVaccAge[i]
         nextVaccIndex.append(np.argmin(np.array(VaccTiming["Age{0}".format(k)])))
+      
+    nextVecControlTime = 10000
+    for i, vecControl in enumerate(params.VecControl):
+        nextVecControlTime = min(nextVecControlTime, min(VecControlTiming ["Time".format(i)]))
+    nextVecControlIndex = []
+    for i in range(len(VecControlTiming['Time'])):
+        k = copy.deepcopy(VecControlTiming['Time'][i])
+        if k == nextVecControlTime:
+            nextVecControlIndex = i
 
     return (
         chemoTiming,
@@ -389,6 +493,8 @@ def nextMDAVaccInfo(
         nextVaccTime,
         nextVaccAge,
         nextVaccIndex,
+        nextVecControlTime,
+        nextVecControlIndex,
     )
 
 
@@ -406,6 +512,7 @@ def overWritePostVacc(
     return params
 
 
+
 def overWritePostMDA(
     params: Parameters,
     nextMDAAge: Union[NDArray[np.int_], List[int]],
@@ -420,37 +527,17 @@ def overWritePostMDA(
     return params
 
 
-def readCoverageFile(
-    coverageTextFileStorageName: str, params: Parameters
-) -> Parameters:
 
-    coverage = readCovFile(coverageTextFileStorageName)
+def overWritePostVecControl(
+    params: Parameters,
+    nextVecControlIndex:int,
+):
+    assert params.VecControl is not None
+    
+    params.VecControl[0].Years[nextVecControlIndex] = 10000
 
-    nMDAAges = int(coverage["nMDAAges"])
-    nVaccAges = int(coverage["nVaccAges"])
-    mda_covs = []
-    for i in range(nMDAAges):
-        cov = Coverage(
-            Age=coverage["MDA_age" + str(i + 1)],
-            Years=coverage["MDA_Years" + str(i + 1)] - 2018,
-            Coverage=coverage["MDA_Coverage" + str(i + 1)],
-        )
-        mda_covs.append(cov)
-    params.MDA = mda_covs
-    vacc_covs = []
-    for i in range(nVaccAges):
-        cov = Coverage(
-            Age=coverage["Vacc_age" + str(i + 1)],
-            Years=coverage["Vacc_Years" + str(i + 1)] - 2018,
-            Coverage=coverage["Vacc_Coverage" + str(i + 1)],
-        )
-        vacc_covs.append(cov)
-    params.Vacc = vacc_covs
-    params.drug1Years = np.array(coverage["drug1Years"] - 2018)
-    params.drug1Split = np.array(coverage["drug1Split"])
-    params.drug2Years = np.array(coverage["drug2Years"] - 2018)
-    params.drug2Split = np.array(coverage["drug2Split"])
     return params
+
 
 
 def readParams(

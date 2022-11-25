@@ -25,6 +25,7 @@ from sch_simulation.helsim_FUNC_KK import (
     doFreeLive,
     doVaccine,
     doVaccineAgeRange,
+    doVectorControl,
     extractHostData,
     getEquilibrium,
     getPrevalence,
@@ -34,6 +35,7 @@ from sch_simulation.helsim_FUNC_KK import (
     outputNumberInAgeGroup,
     overWritePostMDA,
     overWritePostVacc,
+    overWritePostVecControl,
     parse_coverage_input,
     readCoverageFile,
     readParams,
@@ -727,6 +729,8 @@ def doRealizationSurveyCoveragePickle(
         nextVaccTime,
         nextVaccAge,
         nextVaccIndex,
+        nextVecControlTime,
+        nextVecControlIndex,
     ) = nextMDAVaccInfo(params)
 
     # next event
@@ -737,6 +741,7 @@ def doRealizationSurveyCoveragePickle(
         float(nextChemoTime),
         float(nextAgeTime),
         float(nextVaccTime),
+        float(nextVecControlTime)
     )
     
     propChemo1 = []
@@ -827,6 +832,8 @@ def doRealizationSurveyCoveragePickle(
                     nextVaccTime,
                     nextVaccAge,
                     nextVaccIndex,
+                    nextVecControlTime,
+                    nextVecControlIndex,
                 ) = nextMDAVaccInfo(params)
 
             # vaccination
@@ -855,8 +862,28 @@ def doRealizationSurveyCoveragePickle(
                     nextVaccTime,
                     nextVaccAge,
                     nextVaccIndex,
+                    nextVecControlTime,
+                    nextVecControlIndex,
                 ) = nextMDAVaccInfo(params)
-
+            
+            
+            if timeBarrier >= nextVecControlTime:
+                cov = params.VecControl[0].Coverage[nextVecControlIndex]
+                simData = doVectorControl(params, simData, cov)
+                params = overWritePostVecControl(params, nextVecControlIndex)
+                
+                (
+                    chemoTiming,
+                    VaccTiming,
+                    nextChemoTime,
+                    nextMDAAge,
+                    nextChemoIndex,
+                    nextVaccTime,
+                    nextVaccAge,
+                    nextVaccIndex,
+                    nextVecControlTime,
+                    nextVecControlIndex,
+                ) = nextMDAVaccInfo(params)
             # survey
             if timeBarrier >= tSurvey:
                 simData, prevOne = conductSurvey(
@@ -886,6 +913,8 @@ def doRealizationSurveyCoveragePickle(
                     nextVaccTime,
                     nextVaccAge,
                     nextVaccIndex,
+                    nextVecControlTime,
+                    nextVecControlIndex,
                 ) = nextMDAVaccInfo(params)
 
             if timeBarrier >= nextOutTime:
@@ -931,6 +960,7 @@ def doRealizationSurveyCoveragePickle(
                 float(nextChemoTime),
                 float(nextAgeTime),
                 float(nextVaccTime),
+                float(nextVecControlTime),
             )
   
     # results.append(dict(  # attendanceRecord=np.array(simData['attendanceRecord']),
