@@ -13,6 +13,9 @@ from sch_simulation.helsim_FUNC_KK.events import (
     doVaccine,
     doVaccineAgeRange,
     doVectorControl,
+    conductKKSurvey,
+    conductPOCCCASurvey,
+    conductPCRSurvey
 )
 from sch_simulation.helsim_FUNC_KK.file_parsing import (
     nextMDAVaccInfo,
@@ -37,4 +40,11 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
     getPrevalenceDALYsAll,
     outputNumberInAgeGroup,
 )
-from sch_simulation.helsim_FUNC_KK.utils import calcRates2, getPsi
+from sch_simulation.helsim_FUNC_KK.utils import (
+    calcRates2, 
+    getPsi, 
+    KKsampleGammaGammaPois,
+    POC_CCA_test,
+    PCR_test
+)
+
