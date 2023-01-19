@@ -7,7 +7,7 @@ from numpy import ndarray
 from numpy.typing import NDArray
 
 from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters, SDEquilibrium
-from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts
+from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans, getSetOfEggCounts, KKsampleGammaGammaPois,POC_CCA_test, PCR_test
 
 warnings.filterwarnings("ignore")
 
@@ -572,13 +572,9 @@ def doVectorControl(
     
     return SD
 
-
-
-
-def conductSurvey(
-    SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int
+def conductKKSurvey(
+        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str
 ) -> Tuple[SDEquilibrium, float]:
-    # get min and max age for survey
     minAge = params.minSurveyAge
     maxAge = params.maxSurveyAge
     # minAge = 5
@@ -586,22 +582,39 @@ def conductSurvey(
     # get Kato-Katz eggs for each individual
     if nSamples < 1:
         raise ValueError("nSamples < 1")
-
-    eggCounts = getSetOfEggCounts(
-        SD.worms.total, SD.worms.female, SD.sv, params, Unfertilized=params.Unfertilized
-    )
+    if surveyType == 'KK1':
+        #eggCounts = getSetOfEggCounts(
+        #    SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, surveyType, nSamples
+        #)
+        eggCounts = KKsampleGammaGammaPois(
+            SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
+            )
+    if surveyType == 'KK2':
+        eggCounts = KKsampleGammaGammaPois(
+            SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
+            )
     for _ in range(nSamples - 1):
-        eggCounts = np.add(
-            eggCounts,
-            getSetOfEggCounts(
-                SD.worms.total,
-                SD.worms.female,
-                SD.sv,
-                params,
-                Unfertilized=params.Unfertilized,
-            ),
-        )
-
+        if surveyType == 'KK1':
+            eggCounts = np.add(
+                eggCounts,
+                getSetOfEggCounts(
+                    SD.worms.total,
+                    SD.worms.female,
+                    SD.sv,
+                    params,
+                    params.Unfertilized,
+                    surveyType, 
+                    nSamples
+                ),
+            )
+        if surveyType == 'KK2':
+            eggCounts = KKsampleGammaGammaPois(SD.worms.total,
+                                               SD.worms.female,
+                                               SD.sv,
+                                               params,
+                                               params.Unfertilized,
+                                               nSamples)
+            
     eggCounts = eggCounts / nSamples
 
     # get individuals in chosen survey age group
@@ -617,20 +630,95 @@ def conductSurvey(
     sampledEggs = np.random.choice(
         a=np.array(surveyEggs), size=int(KKSampleSize), replace=False
     )
+    positivity = np.count_nonzero(sampledEggs) / KKSampleSize
+    return positivity 
+
+
+
+
+def conductPOCCCASurvey(
+        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int
+) -> Tuple[SDEquilibrium, float]:
+    minAge = params.minSurveyAge
+    maxAge = params.maxSurveyAge
+    # minAge = 5
+    # maxAge = 15
+    # get Kato-Katz eggs for each individual
+    
+    
+    POC_CCA_antigen = POC_CCA_test( SD.worms.total, params)
+            
+    
+    # get individuals in chosen survey age group
+    ages = -(SD.demography.birthDate - t)
+    surveyAged = np.logical_and(ages >= minAge, ages <= maxAge)
+
+    # get egg counts for those individuals
+    surveyPOC_CCA = POC_CCA_antigen[surveyAged]
+
+    # get sampled individuals
+    POC_CCA_SampleSize = min(sampleSize, sum(surveyAged))
+
+    sampledPOC_CCA = np.random.choice(
+        a=np.array(surveyPOC_CCA), size=int(POC_CCA_SampleSize), replace=False
+    )
+    positivity = sum(sampledPOC_CCA > 0) / POC_CCA_SampleSize
+    return positivity 
+
+
+def conductPCRSurvey(
+        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int
+) -> Tuple[SDEquilibrium, float]:
+    minAge = params.minSurveyAge
+    maxAge = params.maxSurveyAge
+    # minAge = 5
+    # maxAge = 15
+    # get Kato-Katz eggs for each individual
+    
+    
+    PCR_antigen = PCR_test( SD.worms.total, SD.worms.female, params)
+            
+    
+    # get individuals in chosen survey age group
+    ages = -(SD.demography.birthDate - t)
+    surveyAged = np.logical_and(ages >= minAge, ages <= maxAge)
+
+    # get egg counts for those individuals
+    surveyPCR = PCR_antigen[surveyAged]
+
+    # get sampled individuals
+    PCR_SampleSize = min(sampleSize, sum(surveyAged))
+
+    sampledPCR = np.random.choice(
+        a=np.array(surveyPCR), size=int(PCR_SampleSize), replace=False
+    )
+    positivity = sum(sampledPCR > 0) / PCR_SampleSize
+    return positivity 
+
+def conductSurvey(
+    SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str
+) -> Tuple[SDEquilibrium, float]:
+    # get min and max age for survey
+    if (surveyType == 'KK1') | (surveyType == 'KK2'):
+        positivity = conductKKSurvey(SD, params, t, sampleSize, nSamples, surveyType)
+    if surveyType == 'POC-CCA':
+        positivity = conductPOCCCASurvey(SD, params, t, sampleSize)
+    if surveyType == 'PCR':
+        positivity = conductPCRSurvey(SD, params, t, sampleSize)
     SD.numSurvey += 1
     # return the prevalence
-    return SD, np.sum(sampledEggs > 0.9) / KKSampleSize
+    return SD, positivity
 
 
 def conductSurveyTwo(
-    SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int
+    SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: int
 ) -> Tuple[SDEquilibrium, float]:
 
     # get Kato-Katz eggs for each individual
     if nSamples < 1:
         raise ValueError("nSamples < 1")
     eggCounts = getSetOfEggCounts(
-        SD.worms.total, SD.worms.female, SD.sv, params, Unfertilized=params.Unfertilized
+        SD.worms.total, SD.worms.female, SD.sv, params, params.Unfertilized, surveyType, nSamples
     )
     for _ in range(nSamples):
         eggCounts = np.add(
@@ -640,7 +728,9 @@ def conductSurveyTwo(
                 SD.worms.female,
                 SD.sv,
                 params,
-                Unfertilized=params.Unfertilized,
+                params.Unfertilized,
+                surveyType, 
+                nSamples
             ),
         )
     eggCounts = eggCounts / nSamples
