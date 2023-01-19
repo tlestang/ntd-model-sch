@@ -646,6 +646,11 @@ def readParams(
         timeToNextSurvey=parameters["timeToNextSurvey"],
         surveyThreshold=parameters["surveyThreshold"],
         Unfertilized=parameters["unfertilized"],
+        k_within = parameters["k_within"],
+        k_slide = parameters["k_slide"],
+        weight_sample = parameters["weight_sample"],
+        testSensitivity = parameters["testSensitivity"],
+        testSpecificity = parameters["testSpecificity"]
     )
 
     return params
