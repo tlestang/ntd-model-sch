@@ -11,7 +11,7 @@ from sch_simulation.helsim_FUNC_KK.helsim_structures import (
     ProcResult,
     Result,
 )
-from sch_simulation.helsim_FUNC_KK.utils import getSetOfEggCounts
+from sch_simulation.helsim_FUNC_KK.utils import getSetOfEggCounts, POC_CCA_test, PCR_test
 
 warnings.filterwarnings("ignore")
 
@@ -76,6 +76,7 @@ def getVillageMeanCountsByHost(
     timeIndex: int,
     params: Parameters,
     Unfertilized: bool,
+    surveyType: str,
     nSamples: int = 2,
 ) -> NDArray[np.float_]:
     """
@@ -103,6 +104,8 @@ def getVillageMeanCountsByHost(
             villageList.vaccState[:, timeIndex],
             params,
             Unfertilized,
+            surveyType,
+            nSamples
         )
         / nSamples
     )
@@ -116,11 +119,52 @@ def getVillageMeanCountsByHost(
                 villageList.vaccState[:, timeIndex],
                 params,
                 Unfertilized,
+                surveyType,
+                nSamples
             )
             / nSamples
         )
 
     return meanEggsByHost
+
+
+
+def getVillagePOCCCAByHost(
+    villageList: ProcResult,
+    timeIndex: int,
+    params: Parameters,
+    Unfertilized: bool,
+    surveyType: str,
+    nSamples: int = 2,
+) -> NDArray[np.float_]:
+    """
+    This function returns the mean egg count across readings by host
+    for a given time point and iteration.
+    Parameters
+    ----------
+    villageList: ProcResult
+        processed simulation output for a given iteration;
+    timeIndex: int
+        selected time point index;
+    nSamples: int
+        number of samples;
+    Unfertilized: bool
+        True / False flag for whether unfertilized worms generate eggs;
+    Returns
+    -------
+    array of mean egg counts;
+    """
+
+    mean_POCCCA = POC_CCA_test(
+        villageList.wormsOverTime[:, timeIndex],
+        params)
+    
+    for i in range(1, nSamples):
+        mean_POCCCA += POC_CCA_test(
+            villageList.wormsOverTime[:, timeIndex],
+            params)
+
+    return mean_POCCCA / nSamples
 
 
 def getAgeCatSampledPrevByVillage(
@@ -184,6 +228,130 @@ def getAgeCatSampledPrevByVillage(
 
 
 def getAgeCatSampledPrevByVillageAll(
+    villageList: ProcResult,
+    timeIndex: int,
+    ageBand: NDArray[np.int_],
+    params: Parameters,
+    Unfertilized: bool,
+    surveyType: str,
+    nSamples: int = 2,
+    villageSampleSize=100,
+) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, ndarray]:
+
+    """
+    This function provides sampled, age-cat worm prevalence
+    for a given time point and iteration.
+    Parameters
+    ----------
+    villageList: ProcResult
+        processed simulation output for a given iteration;
+    timeIndex: int
+        selected time point index;
+    ageBand: int
+        array with age group boundaries;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    nSamples: int
+        number of samples;
+    Unfertilized: bool
+        True / False flag for whether unfertilized worms generate eggs;
+    villageSampleSize: int;
+        village sample size fraction;
+    Returns
+    -------
+    sampled worm prevalence;
+    """
+    if ((surveyType == "KK1") | (surveyType == "KK2")):
+        meanEggCounts = getVillageMeanCountsByHost(
+            villageList, timeIndex, params, Unfertilized, surveyType, nSamples
+        )
+        ages = villageList.ages[:, timeIndex]
+    
+        currentAges = np.where(np.logical_and(ages >= ageBand[0], ages < ageBand[1]))
+        currentAgeGroupMeanEggCounts = meanEggCounts[currentAges]
+    
+        is_empty = currentAgeGroupMeanEggCounts.size == 0
+        
+        if is_empty:
+            infected = np.nan
+            low = np.nan
+            medium = np.nan
+            heavy = np.nan
+            meanEggs = np.nan
+        else:
+    
+            infected = np.sum(currentAgeGroupMeanEggCounts>0)/len(currentAgeGroupMeanEggCounts)
+     
+            medium = (
+                np.sum(
+                    (currentAgeGroupMeanEggCounts >= params.mediumThreshold)
+                    & (currentAgeGroupMeanEggCounts <= params.heavyThreshold)
+                )
+                /len(currentAgeGroupMeanEggCounts)
+            )
+    
+            heavy = np.sum(currentAgeGroupMeanEggCounts > params.heavyThreshold) / len(currentAgeGroupMeanEggCounts)
+    
+            low = infected - (medium + heavy)
+            meanEggs = np.mean(currentAgeGroupMeanEggCounts)
+        return (
+            np.array(infected),
+            np.array(low),
+            np.array(medium),
+            np.array(heavy),
+            np.array(len(currentAgeGroupMeanEggCounts)),
+            np.array(meanEggs)
+        )
+    
+    
+    
+    if surveyType == "POC-CCA":
+        meanPOCCCA = getVillagePOCCCAByHost(
+            villageList, timeIndex, params, Unfertilized, surveyType, nSamples
+        ) 
+    
+        ages = villageList.ages[:, timeIndex]
+    
+        currentAges = np.where(np.logical_and(ages >= ageBand[0], ages < ageBand[1]))
+        currentAgeGroupMeanEggCounts = meanPOCCCA[currentAges]
+    
+        is_empty = currentAgeGroupMeanEggCounts.size == 0
+        
+        if is_empty:
+            infected = np.nan
+            low = np.nan
+            medium = np.nan
+            heavy = np.nan
+            meanPOCmeasure = np.nan
+        else:
+    
+            infected = np.sum(currentAgeGroupMeanEggCounts>params.POC_CCA_thresholds[0])/len(currentAgeGroupMeanEggCounts)
+     
+            medium = (
+                np.sum(
+                    (currentAgeGroupMeanEggCounts >= params.POC_CCA_thresholds[1])
+                    & (currentAgeGroupMeanEggCounts <= params.POC_CCA_thresholds[2])
+                )
+                /len(currentAgeGroupMeanEggCounts)
+            )
+    
+            heavy = np.sum(currentAgeGroupMeanEggCounts > params.POC_CCA_thresholds[2]) / len(currentAgeGroupMeanEggCounts)
+    
+            low = infected - (medium + heavy)
+            meanPOCmeasure = np.mean(currentAgeGroupMeanEggCounts)    
+    
+    
+        return (
+            np.array(infected),
+            np.array(low),
+            np.array(medium),
+            np.array(heavy),
+            np.array(len(currentAgeGroupMeanEggCounts)),
+            np.array(meanPOCmeasure)
+        )
+
+
+def getAgeCatSampledPrevByVillageAllPOCCCA(
     villageList: ProcResult,
     timeIndex: int,
     ageBand: NDArray[np.int_],
@@ -264,6 +432,7 @@ def getAgeCatSampledPrevByVillageAll(
     )
 
 
+
 def getAgeCatSampledPrevHeavyBurdenByVillage(
     villageList: ProcResult,
     timeIndex: int,
@@ -328,6 +497,7 @@ def getSampledDetectedPrevByVillageAll(
     ageBand: NDArray[np.int_],
     params: Parameters,
     Unfertilized: bool,
+    surveyType: str, 
     nSamples: int = 2,
     villageSampleSize: int = 100,
 ) -> List[Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, ndarray]]:
@@ -363,6 +533,7 @@ def getSampledDetectedPrevByVillageAll(
             ageBand,
             params,
             Unfertilized,
+            surveyType, 
             nSamples,
             villageSampleSize,
         )
@@ -376,6 +547,7 @@ def getBurdens(
     numReps: int,
     ageBand: NDArray[np.int_],
     Unfertilized: bool,
+    surveyType: str, 
     nSamples: int = 2,
     villageSampleSize: int = 100,
 ) -> Tuple[
@@ -389,9 +561,15 @@ def getBurdens(
     mean_eggs = np.empty((0, numReps))
     for t in range(len(hostData[0].timePoints)):  # loop over time points
         # calculate burdens using the same sample
+        #newrow = np.array(
+        #  getSampledDetectedPrevByVillageAll(
+        #        hostData, t, ageBand, params, Unfertilized, surveyType, nSamples, villageSampleSize
+        #    )
+        #)
+        
         newrow = np.array(
             getSampledDetectedPrevByVillageAll(
-                hostData, t, ageBand, params, Unfertilized, nSamples, villageSampleSize
+                hostData, t, ageBand, params, Unfertilized, "KK1", 1, villageSampleSize
             )
         )
         newrowinfected = newrow[:, 0]
@@ -734,6 +912,7 @@ def getPrevalenceDALYsAll(
     params: Parameters,
     numReps: int,
     Unfertilized: bool,
+    surveyType: str,
     nSamples: int = 2,
     villageSampleSize: int = 100,
 ) -> pd.DataFrame:
@@ -759,29 +938,23 @@ def getPrevalenceDALYsAll(
     data frame with SAC and adult prevalence at each time point;
     """
 
-    # all individuals
-    # all_prevalence, all_low_prevalence, all_medium_prevalence, all_heavy_prevalence = getBurdens(hostData, params, numReps, np.array([0, 80]), nSamples=2, Unfertilized=False, villageSampleSize=100)
 
-    # df = pd.DataFrame({'Time': hostData[0]['timePoints'],
-    #                    'Prevalence': all_prevalence,
-    #                     'Low Intensity Prevalence': all_low_prevalence,
-    #                     'Medium Intensity Prevalence': all_medium_prevalence,
-    #                     'Heavy Intensity Prevalence': all_heavy_prevalence})
     df = None
     for i in range(0, 80):  # loop over yearly age bins
-
+  
         prevalence, low_prevalence, moderate_prevalence, heavy_prevalence, meanEggs = getBurdens(
-            hostData,
-            params,
-            numReps,
-            np.array([i, i + 1]),
-            Unfertilized,
-            nSamples=2,
-            villageSampleSize=100,
-        )
+                hostData,
+                params,
+                numReps,
+                np.array([i, i + 1]),
+                Unfertilized,
+                surveyType, 
+                nSamples=nSamples,
+                villageSampleSize=100,
+            )
         age_start = i
         age_end = i + 1
-        # year = hostData[0]['timePoints']
+            # year = hostData[0]['timePoints']
 
         if i == 0:
             df = pd.DataFrame(
@@ -854,13 +1027,7 @@ def getPrevalenceDALYsAll(
             )
         )
 
-        # df[str(i)+' Prevalence'] = prevalence
-        # df[str(i)+' Low Intensity Prevalence'] = low_prevalence
-        # df[str(i)+' Medium Intensity Prevalence'] = medium_prevalence
-        # df[str(i)+' Heavy Intensity Prevalence'] = heavy_prevalence
-
-    # df = df[(df['Time'] >= 50) & (df['Time'] <= 64)]
-    # df['Time'] = df['Time'] - 50
+     
 
     return df
 
