@@ -104,6 +104,11 @@ class Parameters:
     hostMuData: ndarray
     muBreaks: ndarray
     SR: bool
+    k_within: float
+    k_slide: float
+    weight_sample: float
+    testSensitivity: float
+    testSpecificity: float
     psi: float = 1.0
     reproFunc: Optional[Callable[[np.ndarray, "Parameters"], np.ndarray]] = None
     maxHostAge: Optional[ndarray] = None
