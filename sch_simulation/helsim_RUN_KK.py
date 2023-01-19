@@ -617,7 +617,7 @@ def doRealizationSurveyCoverage(params: Parameters, i: int) -> List[Result]:
             # survey
             if timeBarrier >= tSurvey:
                 simData, prevOne = conductSurvey(
-                    simData, params, t, params.sampleSizeOne, params.nSamples
+                    simData, params, t, params.sampleSizeOne, params.nSamples, conductSurvey
                 )
                 nSurvey += 1
                 assert params.MDA is not None
@@ -677,7 +677,7 @@ def doRealizationSurveyCoverage(params: Parameters, i: int) -> List[Result]:
 
 
 def doRealizationSurveyCoveragePickle(
-    params: Parameters, simData: SDEquilibrium, i: int
+    params: Parameters, simData: SDEquilibrium, i: int, surveyType: str
 ) -> List[Result]:
     """
     This function generates a single simulation path.
@@ -887,18 +887,19 @@ def doRealizationSurveyCoveragePickle(
             # survey
             if timeBarrier >= tSurvey:
                 simData, prevOne = conductSurvey(
-                    simData, params, t, params.sampleSizeOne, params.nSamples
+                    simData, params, t, params.sampleSizeOne, params.nSamples, surveyType
                 )
                 nSurvey += 1
-
+                
+                # if we pass the survey, then don't continue with MDA
                 if prevOne < params.surveyThreshold:
                     surveyPass = 1
                     assert params.MDA is not None
                     for mda in params.MDA:
                         mda.Years = np.array([maxTime + 10])
-                    assert params.Vacc is not None
-                    for vacc in params.Vacc:
-                        vacc.Years = np.array([maxTime + 10])
+                    #assert params.Vacc is not None
+                    #for vacc in params.Vacc:
+                    #    vacc.Years = np.array([maxTime + 10])
                         
                     tSurvey = maxTime + 10
                 else:
@@ -920,7 +921,8 @@ def doRealizationSurveyCoveragePickle(
             if timeBarrier >= nextOutTime:
 
 
-                a, truePrev = conductSurvey(simData, params, t, params.N, 2)
+                a, truePrev = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType)
+                
                 trueElim = int(1 - truePrev)
                 
                 results.append(
@@ -1292,7 +1294,7 @@ def SCH_Simulation_DALY_Coverage(
 
 
 def singleSimulationDALYCoverage(
-    params: Parameters, simData: SDEquilibrium, numReps: Optional[int] = None
+    params: Parameters, simData: SDEquilibrium, surveyType: str, numReps: Optional[int] = None
 ) -> pd.DataFrame:
     """
     This function generates multiple simulation paths.
@@ -1311,7 +1313,7 @@ def singleSimulationDALYCoverage(
         numReps = params.numReps
 
     # run the simulations
-    results, SD = doRealizationSurveyCoveragePickle(params, simData, 1)
+    results, SD = doRealizationSurveyCoveragePickle(params, simData, 1, surveyType)
     
  
     results = [results]
@@ -1320,7 +1322,7 @@ def singleSimulationDALYCoverage(
 
     # transform the output to data frame
     df = getPrevalenceDALYsAll(
-        output, params, numReps, Unfertilized=params.Unfertilized
+        output, params, numReps, params.Unfertilized,  surveyType
     )
          
      
@@ -1407,7 +1409,7 @@ def selectIndividuals(chosenAges,  groupAges, numIndivsToChoose):
 
 
 def multiple_simulations(
-    params: Parameters, pickleData, simparams, indices, i, wantedPopSize = 3000,
+    params: Parameters, pickleData, simparams, indices, i, surveyType, wantedPopSize = 3000,
     ageGroups = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100]
 ) -> pd.DataFrame:
     print(f"==> multiple_simulations starting sim {i}")
@@ -1547,7 +1549,7 @@ def multiple_simulations(
     # output = extractHostData(results)
 
     # transform the output to data frame
-    df, simData = singleSimulationDALYCoverage(parameters, simData, 1)
+    df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
     end_time = time.time()
     total_time = end_time - start_time
     print(f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s")
@@ -1556,9 +1558,9 @@ def multiple_simulations(
 
 
 def multiple_simulations_after_burnin(
-    params: Parameters, pickleData, simparams, indices, i, burnInTime
+    params: Parameters, pickleData, simparams, indices, i, burnInTime, surveyType
 ) -> pd.DataFrame:
-    print(f"==> multiple_simulations starting sim {i}")
+    print(f"==> after burn in starting sim {i}")
     start_time = time.time()
     # copy the parameters
     parameters = copy.deepcopy(params)
@@ -1569,10 +1571,10 @@ def multiple_simulations_after_burnin(
     
     t = 0
 
-    
-
     raw_data.demography.birthDate = raw_data.demography.birthDate - burnInTime
-    raw_data.demography.deathDate = raw_data.demography.deathDate - burnInTime
+    raw_data.demography.deathDate = raw_data.demography.deathDate - burnInTime 
+
+    
     worms = Worms(total=raw_data.worms.total, female=raw_data.worms.female)
     demography = Demography(
         birthDate=raw_data.demography.birthDate,
@@ -1630,19 +1632,19 @@ def multiple_simulations_after_burnin(
     # output = extractHostData(results)
 
     # transform the output to data frame
-    df, simData = singleSimulationDALYCoverage(parameters, simData, 1)
+    df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType, 1)
     end_time = time.time()
     total_time = end_time - start_time
-    print(f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s")
+    print(f"==> after burn in finishing sim {i}: {total_time:.3f}s")
     return df, simData
 
 
 
 
 def BurnInSimulations(
-    params: Parameters, simparams, i
+    params: Parameters, simparams, i, surveyType
 ) -> pd.DataFrame:
-    print(f"==> multiple_simulations starting sim {i}")
+    print(f"==> burn in starting sim {i}")
     start_time = time.time()
     #copy parameters
     parameters = copy.deepcopy(params)
@@ -1666,10 +1668,10 @@ def BurnInSimulations(
     simData.numSurvey=0
 
 
-    df, simData = singleSimulationDALYCoverage(parameters, simData, 1)
+    df, simData = singleSimulationDALYCoverage(parameters, simData, surveyType,  1)
     end_time = time.time()
     total_time = end_time - start_time
-    print(f"==> multiple_simulations finishing sim {i}: {total_time:.3f}s")
+    print(f"==> burn in finishing sim {i}: {total_time:.3f}s")
     return df, simData
 
 
