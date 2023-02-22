@@ -569,7 +569,7 @@ def getBurdens(
         
         newrow = np.array(
             getSampledDetectedPrevByVillageAll(
-                hostData, t, ageBand, params, Unfertilized, "KK1", 1, villageSampleSize
+                hostData, t, ageBand, params, Unfertilized, surveyType, 1, villageSampleSize
             )
         )
         newrowinfected = newrow[:, 0]

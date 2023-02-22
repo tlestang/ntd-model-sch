@@ -323,7 +323,7 @@ def parse_coverage_input(
     return coverageText
 
 
-def parse_vector_control_input(
+def     parse_vector_control_input(
     coverageFileName: str,
     params: Parameters,
 ):

@@ -575,10 +575,10 @@ def doVectorControl(
 def conductKKSurvey(
         SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str
 ) -> Tuple[SDEquilibrium, float]:
+    
     minAge = params.minSurveyAge
     maxAge = params.maxSurveyAge
-    # minAge = 5
-    # maxAge = 15
+   
     # get Kato-Katz eggs for each individual
     if nSamples < 1:
         raise ValueError("nSamples < 1")
