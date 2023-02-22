@@ -719,7 +719,22 @@ def doRealizationSurveyCoveragePickle(
     ageingInt = 1 / 52
     nextAgeTime = 1 / 52
     maxStep = 1 / 52
+    
+    
+    
+    # do an initial survey to see if we would ever start MDA
+    # simData, prevOne = conductSurvey(
+    #     simData, params, t, params.sampleSizeOne, params.nSamples, surveyType
+    # )
+   
+    # # if we pass the survey, then don't do any MDA
+    # if prevOne < params.surveyThreshold:
+    #     surveyPass = 1
+    #     assert params.MDA is not None
+    #     for mda in params.MDA:
+    #         mda.Years = np.array([maxTime + 10])
 
+    
     (
         chemoTiming,
         VaccTiming,
@@ -759,6 +774,9 @@ def doRealizationSurveyCoveragePickle(
     print_t_interval = 0.5
     print_t = 0
   
+    
+  
+
     # run stochastic algorithm
     multiplier = math.floor(
         params.N / 50
@@ -802,7 +820,7 @@ def doRealizationSurveyCoveragePickle(
 
             # chemotherapy
             if timeBarrier >= nextChemoTime:
-
+                            
                 simData = doDeath(params, simData, t)
                 assert params.MDA is not None
                 for i in range(len(nextMDAAge)):
@@ -922,8 +940,12 @@ def doRealizationSurveyCoveragePickle(
 
 
                 a, truePrev = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType)
-                
-                trueElim = int(1 - truePrev)
+                wormsTotal = sum(simData.worms.total) 
+                if wormsTotal == 0:
+                    trueElim = 1
+                else:
+                    trueElim = 0
+
                 
                 results.append(
                     Result(
@@ -1322,7 +1344,7 @@ def singleSimulationDALYCoverage(
 
     # transform the output to data frame
     df = getPrevalenceDALYsAll(
-        output, params, numReps, params.Unfertilized,  surveyType
+        output, params, numReps, params.Unfertilized,  'KK1', 1
     )
          
      
