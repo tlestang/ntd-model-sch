@@ -67,7 +67,7 @@ heavyThreshold	16.7		The threshold for heavy burden of infection, egg count > he
 ## Survey parameters
 timeToFirstSurvey	5
 timeToNextSurvey	4
-surveyThreshold	0.01
+surveyThreshold	0.02
 sampleSizeOne	250
 sampleSizeTwo	250
 nSamples	2
