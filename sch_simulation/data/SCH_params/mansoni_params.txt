@@ -89,4 +89,4 @@ weight_sample	0.24
 testSensitivity	0.553
 
 ## testSpecificity
-testSpecificity	0.9
+testSpecificity	1
