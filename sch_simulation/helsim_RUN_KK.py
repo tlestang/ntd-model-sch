@@ -904,7 +904,7 @@ def doRealizationSurveyCoveragePickle(
                 ) = nextMDAVaccInfo(params)
             # survey
             if timeBarrier >= tSurvey:
-                print("surveyType = ", surveyType)
+                
                 simData, prevOne = conductSurvey(
                     simData, params, t, params.sampleSizeOne, params.nSamples, surveyType
                 )
