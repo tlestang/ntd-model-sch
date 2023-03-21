@@ -65,14 +65,14 @@ mediumThreshold	4.2	The threshold of medium burden of infection, mediumThreshold
 heavyThreshold	16.7		The threshold for heavy burden of infection, egg count > heavyThreshold
 
 ## Survey parameters
-timeToFirstSurvey	5
+timeToFirstSurvey	5.25
 timeToNextSurvey	4
 surveyThreshold	0.02
 sampleSizeOne	250
 sampleSizeTwo	250
 nSamples	2
 minSurveyAge	5
-maxSurveyAge	100
+maxSurveyAge	15
 
 ## vector control parameters
 beta_v	0.77
