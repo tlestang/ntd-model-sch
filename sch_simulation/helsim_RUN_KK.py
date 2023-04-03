@@ -485,7 +485,7 @@ def doRealizationSurveyCoveragePickle(
                     surveyPass = 1
                     assert params.MDA is not None
                     for mda in params.MDA:
-                        k = np.where(mda.Years >= t + 1)
+                        k = np.where(mda.Years > t + 1)
                         mda.Years[k] = np.array([maxTime + 10])
                     #assert params.Vacc is not None
                     #for vacc in params.Vacc:
