@@ -389,7 +389,7 @@ def doRealizationSurveyCoveragePickle(
 
             # survey
             if timeBarrier >= tSurvey:
-                print("Survey, time = ", t)
+                #print("Survey, time = ", t)
                 simData, prevOne = conductSurvey(
                     simData, params, t, params.sampleSizeOne, params.nSamples, surveyType
                 )
@@ -397,7 +397,7 @@ def doRealizationSurveyCoveragePickle(
                 
                 # if we pass the survey, then don't continue with MDA
                 if prevOne < params.surveyThreshold:
-                    print("Passed survey, time = ", t)
+                    #print("Passed survey, time = ", t)
                     surveyPass = 1
                     assert params.MDA is not None
                     for mda in params.MDA:
@@ -426,7 +426,7 @@ def doRealizationSurveyCoveragePickle(
                 
             # chemotherapy
             if timeBarrier >= nextChemoTime:
-                print("MDA, time = ", t)           
+                #print("MDA, time = ", t)           
                 simData = doDeath(params, simData, t)
                 assert params.MDA is not None
                 for i in range(len(nextMDAAge)):
