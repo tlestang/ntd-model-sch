@@ -343,8 +343,8 @@ def doRealizationSurveyCoveragePickle(
     print_t_interval = 0.5
     print_t = 0
   
-    
-  
+    #tSurvey = 0.9
+      
 
     # run stochastic algorithm
     multiplier = math.floor(
@@ -387,9 +387,46 @@ def doRealizationSurveyCoveragePickle(
 
                 nextAgeTime += ageingInt
 
+            # survey
+            if timeBarrier >= tSurvey:
+                print("Survey, time = ", t)
+                simData, prevOne = conductSurvey(
+                    simData, params, t, params.sampleSizeOne, params.nSamples, surveyType
+                )
+                nSurvey += 1
+                
+                # if we pass the survey, then don't continue with MDA
+                if prevOne < params.surveyThreshold:
+                    print("Passed survey, time = ", t)
+                    surveyPass = 1
+                    assert params.MDA is not None
+                    for mda in params.MDA:
+                        k = np.where(mda.Years > t + 1)
+                        mda.Years[k] = np.array([maxTime + 10])
+                    #assert params.Vacc is not None
+                    #for vacc in params.Vacc:
+                    #    vacc.Years = np.array([maxTime + 10])
+                        
+                    tSurvey = maxTime + 10
+                else:
+                    tSurvey = t + params.timeToNextSurvey
+
+                (
+                    chemoTiming,
+                    VaccTiming,
+                    nextChemoTime,
+                    nextMDAAge,
+                    nextChemoIndex,
+                    nextVaccTime,
+                    nextVaccAge,
+                    nextVaccIndex,
+                    nextVecControlTime,
+                    nextVecControlIndex,
+                ) = nextMDAVaccInfo(params)
+                
             # chemotherapy
             if timeBarrier >= nextChemoTime:
-                            
+                print("MDA, time = ", t)           
                 simData = doDeath(params, simData, t)
                 assert params.MDA is not None
                 for i in range(len(nextMDAAge)):
@@ -473,40 +510,7 @@ def doRealizationSurveyCoveragePickle(
                     nextVecControlTime,
                     nextVecControlIndex,
                 ) = nextMDAVaccInfo(params)
-            # survey
-            if timeBarrier >= tSurvey:
-                simData, prevOne = conductSurvey(
-                    simData, params, t, params.sampleSizeOne, params.nSamples, surveyType
-                )
-                nSurvey += 1
-                
-                # if we pass the survey, then don't continue with MDA
-                if prevOne < params.surveyThreshold:
-                    surveyPass = 1
-                    assert params.MDA is not None
-                    for mda in params.MDA:
-                        k = np.where(mda.Years > t + 1)
-                        mda.Years[k] = np.array([maxTime + 10])
-                    #assert params.Vacc is not None
-                    #for vacc in params.Vacc:
-                    #    vacc.Years = np.array([maxTime + 10])
-                        
-                    tSurvey = maxTime + 10
-                else:
-                    tSurvey = t + params.timeToNextSurvey
-
-                (
-                    chemoTiming,
-                    VaccTiming,
-                    nextChemoTime,
-                    nextMDAAge,
-                    nextChemoIndex,
-                    nextVaccTime,
-                    nextVaccAge,
-                    nextVaccIndex,
-                    nextVecControlTime,
-                    nextVecControlIndex,
-                ) = nextMDAVaccInfo(params)
+            
 
             if timeBarrier >= nextOutTime:
 
