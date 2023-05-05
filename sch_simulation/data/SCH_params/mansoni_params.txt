@@ -82,7 +82,7 @@ beta_recovery	1
 ## KK params
 k_within	1.672
 k_slide	2.374
-weight_sample	0.0411
+weight_sample	0.0416666
 
 
 ## testSensitivity
