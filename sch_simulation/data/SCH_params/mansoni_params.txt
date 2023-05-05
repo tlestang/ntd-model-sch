@@ -61,11 +61,11 @@ nRoundsVacc	60					##number of vaccine rounds KK
 treatIntervalVacc	1			##KK 
 
 ### Thresholds
-mediumThreshold	4.2	The threshold of medium burden of infection, mediumThreshold <= egg count <= heavyThreshold
-heavyThreshold	16.7		The threshold for heavy burden of infection, egg count > heavyThreshold
+mediumThreshold	100	The threshold of medium burden of infection, mediumThreshold <= egg count <= heavyThreshold
+heavyThreshold	400		The threshold for heavy burden of infection, egg count > heavyThreshold
 
 ## Survey parameters
-timeToFirstSurvey	5.25
+timeToFirstSurvey	5.99
 timeToNextSurvey	4
 surveyThreshold	0.02
 sampleSizeOne	250
@@ -82,7 +82,7 @@ beta_recovery	1
 ## KK params
 k_within	1.672
 k_slide	2.374
-weight_sample	0.24
+weight_sample	0.0411
 
 
 ## testSensitivity
