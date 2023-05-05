@@ -583,6 +583,7 @@ def conductKKSurvey(
     if nSamples < 1:
         raise ValueError("nSamples < 1")
     if surveyType == 'KK1':
+        nSamples = 1
         eggCounts = KKsampleGammaGammaPois(
             SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
             )
@@ -590,21 +591,6 @@ def conductKKSurvey(
         eggCounts = KKsampleGammaGammaPois(
             SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
             )
-        for _ in range(nSamples - 1):
-        
-            eggCounts = np.add(
-                eggCounts,
-                getSetOfEggCounts(
-                    SD.worms.total,
-                    SD.worms.female,
-                    SD.sv,
-                    params,
-                    params.Unfertilized,
-                    surveyType, 
-                    nSamples
-                ),
-            )
-       
             
         eggCounts = eggCounts / nSamples
 
