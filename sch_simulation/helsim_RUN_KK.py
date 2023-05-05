@@ -386,7 +386,47 @@ def doRealizationSurveyCoveragePickle(
                 simData = doDeath(params, simData, t)
 
                 nextAgeTime += ageingInt
+            if timeBarrier >= nextOutTime:
 
+
+                a, truePrev = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType)
+                wormsTotal = sum(simData.worms.total) 
+                if wormsTotal == 0:
+                    trueElim = 1
+                else:
+                    trueElim = 0
+
+                
+                results.append(
+                    Result(
+                        iteration=1,
+                        time=t,
+                        worms=copy.deepcopy(simData.worms),
+                        hosts=copy.deepcopy(simData.demography),
+                        vaccState=copy.deepcopy(simData.sv),
+                        freeLiving=copy.deepcopy(simData.freeLiving),
+                        adherenceFactors=copy.deepcopy(simData.adherenceFactors),
+                        compliers=copy.deepcopy(simData.compliers),
+                        si=copy.deepcopy(simData.si),
+                        sv=copy.deepcopy(simData.sv),
+                        contactAgeGroupIndices=copy.deepcopy(simData.contactAgeGroupIndices),
+                        nVacc=simData.vaccCount - prevNVacc,
+                        nChemo1=simData.nChemo1 - prevNChemo1,
+                        nChemo2=simData.nChemo2 - prevNChemo2,
+                        nSurvey=nSurvey,
+                        surveyPass=surveyPass,
+                        elimination=trueElim,
+                        propChemo1=propChemo1,
+                        propChemo2=propChemo2,
+                        propVacc = propVacc
+                    )
+                )
+                prevNChemo1 = simData.nChemo1 
+                prevNChemo2 = simData.nChemo2
+                prevNVacc = simData.vaccCount
+                outTimes[nextOutIndex] = maxTime + 10
+                nextOutIndex = np.argmin(outTimes)
+                nextOutTime = outTimes[nextOutIndex]
             # survey
             if timeBarrier >= tSurvey:
                 #print("Survey, time = ", t)
@@ -512,47 +552,7 @@ def doRealizationSurveyCoveragePickle(
                 ) = nextMDAVaccInfo(params)
             
 
-            if timeBarrier >= nextOutTime:
-
-
-                a, truePrev = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType)
-                wormsTotal = sum(simData.worms.total) 
-                if wormsTotal == 0:
-                    trueElim = 1
-                else:
-                    trueElim = 0
-
-                
-                results.append(
-                    Result(
-                        iteration=1,
-                        time=t,
-                        worms=copy.deepcopy(simData.worms),
-                        hosts=copy.deepcopy(simData.demography),
-                        vaccState=copy.deepcopy(simData.sv),
-                        freeLiving=copy.deepcopy(simData.freeLiving),
-                        adherenceFactors=copy.deepcopy(simData.adherenceFactors),
-                        compliers=copy.deepcopy(simData.compliers),
-                        si=copy.deepcopy(simData.si),
-                        sv=copy.deepcopy(simData.sv),
-                        contactAgeGroupIndices=copy.deepcopy(simData.contactAgeGroupIndices),
-                        nVacc=simData.vaccCount - prevNVacc,
-                        nChemo1=simData.nChemo1 - prevNChemo1,
-                        nChemo2=simData.nChemo2 - prevNChemo2,
-                        nSurvey=nSurvey,
-                        surveyPass=surveyPass,
-                        elimination=trueElim,
-                        propChemo1=propChemo1,
-                        propChemo2=propChemo2,
-                        propVacc = propVacc
-                    )
-                )
-                prevNChemo1 = simData.nChemo1 
-                prevNChemo2 = simData.nChemo2
-                prevNVacc = simData.vaccCount
-                outTimes[nextOutIndex] = maxTime + 10
-                nextOutIndex = np.argmin(outTimes)
-                nextOutTime = outTimes[nextOutIndex]
+            
 
             nextStep = min(
                 float(nextOutTime),
