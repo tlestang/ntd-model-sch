@@ -583,9 +583,6 @@ def conductKKSurvey(
     if nSamples < 1:
         raise ValueError("nSamples < 1")
     if surveyType == 'KK1':
-        #eggCounts = getSetOfEggCounts(
-        #    SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, surveyType, nSamples
-        #)
         eggCounts = KKsampleGammaGammaPois(
             SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
             )
@@ -593,8 +590,8 @@ def conductKKSurvey(
         eggCounts = KKsampleGammaGammaPois(
             SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
             )
-    for _ in range(nSamples - 1):
-        if surveyType == 'KK1':
+        for _ in range(nSamples - 1):
+        
             eggCounts = np.add(
                 eggCounts,
                 getSetOfEggCounts(
@@ -607,15 +604,9 @@ def conductKKSurvey(
                     nSamples
                 ),
             )
-        if surveyType == 'KK2':
-            eggCounts = KKsampleGammaGammaPois(SD.worms.total,
-                                               SD.worms.female,
-                                               SD.sv,
-                                               params,
-                                               params.Unfertilized,
-                                               nSamples)
+       
             
-    eggCounts = eggCounts / nSamples
+        eggCounts = eggCounts / nSamples
 
     # get individuals in chosen survey age group
     ages = -(SD.demography.birthDate - t)
