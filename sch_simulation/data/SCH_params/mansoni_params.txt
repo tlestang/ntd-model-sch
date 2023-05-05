@@ -72,7 +72,7 @@ sampleSizeOne	250
 sampleSizeTwo	250
 nSamples	2
 minSurveyAge	5
-maxSurveyAge	15
+maxSurveyAge	100
 
 ## vector control parameters
 beta_v	0.77
