@@ -110,20 +110,6 @@ def getVillageMeanCountsByHost(
         / nSamples
     )
 
-    for i in range(1, nSamples):
-
-        meanEggsByHost += (
-            getSetOfEggCounts(
-                villageList.wormsOverTime[:, timeIndex],
-                villageList.femaleWormsOverTime[:, timeIndex],
-                villageList.vaccState[:, timeIndex],
-                params,
-                Unfertilized,
-                surveyType,
-                nSamples
-            )
-            / nSamples
-        )
 
     return meanEggsByHost
 
