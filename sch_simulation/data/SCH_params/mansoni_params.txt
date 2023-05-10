@@ -65,7 +65,7 @@ mediumThreshold	100	The threshold of medium burden of infection, mediumThreshold
 heavyThreshold	400		The threshold for heavy burden of infection, egg count > heavyThreshold
 
 ## Survey parameters
-timeToFirstSurvey	5.99
+timeToFirstSurvey	5.49
 timeToNextSurvey	4
 surveyThreshold	0.02
 sampleSizeOne	250
