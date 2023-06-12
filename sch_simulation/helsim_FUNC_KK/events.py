@@ -215,7 +215,7 @@ def doFreeLive(params: Parameters, SD: SDEquilibrium, dt: float) -> SDEquilibriu
     eggOutputPerHost = (
         params.lambda_egg
         * productivefemaleworms
-        * np.exp(-SD.worms.total * params.gamma)
+        * np.exp(-productivefemaleworms * params.gamma)
         * params.v2[SD.sv]
     )  # vaccine related fecundity
     eggsProdRate = (
