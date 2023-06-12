@@ -244,7 +244,7 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
 
 
 def doRealizationSurveyCoveragePickle(
-    params: Parameters, surveyType: str,  simData: Optional[SDEquilibrium] = None, 
+    params: Parameters, surveyType: str,  simData: Optional[SDEquilibrium] = None, maxMultiplier: int = 10
 ) -> List[Result]:
     """
     This function generates a single simulation path.
@@ -360,8 +360,8 @@ def doRealizationSurveyCoveragePickle(
         cumsumRates = np.cumsum(rates)
         # If the nextStep is soon, take a smaller multiplier
         # new_multiplier = max(math.floor(min((nextStep - t) * sumRates, multiplier)), 1)
-        new_multiplier = min(math.floor(min((1/365) * sumRates, multiplier)), 10)
-        new_multiplier = max(new_multiplier, 10)
+        new_multiplier = min(math.floor(min((1/365) * sumRates, multiplier)), maxMultiplier)
+        new_multiplier = max(new_multiplier, maxMultiplier)
         #new_multiplier = 1
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
