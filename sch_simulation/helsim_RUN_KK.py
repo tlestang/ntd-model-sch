@@ -360,8 +360,8 @@ def doRealizationSurveyCoveragePickle(
         cumsumRates = np.cumsum(rates)
         # If the nextStep is soon, take a smaller multiplier
         # new_multiplier = max(math.floor(min((nextStep - t) * sumRates, multiplier)), 1)
-        new_multiplier = min(math.floor(min((1/365) * sumRates, multiplier)), maxMultiplier)
-        new_multiplier = max(new_multiplier, maxMultiplier)
+        new_multiplier = min(math.ceil(min((1/365) * sumRates, multiplier)), maxMultiplier)
+        #new_multiplier = max(new_multiplier, maxMultiplier)
         #new_multiplier = 1
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
