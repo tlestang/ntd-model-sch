@@ -186,8 +186,8 @@ def doRealization(params, i, mult):
         if t + dt < nextStep:
             t += dt
             simData = doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
-            simData = doFreeLive(params, simData, dt)
-            freeliveTime = t
+            #simData = doFreeLive(params, simData, dt)
+            #freeliveTime = t
         else:
 
             simData = doFreeLive(params, simData, nextStep - freeliveTime)
