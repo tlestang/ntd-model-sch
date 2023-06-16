@@ -74,7 +74,8 @@ def loadParameters(paramFileName: str, demogName: str) -> Parameters:
     return params
 
 
-def doRealization(params: Parameters, i: int) -> List[Result]:
+def doRealization(params, i, mult):
+
     """
     This function generates a single simulation path.
     Parameters
@@ -88,7 +89,9 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
     results: List[Result]
         list with simulation results;
     """
-
+    np.random.seed(i) 
+    random.seed(i)
+    params.equiData = getEquilibrium(params)
     # setup simulation data
     simData = setupSD(params)
 
@@ -141,27 +144,50 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
     )
 
     results: List[Result] = []  # initialise empty list to store results
-
+    multiplier = math.floor(
+        params.N / 50
+    )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
+    
     # run stochastic algorithm
     while t < maxTime:
-        if (t * 1000 % 10) == 0:
-            print(t)
+       # if (t * 1000 % 10) == 0:
+       #     print(t)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
-
+        new_multiplier = min(math.ceil(min((1/365) * sumRates, multiplier)), mult)
+        #new_multiplier = math.floor(min((1/365) * sumRates, multiplier))
+        #print(new_multiplier)
+        #new_multiplier = max(new_multiplier, mult)
+        #new_multiplier = 5
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
         if sumRates < 1e-4:
-            dt = 10000
+            dt = 10000 * multiplier
 
         else:
-            dt = random.expovariate(lambd=sumRates)
-
+            dt = random.expovariate(lambd=sumRates) * new_multiplier
+        
+        if mult > 1:
+            if t + dt >= nextStep:
+                small_multiplier = np.array(list(range(new_multiplier, 0, -1)))
+                dt1 = dt * small_multiplier/new_multiplier
+                x = np.where((t+dt1) < nextStep)[0]
+                if len(x) > 0:
+                    x = x[0]
+                    sm = small_multiplier[x]
+                    dt = dt * sm / new_multiplier
+                    new_multiplier = sm
+                else:
+                    sm = 1
+                    dt = dt * sm / new_multiplier
+                    new_multiplier = sm
+                    
         if t + dt < nextStep:
             t += dt
-            simData = doEvent2(sumRates, cumsumRates, params, simData)
-
+            simData = doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
+            simData = doFreeLive(params, simData, dt)
+            freeliveTime = t
         else:
 
             simData = doFreeLive(params, simData, nextStep - freeliveTime)
@@ -208,7 +234,7 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
 
                 results.append(
                     Result(
-                        iteration=i,
+                        iteration=1,
                         time=t,
                         worms=copy.deepcopy(simData.worms),
                         hosts=copy.deepcopy(simData.demography),
@@ -216,7 +242,18 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
                         freeLiving=copy.deepcopy(simData.freeLiving),
                         adherenceFactors=copy.deepcopy(simData.adherenceFactors),
                         compliers=copy.deepcopy(simData.compliers),
-                        sex_id=copy.deepcopy(simData.sex_id),
+                        si=copy.deepcopy(simData.si),
+                        sv=copy.deepcopy(simData.sv),
+                        contactAgeGroupIndices=copy.deepcopy(simData.contactAgeGroupIndices),
+                        nVacc=0,
+                        nChemo1=0,
+                        nChemo2=0,
+                        nSurvey=0,
+                        surveyPass=0,
+                        elimination=0,
+                        propChemo1=0,
+                        propChemo2=0,
+                        propVacc = 0
                     )
                 )
                 outTimes[nextOutIndex] = maxTime + 10
@@ -240,6 +277,8 @@ def doRealization(params: Parameters, i: int) -> List[Result]:
     # ))
 
     return results
+
+
 
 
 
