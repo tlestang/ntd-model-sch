@@ -474,7 +474,7 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(
             a=currentAgeGroupMeanEggCounts, size=villageSampleSize, replace=True
         )
 
-    return np.sum(mySample > 16) / villageSampleSize
+    return np.sum(mySample > params.heavyThreshold) / villageSampleSize
 
 
 def getSampledDetectedPrevByVillageAll(
