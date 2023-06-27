@@ -188,14 +188,14 @@ def getAgeCatSampledPrevByVillage(
     """
 
     meanEggCounts = getVillageMeanCountsByHost(
-        villageList, timeIndex, params, Unfertilized, nSamples
+        villageList, timeIndex, params, Unfertilized, 'KK2', nSamples
     )
 
     ageGroups = (
         np.digitize(
             villageList.ages[:, timeIndex], np.append(-10, np.append(ageBand, 150))
         )
-        - 1
+        
     )
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
@@ -372,7 +372,7 @@ def getAgeCatSampledPrevByVillageAllPOCCCA(
     """
 
     meanEggCounts = getVillageMeanCountsByHost(
-        villageList, timeIndex, params, Unfertilized, nSamples
+        villageList, timeIndex, params, Unfertilized, 'KK2', nSamples
     )
     ages = villageList.ages[:, timeIndex]
     #ageGroups = (
@@ -453,13 +453,13 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(
     """
 
     meanEggCounts = getVillageMeanCountsByHost(
-        villageList, timeIndex, params, Unfertilized, nSamples
+        villageList, timeIndex, params, Unfertilized, 'KK2', nSamples
     )
     ageGroups = (
         np.digitize(
             villageList.ages[:, timeIndex], np.append(-10, np.append(ageBand, 150))
         )
-        - 1
+        
     )
 
     currentAgeGroupMeanEggCounts = meanEggCounts[ageGroups == 2]
@@ -785,8 +785,8 @@ def getPrevalence(
         }
     )
 
-    df = df[(df["Time"] >= 50) & (df["Time"] <= 64)]
-    df["Time"] = df["Time"] - 50
+    #df = df[(df["Time"] >= 50) & (df["Time"] <= 64)]
+    #df["Time"] = df["Time"] - 50
 
     return df
 
