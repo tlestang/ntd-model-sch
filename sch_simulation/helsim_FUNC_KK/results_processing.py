@@ -39,26 +39,26 @@ def extractHostData(results: List[List[Result]]) -> List[ProcResult]:
         output.append(
             ProcResult(
                 vaccState = np.array(
-                    [result[i].vaccState for i in range(len(results[0]) - 1)]
+                    [result[i].vaccState for i in range(len(result))]
                 ).T,
                 wormsOverTime=np.array(
-                    [result[i].worms.total for i in range(len(results[0]) - 1)]
+                    [result[i].worms.total for i in range(len(result))]
                 ).T,
                 femaleWormsOverTime=np.array(
-                    [result[i].worms.female for i in range(len(results[0]) - 1)]
+                    [result[i].worms.female for i in range(len(result) )]
                 ).T,
                 # freeLiving=np.array([result[i]['freeLiving'] for i in range(len(results[0]) - 1)]),
                 ages=np.array(
                     [
                         result[i].time - result[i].hosts.birthDate
-                        for i in range(len(results[0]) - 1)
+                        for i in range(len(result) )
                     ]
                 ).T,
                 # adherenceFactors=np.array([result[i]['adherenceFactors'] for i in range(len(results[0]) - 1)]).T,
                 # compliers=np.array([result[i]['compliers'] for i in range(len(results[0]) - 1)]).T,
                 # totalPop=len(result[0]['worms']['total']),
                 timePoints=np.array(
-                    [np.array(result[i].time) for i in range(len(results[0]) - 1)]
+                    [np.array(result[i].time) for i in range(len(result) )]
                 ),
                 # attendanceRecord=result[-1]['attendanceRecord'],
                 # ageAtChemo=result[-1]['ageAtChemo'],
@@ -76,8 +76,8 @@ def getVillageMeanCountsByHost(
     timeIndex: int,
     params: Parameters,
     Unfertilized: bool,
-    surveyType: str,
     nSamples: int = 2,
+    surveyType: str = "KK2"
 ) -> NDArray[np.float_]:
     """
     This function returns the mean egg count across readings by host
@@ -104,8 +104,8 @@ def getVillageMeanCountsByHost(
             villageList.vaccState[:, timeIndex],
             params,
             Unfertilized,
-            surveyType,
-            nSamples
+            nSamples,
+            surveyType
         )
         / nSamples
     )
@@ -161,6 +161,7 @@ def getAgeCatSampledPrevByVillage(
     Unfertilized: bool,
     nSamples: int = 2,
     villageSampleSize: int = 100,
+    surveyType: str = 'KK2'
 ) -> float:
 
     """
@@ -188,7 +189,7 @@ def getAgeCatSampledPrevByVillage(
     """
 
     meanEggCounts = getVillageMeanCountsByHost(
-        villageList, timeIndex, params, Unfertilized, 'KK2', nSamples
+        villageList, timeIndex, params, Unfertilized, nSamples
     )
 
     ageGroups = (
@@ -219,7 +220,7 @@ def getAgeCatSampledPrevByVillageAll(
     ageBand: NDArray[np.int_],
     params: Parameters,
     Unfertilized: bool,
-    surveyType: str,
+    surveyType: str = 'KK2',
     nSamples: int = 2,
     villageSampleSize=100,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, ndarray]:
@@ -345,6 +346,7 @@ def getAgeCatSampledPrevByVillageAllPOCCCA(
     Unfertilized: bool,
     nSamples: int = 2,
     villageSampleSize=100,
+    surveyType: str = 'POC-CCA'
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, ndarray]:
 
     """
@@ -372,7 +374,7 @@ def getAgeCatSampledPrevByVillageAllPOCCCA(
     """
 
     meanEggCounts = getVillageMeanCountsByHost(
-        villageList, timeIndex, params, Unfertilized, 'KK2', nSamples
+        villageList, timeIndex, params, Unfertilized, surveyType, nSamples
     )
     ages = villageList.ages[:, timeIndex]
     #ageGroups = (
@@ -427,6 +429,7 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(
     Unfertilized: bool,
     nSamples: int = 2,
     villageSampleSize: int = 100,
+    surveyType: int = 'KK2'
 ) -> float:
     """
     This function provides sampled, age-cat worm prevalence
@@ -453,7 +456,7 @@ def getAgeCatSampledPrevHeavyBurdenByVillage(
     """
 
     meanEggCounts = getVillageMeanCountsByHost(
-        villageList, timeIndex, params, Unfertilized, 'KK2', nSamples
+        villageList, timeIndex, params, Unfertilized,  nSamples
     )
     ageGroups = (
         np.digitize(
@@ -587,6 +590,7 @@ def getSampledDetectedPrevByVillage(
     Unfertilized: bool,
     nSamples: int = 2,
     villageSampleSize: int = 100,
+    surveyType: str = 'KK2'
 ) -> NDArray[np.float_]:
 
     """
@@ -685,6 +689,7 @@ def getPrevalence(
     Unfertilized: bool,
     nSamples: int = 2,
     villageSampleSize: int = 100,
+    surveyType: str = 'KK2'
 ) -> pd.DataFrame:
 
     """
