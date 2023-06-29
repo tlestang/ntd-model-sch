@@ -695,7 +695,8 @@ def conductSurveyTwo(
     if nSamples < 1:
         raise ValueError("nSamples < 1")
     eggCounts = getSetOfEggCounts(
-        SD.worms.total, SD.worms.female, SD.sv, params, params.Unfertilized, surveyType, nSamples
+        SD.worms.total, SD.worms.female, SD.sv, params, params.Unfertilized,  nSamples,
+        surveyType
     )
     for _ in range(nSamples):
         eggCounts = np.add(
@@ -706,8 +707,8 @@ def conductSurveyTwo(
                 SD.sv,
                 params,
                 params.Unfertilized,
-                surveyType, 
-                nSamples
+                nSamples,
+                surveyType
             ),
         )
     eggCounts = eggCounts / nSamples
