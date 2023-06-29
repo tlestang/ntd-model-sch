@@ -17,8 +17,8 @@ def getSetOfEggCounts(
     vaccState:NDArray[np.int_],
     params: Parameters,
     Unfertilized: bool,
-    surveyType: str,
-    nSamples: int
+    nSamples: int = 2,
+    surveyType: str = 'KK2'
 ) -> NDArray[np.int_]:
 
     """
