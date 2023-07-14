@@ -415,8 +415,8 @@ def doRealizationSurveyCoveragePickle(
         if new_t < nextStep:
             t = new_t
             simData = doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
-            simData = doFreeLive(params, simData, dt)
-            freeliveTime = nextStep
+            #simData = doFreeLive(params, simData, dt)
+            #freeliveTime = nextStep
         else:
             simData = doFreeLive(params, simData, nextStep - freeliveTime)
             t = nextStep
