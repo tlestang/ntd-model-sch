@@ -172,7 +172,7 @@ def setupSD(params: Parameters) -> SDEquilibrium:
         np.digitize(-demography.birthDate, params.VaccTreatmentAgeGroupBreaks) - 1
     )
 
-    SD = SDEquilibrium(
+     SD = SDEquilibrium(
         si=si,
         sv=sv,
         worms=worms,
@@ -191,7 +191,10 @@ def setupSD(params: Parameters) -> SDEquilibrium:
         adherenceFactorAtChemo=[],
         vaccCount=0,
         numSurvey=0,
+        nChemo1 = 0,
+        nChemo2 = 0, 
     )
+
 
     return SD
 
