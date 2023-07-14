@@ -158,7 +158,7 @@ def doRealization(params, i, mult):
         new_multiplier = min(math.ceil(min((1/365) * sumRates, multiplier)), mult)
         #new_multiplier = math.floor(min((1/365) * sumRates, multiplier))
         #print(new_multiplier)
-        #new_multiplier = max(new_multiplier, mult)
+        new_multiplier = max(new_multiplier, 1)
         #new_multiplier = 5
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
@@ -283,7 +283,7 @@ def doRealization(params, i, mult):
 
 
 def doRealizationSurveyCoveragePickle(
-    params: Parameters, surveyType: str,  simData: Optional[SDEquilibrium] = None, maxMultiplier: int = 10
+    params: Parameters, surveyType: str,  simData: Optional[SDEquilibrium] = None, mult: int = 5
 ) -> List[Result]:
     """
     This function generates a single simulation path.
@@ -328,21 +328,7 @@ def doRealizationSurveyCoveragePickle(
     nextAgeTime = 1 / 52
     maxStep = 1 / 52
     
-    
-    
-    # do an initial survey to see if we would ever start MDA
-    # simData, prevOne = conductSurvey(
-    #     simData, params, t, params.sampleSizeOne, params.nSamples, surveyType
-    # )
-   
-    # # if we pass the survey, then don't do any MDA
-    # if prevOne < params.surveyThreshold:
-    #     surveyPass = 1
-    #     assert params.MDA is not None
-    #     for mda in params.MDA:
-    #         mda.Years = np.array([maxTime + 10])
-
-    
+  
     (
         chemoTiming,
         VaccTiming,
@@ -397,23 +383,40 @@ def doRealizationSurveyCoveragePickle(
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
-        # If the nextStep is soon, take a smaller multiplier
-        # new_multiplier = max(math.floor(min((nextStep - t) * sumRates, multiplier)), 1)
-        new_multiplier = min(math.ceil(min((1/365) * sumRates, multiplier)), maxMultiplier)
-        #new_multiplier = max(new_multiplier, maxMultiplier)
-        #new_multiplier = 1
+        
+        new_multiplier = min(math.ceil(min((1/365) * sumRates, multiplier)), mult)
+        new_multiplier = max(new_multiplier, 1)
+        
         # if the rate is such that nothing's likely to happen in the next 10,000 years,
         # just fix the next time step to 10,000
 
         if sumRates < 1e-4:
-            dt = 10000 * new_multiplier
+            dt = 10000 * multiplier
+
         else:
             dt = random.expovariate(lambd=sumRates) * new_multiplier
+        
+        if mult > 1:
+            if t + dt >= nextStep:
+                small_multiplier = np.array(list(range(new_multiplier, 0, -1)))
+                dt1 = dt * small_multiplier/new_multiplier
+                x = np.where((t+dt1) < nextStep)[0]
+                if len(x) > 0:
+                    x = x[0]
+                    sm = small_multiplier[x]
+                    dt = dt * sm / new_multiplier
+                    new_multiplier = sm
+                else:
+                    sm = 1
+                    dt = dt * sm / new_multiplier
+                    new_multiplier = sm
 
         new_t = t + dt
         if new_t < nextStep:
             t = new_t
             simData = doEvent2(sumRates, cumsumRates, params, simData, new_multiplier)
+            simData = doFreeLive(params, simData, dt)
+            freeliveTime = nextStep
         else:
             simData = doFreeLive(params, simData, nextStep - freeliveTime)
             t = nextStep
@@ -491,7 +494,7 @@ def doRealizationSurveyCoveragePickle(
                     tSurvey = t + params.timeToNextSurvey
 
                 (
-                    chemoTiming,
+                    chemoTiming,    
                     VaccTiming,
                     nextChemoTime,
                     nextMDAAge,
