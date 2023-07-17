@@ -63,36 +63,41 @@ def getSetOfEggCounts(
     meanCount = productivefemaleworms * params.lambda_egg * params.z**productivefemaleworms * params.v2[vaccState]
         
     if surveyType == "KK1":
-        # eggs = np.random.negative_binomial(
-        #     size=len(meanCount), p=params.k_epg / (0 + params.k_epg), n=params.k_epg
-        # )
-        # for i in range(nSamples):
-        #     eggs +=  np.random.negative_binomial(
-        #         size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg
-        #         )
-        mu_id = np.random.gamma(params.k_within, 
-                                scale= meanCount/ params.k_within, 
-                                size=len(female))
-        mu_ids = np.random.gamma(params.k_slide * params.weight_sample / 0.025,
-                                 scale= mu_id/params.k_slide, 
-                                 size=len(female))
-        count_ids = np.zeros(len(mu_ids))
-        
-        count_ids += np.random.poisson(mu_ids)
-        return count_ids / params.weight_sample
-    if surveyType == "KK2":
-        mu_id = np.random.gamma(params.k_within, 
-                                scale= meanCount/ params.k_within, 
-                                size=len(female))
-        mu_ids = np.random.gamma(params.k_slide * params.weight_sample / 0.025,
-                                 scale= mu_id/params.k_slide, 
-                                 size=len(female))
-        count_ids = np.zeros(len(mu_ids))
+        eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
         for i in range(nSamples):
-            count_ids += np.random.poisson(mu_ids)
-        return count_ids / params.weight_sample
-    
-    
+            eggs +=  np.random.negative_binomial(
+                size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg
+                )
+        # mu_id = np.random.gamma(params.k_within, 
+        #                         scale= meanCount/ params.k_within, 
+        #                         size=len(female))
+        # mu_ids = np.random.gamma(params.k_slide * params.weight_sample / 0.025,
+        #                          scale= mu_id/params.k_slide, 
+        #                          size=len(female))
+        # count_ids = np.zeros(len(mu_ids))
+        
+        # count_ids += np.random.poisson(mu_ids)
+        # return count_ids / params.weight_sample
+        return eggs
+    if surveyType == "KK2":
+        # mu_id = np.random.gamma(params.k_within, 
+        #                         scale= meanCount/ params.k_within, 
+        #                         size=len(female))
+        # mu_ids = np.random.gamma(params.k_slide * params.weight_sample / 0.025,
+        #                          scale= mu_id/params.k_slide, 
+        #                          size=len(female))
+        # count_ids = np.zeros(len(mu_ids))
+        # for i in range(nSamples):
+        #     count_ids += np.random.poisson(mu_ids)
+            
+        
+        # return count_ids / params.weight_sample
+        eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
+        for i in range(nSamples):
+            eggs +=  np.random.negative_binomial(
+                size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg
+                )
+        return eggs
 
 def KKsampleGammaGammaPois(
     total: NDArray[np.int_],

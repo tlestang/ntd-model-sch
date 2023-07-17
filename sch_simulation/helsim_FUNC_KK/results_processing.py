@@ -248,9 +248,10 @@ def getAgeCatSampledPrevByVillageAll(
     -------
     sampled worm prevalence;
     """
+   
     if ((surveyType == "KK1") | (surveyType == "KK2")):
         meanEggCounts = getVillageMeanCountsByHost(
-            villageList, timeIndex, params, Unfertilized, surveyType, nSamples
+            villageList, timeIndex, params, Unfertilized, nSamples, surveyType
         )
         ages = villageList.ages[:, timeIndex]
     
