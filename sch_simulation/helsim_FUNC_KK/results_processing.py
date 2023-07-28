@@ -11,7 +11,7 @@ from sch_simulation.helsim_FUNC_KK.helsim_structures import (
     ProcResult,
     Result,
 )
-from sch_simulation.helsim_FUNC_KK.utils import getSetOfEggCounts, POC_CCA_test, PCR_test
+from sch_simulation.helsim_FUNC_KK.utils import getSetOfEggCounts, getSetOfEggCountsv2, POC_CCA_test, PCR_test
 
 warnings.filterwarnings("ignore")
 
@@ -99,6 +99,49 @@ def getVillageMeanCountsByHost(
 
     meanEggsByHost = (
         getSetOfEggCounts(
+            villageList.wormsOverTime[:, timeIndex],
+            villageList.femaleWormsOverTime[:, timeIndex],
+            villageList.vaccState[:, timeIndex],
+            params,
+            Unfertilized,
+            nSamples,
+            surveyType
+        )
+        / nSamples
+    )
+
+
+    return meanEggsByHost
+
+
+def getVillageMeanCountsByHostv2(
+    villageList: ProcResult,
+    timeIndex: int,
+    params: Parameters,
+    Unfertilized: bool,
+    nSamples: int = 2,
+    surveyType: str = "KK2"
+) -> NDArray[np.float_]:
+    """
+    This function returns the mean egg count across readings by host
+    for a given time point and iteration.
+    Parameters
+    ----------
+    villageList: ProcResult
+        processed simulation output for a given iteration;
+    timeIndex: int
+        selected time point index;
+    nSamples: int
+        number of samples;
+    Unfertilized: bool
+        True / False flag for whether unfertilized worms generate eggs;
+    Returns
+    -------
+    array of mean egg counts;
+    """
+
+    meanEggsByHost = (
+        getSetOfEggCountsv2(
             villageList.wormsOverTime[:, timeIndex],
             villageList.femaleWormsOverTime[:, timeIndex],
             villageList.vaccState[:, timeIndex],
@@ -250,7 +293,7 @@ def getAgeCatSampledPrevByVillageAll(
     """
    
     if ((surveyType == "KK1") | (surveyType == "KK2")):
-        meanEggCounts = getVillageMeanCountsByHost(
+        meanEggCounts = getVillageMeanCountsByHostv2(
             villageList, timeIndex, params, Unfertilized, nSamples, surveyType
         )
         ages = villageList.ages[:, timeIndex]
@@ -269,7 +312,17 @@ def getAgeCatSampledPrevByVillageAll(
         else:
     
             infected = np.sum(currentAgeGroupMeanEggCounts>0)/len(currentAgeGroupMeanEggCounts)
-     
+            meanEggCounts = getVillageMeanCountsByHost(
+                 villageList, timeIndex, params, Unfertilized, nSamples, surveyType
+            )
+            ages = villageList.ages[:, timeIndex]
+        
+            currentAges = np.where(np.logical_and(ages >= ageBand[0], ages < ageBand[1]))
+            currentAgeGroupMeanEggCounts = meanEggCounts[currentAges]
+        
+            is_empty = currentAgeGroupMeanEggCounts.size == 0
+            # print("mod thr4esh = ", params.mediumThreshold)
+            # print("heav thr4esh = ", params.heavyThreshold)
             medium = (
                 np.sum(
                     (currentAgeGroupMeanEggCounts >= params.mediumThreshold)
@@ -277,9 +330,10 @@ def getAgeCatSampledPrevByVillageAll(
                 )
                 /len(currentAgeGroupMeanEggCounts)
             )
-    
+            
             heavy = np.sum(currentAgeGroupMeanEggCounts > params.heavyThreshold) / len(currentAgeGroupMeanEggCounts)
-    
+            # print(currentAgeGroupMeanEggCounts)
+            # print("heavy infs = " , heavy)
             low = infected - (medium + heavy)
             meanEggs = np.mean(currentAgeGroupMeanEggCounts)
         return (
@@ -326,7 +380,7 @@ def getAgeCatSampledPrevByVillageAll(
             heavy = np.sum(currentAgeGroupMeanEggCounts > params.POC_CCA_thresholds[2]) / len(currentAgeGroupMeanEggCounts)
     
             low = infected - (medium + heavy)
-            meanPOCmeasure = np.mean(currentAgeGroupMeanEggCounts)    
+            meanPOCmeasure = round(np.mean(currentAgeGroupMeanEggCounts))    
     
     
         return (
@@ -932,7 +986,7 @@ def getPrevalenceDALYsAll(
 
 
     df = None
-    for i in range(0, 80):  # loop over yearly age bins
+    for i in range(0, int(params.maxHostAge)):  # loop over yearly age bins
   
         prevalence, low_prevalence, moderate_prevalence, heavy_prevalence, meanEggs = getBurdens(
                 hostData,
