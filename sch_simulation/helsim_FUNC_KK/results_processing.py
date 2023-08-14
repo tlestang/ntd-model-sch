@@ -293,7 +293,7 @@ def getAgeCatSampledPrevByVillageAll(
     """
    
     if ((surveyType == "KK1") | (surveyType == "KK2")):
-        meanEggCounts = getVillageMeanCountsByHostv2(
+        meanEggCounts = getVillageMeanCountsByHost(
             villageList, timeIndex, params, Unfertilized, nSamples, surveyType
         )
         ages = villageList.ages[:, timeIndex]
@@ -312,9 +312,9 @@ def getAgeCatSampledPrevByVillageAll(
         else:
     
             infected = np.sum(currentAgeGroupMeanEggCounts>0)/len(currentAgeGroupMeanEggCounts)
-            meanEggCounts = getVillageMeanCountsByHost(
-                 villageList, timeIndex, params, Unfertilized, nSamples, surveyType
-            )
+            #meanEggCounts = getVillageMeanCountsByHost(
+            #     villageList, timeIndex, params, Unfertilized, nSamples, surveyType
+            #)
             ages = villageList.ages[:, timeIndex]
         
             currentAges = np.where(np.logical_and(ages >= ageBand[0], ages < ageBand[1]))
