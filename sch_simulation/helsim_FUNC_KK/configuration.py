@@ -189,6 +189,8 @@ def setupSD(params: Parameters) -> SDEquilibrium:
         attendanceRecord=[],
         ageAtChemo=[],
         adherenceFactorAtChemo=[],
+        n_treatments = {},
+        n_treatments_population = {},
         vaccCount=0,
         numSurvey=0,
         nChemo1 = 0,

@@ -349,30 +349,32 @@ def parse_vector_control_input(
     # which rows are for MDA and vaccine
     intervention_array = PlatCov["Intervention Type"]
     VectorControl = np.where(np.array(intervention_array == "Vector Control"))[0]
-
-    # we want to find which is the first year specified in the coverage data, along with which
-    # column of the data set this corresponds to
-    fy = 10000
-    fy_index = 10000
-    for i in range(len(PlatCov.columns)):
-        if type(PlatCov.columns[i]) == int:
-            fy = min(fy, PlatCov.columns[i])
-            fy_index = min(fy_index, i)
-           
-    
-    VecControlInfo = VecControl(Years = [], Coverage = [])
-    
-    
-    # for each non-zero entry of the vector control data add an entry to the parameters object
-    for i in range(len(VectorControl)):
-        k = VectorControl[i]
-        w = PlatCov.iloc[k, :]
-        for j in range(fy_index, len(PlatCov.columns)):
-            cname = PlatCov.columns[j]
-            if w[cname] > 0:
-                VecControlInfo.Years.append(cname-fy)
-                VecControlInfo.Coverage.append(w[cname])
-               
+    if len(VectorControl) == 0:
+        VecControlInfo = VecControl(Years = [1000000,10000000], Coverage = [0.01,0.01])
+    else:
+        # we want to find which is the first year specified in the coverage data, along with which
+        # column of the data set this corresponds to
+        fy = 10000
+        fy_index = 10000
+        for i in range(len(PlatCov.columns)):
+            if type(PlatCov.columns[i]) == int:
+                fy = min(fy, PlatCov.columns[i])
+                fy_index = min(fy_index, i)
+            
+        
+        VecControlInfo = VecControl(Years = [], Coverage = [])
+        
+        
+        # for each non-zero entry of the vector control data add an entry to the parameters object
+        for i in range(len(VectorControl)):
+            k = VectorControl[i]
+            w = PlatCov.iloc[k, :]
+            for j in range(fy_index, len(PlatCov.columns)):
+                cname = PlatCov.columns[j]
+                if w[cname] > 0:
+                    VecControlInfo.Years.append(cname-fy)
+                    VecControlInfo.Coverage.append(w[cname])
+                
     params.VecControl = [VecControlInfo]
 
     return params

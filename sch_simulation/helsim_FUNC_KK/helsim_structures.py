@@ -158,13 +158,15 @@ class SDEquilibrium:
     adherenceFactorAtChemo: List
     vaccCount: int
     numSurvey: int
+    n_treatments: Optional[dict[str, np.ndarray[np.float_]]]
+    n_treatments_population: Optional[dict[str, np.ndarray[np.float_]]] 
     numSurveyTwo: Optional[int] = None
     vaccinatedFactors: Optional[ndarray] = None
     VaccTreatmentAgeGroupIndices: Optional[ndarray] = None
     sex_id: Optional[ndarray] = None
     nChemo1: Optional[int] = None
     nChemo2: Optional[int] = None
-
+    
 
 @dataclass
 class Result:

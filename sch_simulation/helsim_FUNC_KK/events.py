@@ -393,6 +393,9 @@ def doChemoAgeRange(
     toTreatNow = np.logical_and(toTreatNow, correctAges)
 
     # initialize the share of drug 1 and drug2
+    # we allow 2 different types of drug to be given within the same MDA.
+    # Hence we need to split the population into groups who will take each of the drugs. 
+    # in reality it will often be just one of the drugs each year, making this redundant
     d1Share = 0
     d2Share = 0
 
@@ -401,6 +404,7 @@ def doChemoAgeRange(
     assert params.drug2Years is not None
     assert params.drug1Split is not None
     assert params.drug2Split is not None
+
     if t in params.drug1Years:
         i = np.where(params.drug1Years == t)[0][0]
         d1Share = params.drug1Split[i]
@@ -426,14 +430,20 @@ def doChemoAgeRange(
     if d1Share > 0:
         dEff = params.DrugEfficacy1
         k = np.where(drug == 1)[0]
+
         femaleToDie = np.random.binomial(
-            size=len(k), n=np.array(SD.worms.female[ll[k]], dtype="int32"), p=dEff
+            size=len(k), 
+            n=np.array(SD.worms.female[ll[k]], dtype="int32"), 
+            p=dEff
         )
+
         maleToDie = np.random.binomial(
             size=len(k),
             n=np.array(SD.worms.total[ll[k]] - SD.worms.female[ll[k]], dtype="int32"),
             p=dEff,
         )
+
+        counts1, _ = np.histogram(ages[ll[k]], bins=np.arange(params.maxHostAge + 1))
         SD.worms.female[ll[k]] -= femaleToDie
         SD.worms.total[ll[k]] -= maleToDie + femaleToDie
         # save actual attendance record and the age of each host when treated
@@ -441,18 +451,26 @@ def doChemoAgeRange(
         assert SD.nChemo1 is not None
         SD.nChemo1 += len(k)
         numChemo1 += len(k)
+        SD.n_treatments[
+            str(t) + "," + str("MDA drug 1")
+        ] = counts1
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
         dEff = params.DrugEfficacy2
         k = np.where(drug == 2)[0]
+
         femaleToDie = np.random.binomial(
-            size=len(k), n=np.array(SD.worms.female[ll[k]], dtype="int32"), p=dEff
+            size=len(k),
+            n=np.array(SD.worms.female[ll[k]], dtype="int32"),
+            p=dEff
         )
+
         maleToDie = np.random.binomial(
             size=len(k),
             n=np.array(SD.worms.total[ll[k]] - SD.worms.female[ll[k]], dtype="int32"),
             p=dEff,
         )
+        counts2, _ = np.histogram(ages[ll[k]], bins=np.arange(params.maxHostAge + 1))
         SD.worms.female[ll[k]] -= femaleToDie
         SD.worms.total[ll[k]] -= maleToDie + femaleToDie
         # save actual attendance record and the age of each host when treated
@@ -460,6 +478,17 @@ def doChemoAgeRange(
         assert SD.nChemo2 is not None
         SD.nChemo2 += len(k)
         numChemo2 += len(k)
+        SD.n_treatments[
+            str(t) + "," + str("MDA drug 2")
+        ] = counts2
+        
+    n_people_by_age, _ = np.histogram(
+            ages,
+            bins=np.arange(0, params.maxHostAge + 1),
+        )
+    SD.n_treatments_population[
+            str(t) + "," + str("population")
+        ] = n_people_by_age
     propTreated1 = numChemo1 / sum(correctAges)
     propTreated2 = numChemo2 / sum(correctAges)
     SD.ageAtChemo.append(t - SD.demography.birthDate)
