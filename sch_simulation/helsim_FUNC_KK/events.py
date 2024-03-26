@@ -481,7 +481,7 @@ def doChemoAgeRange(
         SD.n_treatments[
             str(t) + "," + str("MDA drug 2")
         ] = counts2
-        
+
     n_people_by_age, _ = np.histogram(
             ages,
             bins=np.arange(0, params.maxHostAge + 1),
@@ -530,7 +530,19 @@ def doVaccine(
     vaccNow = np.logical_and(Hosts4Vaccination, vaccinate)
     SD.sv[vaccNow] = 1
     SD.vaccCount += sum(Hosts4Vaccination) + sum(vaccinate)
-
+    ages = t - SD.demography.birthDate
+    vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
+    SD.n_treatments[
+            str(t) + "," + str("Vaccination")
+        ] = vaccs
+        
+    n_people_by_age, _ = np.histogram(
+            ages,
+            bins=np.arange(0, params.maxHostAge + 1),
+        )
+    SD.n_treatments_population[
+            str(t) + "," + str("population")
+        ] = n_people_by_age
     return SD
 
 
@@ -573,7 +585,18 @@ def doVaccineAgeRange(
     SD.sv[vaccNow] = 1
     SD.vaccCount += sum(vaccNow)
     propVacc = sum(vaccNow)/sum(correctAges)
-
+    vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
+    SD.n_treatments[
+            str(t) + "," + str("Vaccination")
+        ] = vaccs
+        
+    n_people_by_age, _ = np.histogram(
+            ages,
+            bins=np.arange(0, params.maxHostAge + 1),
+        )
+    SD.n_treatments_population[
+            str(t) + "," + str("population")
+        ] = n_people_by_age
     return SD, propVacc
 
 
