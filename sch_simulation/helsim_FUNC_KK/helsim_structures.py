@@ -160,6 +160,8 @@ class SDEquilibrium:
     numSurvey: int
     n_treatments: Optional[dict[str, np.ndarray[np.float_]]]
     n_treatments_population: Optional[dict[str, np.ndarray[np.float_]]] 
+    n_surveys: Optional[dict[str, np.ndarray[np.float_]]] 
+    n_surveys_population: Optional[dict[str, np.ndarray[np.float_]]] 
     numSurveyTwo: Optional[int] = None
     vaccinatedFactors: Optional[ndarray] = None
     VaccTreatmentAgeGroupIndices: Optional[ndarray] = None

@@ -632,14 +632,15 @@ def conductKKSurvey(
     maxAge = params.maxSurveyAge
    
     # get Kato-Katz eggs for each individual
-    if nSamples < 1:
-        raise ValueError("nSamples < 1")
+    # if nSamples < 1:
+    #     raise ValueError("nSamples < 1")
     if surveyType == 'KK1':
         nSamples = 1
         eggCounts = KKsampleGammaGammaPois(
             SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
             )
     if surveyType == 'KK2':
+        nSamples = 2
         eggCounts = KKsampleGammaGammaPois(
             SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
             )
@@ -653,14 +654,32 @@ def conductKKSurvey(
     # get egg counts for those individuals
     surveyEggs = eggCounts[surveyAged]
 
-    # get sampled individuals
+    # get number of samples to take
     KKSampleSize = min(sampleSize, sum(surveyAged))
-
-    sampledEggs = np.random.choice(
-        a=np.array(surveyEggs), size=int(KKSampleSize), replace=False
-    )
+    # which people are in the required age range
+    true_indices = np.where(surveyAged)[0]
+    # sample from these people
+    sample_indices = np.random.choice(true_indices, size=KKSampleSize, replace=False)
+    # get the eggs for these sampled people
+    sampledEggs = eggCounts[sample_indices]
+    # get the number of people of each age that are surveyed
+    surveys, _ = np.histogram(ages[sample_indices], bins=np.arange(params.maxHostAge + 1))
+    # add this to the SD n surveys dict
+    SD.n_surveys[
+            str(t) + "," + str("surveys")
+        ] = surveys
+    # get the number of people in each age group
+    n_people_by_age, _ = np.histogram(
+            ages,
+            bins=np.arange(0, params.maxHostAge + 1),
+        )
+    # add this to the SD n survey population dict
+    SD.n_survey_population[
+            str(t) + "," + str("survey population")
+        ] = n_people_by_age
+    
     positivity = np.count_nonzero(sampledEggs) / KKSampleSize
-    return positivity 
+    return SD, positivity 
 
 
 
@@ -687,11 +706,31 @@ def conductPOCCCASurvey(
 
     # get sampled individuals
     POC_CCA_SampleSize = min(sampleSize, sum(surveyAged))
-
-    sampledPOC_CCA = np.random.choice(
-        a=np.array(surveyPOC_CCA), size=int(POC_CCA_SampleSize), replace=False
-    )
-    positivity = sum(sampledPOC_CCA > 0) / POC_CCA_SampleSize
+    # which people are in the required age range
+    true_indices = np.where(surveyAged)[0]
+    # sample from these people
+    sample_indices = np.random.choice(true_indices, size=POC_CCA_SampleSize, replace=False)
+    # get the eggs for these sampled people
+    samples = surveyPOC_CCA[sample_indices]
+    # get the number of people of each age that are surveyed
+    surveys, _ = np.histogram(ages[sample_indices], bins=np.arange(params.maxHostAge + 1))
+    # add this to the SD n surveys dict
+    SD.n_surveys[
+            str(t) + "," + str("surveys")
+        ] = surveys
+    # get the number of people in each age group
+    n_people_by_age, _ = np.histogram(
+            ages,
+            bins=np.arange(0, params.maxHostAge + 1),
+        )
+    # add this to the SD n survey population dict
+    SD.n_survey_population[
+            str(t) + "," + str("survey population")
+        ] = n_people_by_age
+    # sampledPOC_CCA = np.random.choice(
+    #     a=np.array(surveyPOC_CCA), size=int(POC_CCA_SampleSize), replace=False
+    # )
+    positivity = sum(samples > 0) / POC_CCA_SampleSize
     return positivity 
 
 
@@ -729,7 +768,7 @@ def conductSurvey(
 ) -> Tuple[SDEquilibrium, float]:
     # get min and max age for survey
     if (surveyType == 'KK1') | (surveyType == 'KK2'):
-        positivity = conductKKSurvey(SD, params, t, sampleSize, nSamples, surveyType)
+        SD, positivity = conductKKSurvey(SD, params, t, sampleSize, nSamples, surveyType)
     if surveyType == 'POC-CCA':
         positivity = conductPOCCCASurvey(SD, params, t, sampleSize)
     if surveyType == 'PCR':
