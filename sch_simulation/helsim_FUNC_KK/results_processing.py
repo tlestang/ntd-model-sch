@@ -10,6 +10,7 @@ from sch_simulation.helsim_FUNC_KK.helsim_structures import (
     Parameters,
     ProcResult,
     Result,
+    SDEquilibrium,
 )
 from sch_simulation.helsim_FUNC_KK.utils import getSetOfEggCounts, getSetOfEggCountsv2, POC_CCA_test, PCR_test
 
@@ -1090,9 +1091,7 @@ def outputNumberInAgeGroup(
         age_counts = []
         for j in range(int(params.maxHostAge)):
             age_counts.append(ages1.count(j))
-
-        if i == 0:
-            numEachAgeGroup = pd.DataFrame(
+            newrows = pd.DataFrame(
                 {
                     "Time": np.repeat(d.time, len(age_counts)),
                     "age_start": range(int(params.maxHostAge)),
@@ -1103,20 +1102,72 @@ def outputNumberInAgeGroup(
                     "draw_1": age_counts,
                 }
             )
+        if i == 0:
+            numEachAgeGroup = newrows
         else:
             assert numEachAgeGroup is not None
             numEachAgeGroup = numEachAgeGroup.append(
-                pd.DataFrame(
-                    {
-                        "Time": np.repeat(d.time, len(age_counts)),
-                        "age_start": range(int(params.maxHostAge)),
-                        "age_end": range(1, 1 + int(params.maxHostAge)),
-                        "intensity": np.repeat("All", len(age_counts)),
-                        "species": np.repeat(params.species, len(age_counts)),
-                        "measure": np.repeat("number", len(age_counts)),
-                        "draw_1": age_counts,
-                    }
-                )
+                newrows
             )
 
     return numEachAgeGroup
+
+
+def outputNumberSurveyedAgeGroup(
+    SD: SDEquilibrium, params: Parameters
+) -> pd.DataFrame:
+    assert params.maxHostAge is not None
+    d = None
+    count = 0
+    for key, value in SD.n_surveys.items():
+        t = math.floor(float(key.split(",")[0]))
+        measure = str(key.split(",")[1])
+        newrows = pd.DataFrame(
+                {
+                    "Time": np.repeat(t, len(value)),
+                    "age_start": range(int(params.maxHostAge)),
+                    "age_end": range(1, 1 + int(params.maxHostAge)),
+                    "intensity": np.repeat("All", len(value)),
+                    "species": np.repeat(params.species, len(value)),
+                    "measure": np.repeat(measure, len(value)),
+                    "draw_1": value,
+                }
+            )
+        if count == 0:
+            count = 1
+            d = newrows
+        else:
+            assert d is not None
+            d = pd.concat([d, newrows], ignore_index = True)
+
+    return d
+
+
+def outputNumberTreatmentAgeGroup(
+    SD: SDEquilibrium, params: Parameters
+) -> pd.DataFrame:
+    assert params.maxHostAge is not None
+    d = None
+    count = 0
+    for key, value in SD.n_treatments.items():
+        t = math.floor(float(key.split(",")[0]))
+        measure = str(key.split(",")[1])
+        newrows = pd.DataFrame(
+                {
+                    "Time": np.repeat(t, len(value)),
+                    "age_start": range(int(params.maxHostAge)),
+                    "age_end": range(1, 1 + int(params.maxHostAge)),
+                    "intensity": np.repeat("All", len(value)),
+                    "species": np.repeat(params.species, len(value)),
+                    "measure": np.repeat(measure, len(value)),
+                    "draw_1": value,
+                }
+            )
+        if count == 0:
+            count = 1
+            d = newrows
+        else:
+            assert d is not None
+            d = pd.concat([d, newrows], ignore_index = True)
+
+    return d

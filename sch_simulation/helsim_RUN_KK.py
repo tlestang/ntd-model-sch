@@ -431,7 +431,7 @@ def doRealizationSurveyCoveragePickle(
             if timeBarrier >= nextOutTime:
 
 
-                a, truePrev = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType)
+                simData, truePrev = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType)
                 wormsTotal = sum(simData.worms.total) 
                 if wormsTotal == 0:
                     trueElim = 1
@@ -848,6 +848,8 @@ def singleSimulationDALYCoverage(
     costData = getCostData(results, params)
     allTimes = np.unique(numAgeGroup.Time)
     trueCoverageData = getActualCoverages(results, params, allTimes)
+    surveyData = outputNumberSurveyedAgeGroup(SD, params)
+
     df1 = pd.concat([df, numAgeGroup], ignore_index=True)
     df1 = pd.concat([df1, costData], ignore_index=True)
     df1 = pd.concat([df1, trueCoverageData], ignore_index=True)

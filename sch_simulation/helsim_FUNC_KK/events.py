@@ -674,7 +674,7 @@ def conductKKSurvey(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     # add this to the SD n survey population dict
-    SD.n_survey_population[
+    SD.n_surveys_population[
             str(t) + "," + str("survey population")
         ] = n_people_by_age
     
@@ -724,14 +724,14 @@ def conductPOCCCASurvey(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     # add this to the SD n survey population dict
-    SD.n_survey_population[
+    SD.n_surveys_population[
             str(t) + "," + str("survey population")
         ] = n_people_by_age
     # sampledPOC_CCA = np.random.choice(
     #     a=np.array(surveyPOC_CCA), size=int(POC_CCA_SampleSize), replace=False
     # )
     positivity = sum(samples > 0) / POC_CCA_SampleSize
-    return positivity 
+    return SD, positivity 
 
 
 def conductPCRSurvey(
@@ -770,7 +770,7 @@ def conductSurvey(
     if (surveyType == 'KK1') | (surveyType == 'KK2'):
         SD, positivity = conductKKSurvey(SD, params, t, sampleSize, nSamples, surveyType)
     if surveyType == 'POC-CCA':
-        positivity = conductPOCCCASurvey(SD, params, t, sampleSize)
+        SD, positivity = conductPOCCCASurvey(SD, params, t, sampleSize)
     if surveyType == 'PCR':
         positivity = conductPCRSurvey(SD, params, t, sampleSize)
     SD.numSurvey += 1
