@@ -1018,8 +1018,7 @@ def getPrevalenceDALYsAll(
 
         else:
             assert df is not None
-            df = df.append(
-                pd.DataFrame(
+            newrows = pd.DataFrame(
                     {
                         "Time": hostData[0].timePoints,
                         "age_start": np.repeat(age_start, len(low_prevalence)),
@@ -1030,10 +1029,10 @@ def getPrevalenceDALYsAll(
                         "draw_1": low_prevalence,
                     }
                 )
-            )
+            df = pd.concat([df, newrows], ignore_index = True)
+            
 
-        df = df.append(
-            pd.DataFrame(
+        newrows = pd.DataFrame(
                 {
                     "Time": hostData[0].timePoints,
                     "age_start": np.repeat(age_start, len(low_prevalence)),
@@ -1044,10 +1043,9 @@ def getPrevalenceDALYsAll(
                     "draw_1": moderate_prevalence,
                 }
             )
-        )
+        df = pd.concat([df, newrows], ignore_index = True)
 
-        df = df.append(
-            pd.DataFrame(
+        newrows = pd.DataFrame(
                 {
                     "Time": hostData[0].timePoints,
                     "age_start": np.repeat(age_start, len(low_prevalence)),
@@ -1058,10 +1056,9 @@ def getPrevalenceDALYsAll(
                     "draw_1": heavy_prevalence,
                 }
             )
-        )
+        df = pd.concat([df, newrows], ignore_index = True)
         
-        df = df.append(
-            pd.DataFrame(
+        newrows = pd.DataFrame(
                 {
                     "Time": hostData[0].timePoints,
                     "age_start": np.repeat(age_start, len(low_prevalence)),
@@ -1072,7 +1069,7 @@ def getPrevalenceDALYsAll(
                     "draw_1": meanEggs,
                 }
             )
-        )
+        df = pd.concat([df, newrows], ignore_index = True)
 
      
 
@@ -1091,7 +1088,7 @@ def outputNumberInAgeGroup(
         age_counts = []
         for j in range(int(params.maxHostAge)):
             age_counts.append(ages1.count(j))
-            newrows = pd.DataFrame(
+        newrows = pd.DataFrame(
                 {
                     "Time": np.repeat(d.time, len(age_counts)),
                     "age_start": range(int(params.maxHostAge)),
@@ -1106,9 +1103,8 @@ def outputNumberInAgeGroup(
             numEachAgeGroup = newrows
         else:
             assert numEachAgeGroup is not None
-            numEachAgeGroup = numEachAgeGroup.append(
-                newrows
-            )
+            
+            numEachAgeGroup = pd.concat([numEachAgeGroup, newrows], ignore_index = True)
 
     return numEachAgeGroup
 
@@ -1139,8 +1135,25 @@ def outputNumberSurveyedAgeGroup(
         else:
             assert d is not None
             d = pd.concat([d, newrows], ignore_index = True)
+        
+        v2 = value/SD.n_surveys_population[key]
+        newrows2 = pd.DataFrame(
+                {
+                    "Time": np.repeat(t, len(value)),
+                    "age_start": range(int(params.maxHostAge)),
+                    "age_end": range(1, 1 + int(params.maxHostAge)),
+                    "intensity": np.repeat("All", len(value)),
+                    "species": np.repeat(params.species, len(value)),
+                    "measure": np.repeat("survey coverage", len(value)),
+                    "draw_1": v2,
+                }
+            )
+        
+        d = pd.concat([d, newrows2], ignore_index = True)
+
 
     return d
+
 
 
 def outputNumberTreatmentAgeGroup(
@@ -1169,5 +1182,21 @@ def outputNumberTreatmentAgeGroup(
         else:
             assert d is not None
             d = pd.concat([d, newrows], ignore_index = True)
+        
+        v2 = value/SD.n_treatments_population[key]
+        m1 = measure + " coverage"
+        newrows2 = pd.DataFrame(
+                {
+                    "Time": np.repeat(t, len(value)),
+                    "age_start": range(int(params.maxHostAge)),
+                    "age_end": range(1, 1 + int(params.maxHostAge)),
+                    "intensity": np.repeat("All", len(value)),
+                    "species": np.repeat(params.species, len(value)),
+                    "measure": np.repeat(m1, len(value)),
+                    "draw_1": v2,
+                }
+            )
+        
+        d = pd.concat([d, newrows2], ignore_index = True)
 
     return d

@@ -33,6 +33,8 @@ from sch_simulation.helsim_FUNC_KK import (
     getPsi,
     nextMDAVaccInfo,
     outputNumberInAgeGroup,
+    outputNumberSurveyedAgeGroup,
+    outputNumberTreatmentAgeGroup,
     overWritePostMDA,
     overWritePostVacc,
     overWritePostVecControl,
@@ -431,7 +433,7 @@ def doRealizationSurveyCoveragePickle(
             if timeBarrier >= nextOutTime:
 
 
-                simData, truePrev = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType)
+                simData, truePrev = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType, False)
                 wormsTotal = sum(simData.worms.total) 
                 if wormsTotal == 0:
                     trueElim = 1
@@ -473,7 +475,7 @@ def doRealizationSurveyCoveragePickle(
             if timeBarrier >= tSurvey:
                 #print("Survey, time = ", t)
                 simData, prevOne = conductSurvey(
-                    simData, params, t, params.sampleSizeOne, params.nSamples, surveyType
+                    simData, params, t, params.sampleSizeOne, params.nSamples, surveyType, True
                 )
                 nSurvey += 1
                 
@@ -622,7 +624,7 @@ def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes
         a1 = p[i].Age[0]
         a2 = p[i].Age[1]
         if i == 0:
-            df1 = pd.DataFrame(
+            newrows = pd.DataFrame(
                         {
                             "Time": allTimes,
                             "age_start": np.repeat(a1, len(allTimes)),
@@ -633,9 +635,10 @@ def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes
                             "draw_1": np.repeat(0, len(allTimes)),
                         }
                     )
+            df1 = newrows
                                                  
         else:
-            df1 = df1.append(pd.DataFrame(
+            newrows = pd.DataFrame(
                         {
                             "Time": allTimes,
                             "age_start": np.repeat(a1, len(allTimes)),
@@ -645,9 +648,10 @@ def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes
                             "measure": np.repeat("Chemo1Cov", len(allTimes)),
                             "draw_1": np.repeat(0, len(allTimes)),
                         }
-                    ))
+                    )
+            df1 = pd.concat([df1, newrows], ignore_index = True)
             
-        df1 = df1.append(pd.DataFrame(
+        newrows = pd.DataFrame(
                         {
                             "Time": allTimes,
                             "age_start": np.repeat(a1, len(allTimes)),
@@ -657,14 +661,15 @@ def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes
                             "measure": np.repeat("Chemo2Cov", len(allTimes)),
                             "draw_1": np.repeat(0, len(allTimes)),
                         }
-                    ))
+                    )
+        df1 = pd.concat([df1, newrows], ignore_index = True)
     p = copy.deepcopy(params.Vacc)
     for i in range(len(p)):
         a1 = p[i].Age[0]
         a2 = p[i].Age[1]
         
             
-        df1 = df1.append(pd.DataFrame(
+        newrows = pd.DataFrame(
                         {
                             "Time": allTimes,
                             "age_start": np.repeat(a1, len(allTimes)),
@@ -674,7 +679,8 @@ def getActualCoverages(results: List[List[Result]], params: Parameters, allTimes
                             "measure": np.repeat("VaccCov", len(allTimes)),
                             "draw_1": np.repeat(0, len(allTimes)),
                         }
-                    ))
+                    )
+        df1 = pd.concat([df1, newrows], ignore_index = True)
 
         
     pp = len(results[0])
@@ -715,7 +721,7 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
     for i, list_res in enumerate(results):
         df = pd.DataFrame(list_res)
         if i == 0:
-            df1 = pd.DataFrame(
+            newrows = pd.DataFrame(
                 {
                     "Time": df["time"],
                     "age_start": np.repeat("None", df.shape[0]),
@@ -724,12 +730,11 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
                     "species": np.repeat(params.species, df.shape[0]),
                     "measure": np.repeat("nChemo1", df.shape[0]),
                     "draw_1": df["nChemo1"],
-                }
-            )
+                })
+            df1 = newrows
         else:
             assert df1 is not None
-            df1 = df1.append(
-                pd.DataFrame(
+            newrows = pd.DataFrame(
                     {
                         "Time": df["time"],
                         "age_start": np.repeat("None", df.shape[0]),
@@ -740,9 +745,9 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
                         "draw_1": df["nChemo"],
                     }
                 )
-            )
-        df1 = df1.append(
-            pd.DataFrame(
+            
+            df1 = pd.concat([df1, newrows], ignore_index = True)
+        newrows = pd.DataFrame(
                 {
                     "Time": df["time"],
                     "age_start": np.repeat("None", df.shape[0]),
@@ -753,9 +758,9 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
                     "draw_1": df["nChemo2"],
                 }
             )
-        )
-        df1 = df1.append(
-            pd.DataFrame(
+        df1 = pd.concat([df1, newrows], ignore_index = True)
+
+        newrows = pd.DataFrame(
                 {
                     "Time": df["time"],
                     "age_start": np.repeat("None", df.shape[0]),
@@ -766,9 +771,9 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
                     "draw_1": df["nVacc"],
                 }
             )
-        )
-        df1 = df1.append(
-            pd.DataFrame(
+        df1 = pd.concat([df1, newrows], ignore_index = True)
+
+        newrows =  pd.DataFrame(
                 {
                     "Time": df["time"],
                     "age_start": np.repeat("None", df.shape[0]),
@@ -779,9 +784,9 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
                     "draw_1": df["nSurvey"],
                 }
             )
-        )
-        df1 = df1.append(
-            pd.DataFrame(
+        df1 = pd.concat([df1, newrows], ignore_index = True)
+
+        newrows = pd.DataFrame(
                 {
                     "Time": df["time"],
                     "age_start": np.repeat("None", df.shape[0]),
@@ -792,9 +797,8 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
                     "draw_1": df["surveyPass"],
                 }
             )
-        )
-        df1 = df1.append(
-            pd.DataFrame(
+        df1 = pd.concat([df1, newrows], ignore_index = True)
+        newrows = pd.DataFrame(
                 {
                     "Time": df["time"],
                     "age_start": np.repeat("None", df.shape[0]),
@@ -805,7 +809,7 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
                     "draw_1": df["elimination"],
                 }
             )
-        )
+        df1 = pd.concat([df1, newrows], ignore_index = True)
     return df1
 
 
@@ -849,10 +853,13 @@ def singleSimulationDALYCoverage(
     allTimes = np.unique(numAgeGroup.Time)
     trueCoverageData = getActualCoverages(results, params, allTimes)
     surveyData = outputNumberSurveyedAgeGroup(SD, params)
+    treatmentData = outputNumberTreatmentAgeGroup(SD, params)
 
     df1 = pd.concat([df, numAgeGroup], ignore_index=True)
     df1 = pd.concat([df1, costData], ignore_index=True)
     df1 = pd.concat([df1, trueCoverageData], ignore_index=True)
+    df1 = pd.concat([df1, surveyData], ignore_index=True)
+    df1 = pd.concat([df1, treatmentData], ignore_index=True)
     df1 = df1.reset_index()
     df1['draw_1'][np.where(pd.isna(df1['draw_1']))[0]] = -1
     df1 = df1[['Time','age_start','age_end', 'intensity', 'species', 'measure', 'draw_1']]

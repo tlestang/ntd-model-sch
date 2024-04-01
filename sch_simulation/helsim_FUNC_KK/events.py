@@ -379,7 +379,8 @@ def doChemoAgeRange(
     SD: SDEquilibrium
         dataclass containing the updated equilibrium parameter values;
     """
-    
+
+    mda_t = t + np.random.rand() * 0.0001
     numChemo1 = 0
     numChemo2 = 0
     # decide which individuals are treated, treatment is random
@@ -452,8 +453,15 @@ def doChemoAgeRange(
         SD.nChemo1 += len(k)
         numChemo1 += len(k)
         SD.n_treatments[
-            str(t) + "," + str("MDA drug 1")
+            str(mda_t) + "," + str("MDA drug 1")
         ] = counts1
+        n_people_by_age, _ = np.histogram(
+            ages,
+            bins=np.arange(0, params.maxHostAge + 1),
+        )
+        SD.n_treatments_population[
+            str(mda_t) + "," + str("MDA drug 1")
+        ] = n_people_by_age
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
         dEff = params.DrugEfficacy2
@@ -479,16 +487,19 @@ def doChemoAgeRange(
         SD.nChemo2 += len(k)
         numChemo2 += len(k)
         SD.n_treatments[
-            str(t) + "," + str("MDA drug 2")
+            str(mda_t) + "," + str("MDA drug 2")
+            
         ] = counts2
 
-    n_people_by_age, _ = np.histogram(
+        n_people_by_age, _ = np.histogram(
             ages,
             bins=np.arange(0, params.maxHostAge + 1),
         )
-    SD.n_treatments_population[
-            str(t) + "," + str("population")
+        SD.n_treatments_population[
+            str(mda_t) + "," + str("MDA drug 2")
         ] = n_people_by_age
+
+    
     propTreated1 = numChemo1 / sum(correctAges)
     propTreated2 = numChemo2 / sum(correctAges)
     SD.ageAtChemo.append(t - SD.demography.birthDate)
@@ -517,10 +528,11 @@ def doVaccine(
     SD: SDEquilibrium
         dataclass containing the updated equilibrium parameter values;
     """
+    vacc_t = t + np.random.rand() * 0.0001
     assert SD.VaccTreatmentAgeGroupIndices is not None
     temp = ((SD.VaccTreatmentAgeGroupIndices + 1) // 2) - 1
     vaccinate = np.random.uniform(low=0, high=1, size=params.N) < VaccCoverage[temp]
-
+    
     indicesToVaccinate = []
     for i in range(len(params.VaccTreatmentBreaks)):
         indicesToVaccinate.append(1 + i * 2)
@@ -530,10 +542,11 @@ def doVaccine(
     vaccNow = np.logical_and(Hosts4Vaccination, vaccinate)
     SD.sv[vaccNow] = 1
     SD.vaccCount += sum(Hosts4Vaccination) + sum(vaccinate)
+    # get age of each individual
     ages = t - SD.demography.birthDate
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
     SD.n_treatments[
-            str(t) + "," + str("Vaccination")
+            str(vacc_t) + "," + str("Vaccination")
         ] = vaccs
         
     n_people_by_age, _ = np.histogram(
@@ -541,7 +554,7 @@ def doVaccine(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     SD.n_treatments_population[
-            str(t) + "," + str("population")
+            str(vacc_t) + "," + str("Vaccination")
         ] = n_people_by_age
     return SD
 
@@ -575,7 +588,7 @@ def doVaccineAgeRange(
     SD: SDEquilibrium
         dataclass containing the updated equilibrium parameter values;
     """
-
+    vacc_t = t + np.random.rand() * 0.0001
     vaccinate = np.random.uniform(low=0, high=1, size=params.N) < coverage
     ages = t - SD.demography.birthDate
     correctAges = np.logical_and(ages <= maxAge, ages >= minAge)
@@ -587,7 +600,7 @@ def doVaccineAgeRange(
     propVacc = sum(vaccNow)/sum(correctAges)
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
     SD.n_treatments[
-            str(t) + "," + str("Vaccination")
+            str(vacc_t) + "," + str("Vaccination")
         ] = vaccs
         
     n_people_by_age, _ = np.histogram(
@@ -595,7 +608,7 @@ def doVaccineAgeRange(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     SD.n_treatments_population[
-            str(t) + "," + str("population")
+            str(vacc_t) + "," + str("Vaccination")
         ] = n_people_by_age
     return SD, propVacc
 
@@ -625,7 +638,7 @@ def doVectorControl(
     return SD
 
 def conductKKSurvey(
-        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str
+        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str, writeSurvey: bool,
 ) -> Tuple[SDEquilibrium, float]:
     
     minAge = params.minSurveyAge
@@ -664,20 +677,21 @@ def conductKKSurvey(
     sampledEggs = eggCounts[sample_indices]
     # get the number of people of each age that are surveyed
     surveys, _ = np.histogram(ages[sample_indices], bins=np.arange(params.maxHostAge + 1))
-    # add this to the SD n surveys dict
-    SD.n_surveys[
-            str(t) + "," + str("surveys")
-        ] = surveys
-    # get the number of people in each age group
-    n_people_by_age, _ = np.histogram(
-            ages,
-            bins=np.arange(0, params.maxHostAge + 1),
-        )
-    # add this to the SD n survey population dict
-    SD.n_surveys_population[
-            str(t) + "," + str("survey population")
-        ] = n_people_by_age
-    
+    if writeSurvey == True:
+        # add this to the SD n surveys dict
+        SD.n_surveys[
+                str(t) + "," + str("surveys")
+            ] = surveys
+        # get the number of people in each age group
+        n_people_by_age, _ = np.histogram(
+                ages,
+                bins=np.arange(0, params.maxHostAge + 1),
+            )
+        # add this to the SD n survey population dict
+        SD.n_surveys_population[
+                str(t) + "," + str("surveys")
+            ] = n_people_by_age
+        
     positivity = np.count_nonzero(sampledEggs) / KKSampleSize
     return SD, positivity 
 
@@ -685,7 +699,7 @@ def conductKKSurvey(
 
 
 def conductPOCCCASurvey(
-        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int
+        SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int,  writeSurvey: bool,
 ) -> Tuple[SDEquilibrium, float]:
     minAge = params.minSurveyAge
     maxAge = params.maxSurveyAge
@@ -714,21 +728,22 @@ def conductPOCCCASurvey(
     samples = surveyPOC_CCA[sample_indices]
     # get the number of people of each age that are surveyed
     surveys, _ = np.histogram(ages[sample_indices], bins=np.arange(params.maxHostAge + 1))
+    if writeSurvey == True:
     # add this to the SD n surveys dict
-    SD.n_surveys[
-            str(t) + "," + str("surveys")
-        ] = surveys
-    # get the number of people in each age group
-    n_people_by_age, _ = np.histogram(
-            ages,
-            bins=np.arange(0, params.maxHostAge + 1),
-        )
-    # add this to the SD n survey population dict
-    SD.n_surveys_population[
-            str(t) + "," + str("survey population")
-        ] = n_people_by_age
-    # sampledPOC_CCA = np.random.choice(
-    #     a=np.array(surveyPOC_CCA), size=int(POC_CCA_SampleSize), replace=False
+        SD.n_surveys[
+                str(t) + "," + str("surveys")
+            ] = surveys
+        # get the number of people in each age group
+        n_people_by_age, _ = np.histogram(
+                ages,
+                bins=np.arange(0, params.maxHostAge + 1),
+            )
+        # add this to the SD n survey population dict
+        SD.n_surveys_population[
+                str(t) + "," + str("surveys")
+            ] = n_people_by_age
+        # sampledPOC_CCA = np.random.choice(
+        #     a=np.array(surveyPOC_CCA), size=int(POC_CCA_SampleSize), replace=False
     # )
     positivity = sum(samples > 0) / POC_CCA_SampleSize
     return SD, positivity 
@@ -764,13 +779,13 @@ def conductPCRSurvey(
     return positivity 
 
 def conductSurvey(
-    SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str
+    SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str, writeSurvey: bool
 ) -> Tuple[SDEquilibrium, float]:
     # get min and max age for survey
     if (surveyType == 'KK1') | (surveyType == 'KK2'):
-        SD, positivity = conductKKSurvey(SD, params, t, sampleSize, nSamples, surveyType)
+        SD, positivity = conductKKSurvey(SD, params, t, sampleSize, nSamples, surveyType, writeSurvey)
     if surveyType == 'POC-CCA':
-        SD, positivity = conductPOCCCASurvey(SD, params, t, sampleSize)
+        SD, positivity = conductPOCCCASurvey(SD, params, t, sampleSize, writeSurvey)
     if surveyType == 'PCR':
         positivity = conductPCRSurvey(SD, params, t, sampleSize)
     SD.numSurvey += 1

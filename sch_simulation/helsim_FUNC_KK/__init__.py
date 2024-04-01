@@ -39,6 +39,8 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
     getPrevalence,
     getPrevalenceDALYsAll,
     outputNumberInAgeGroup,
+    outputNumberSurveyedAgeGroup,
+    outputNumberTreatmentAgeGroup
 )
 from sch_simulation.helsim_FUNC_KK.utils import (
     calcRates2, 
