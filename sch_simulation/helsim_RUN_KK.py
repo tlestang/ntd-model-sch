@@ -486,14 +486,15 @@ def doRealizationSurveyCoveragePickle(
                     assert params.MDA is not None
                     for mda in params.MDA:
                         k = np.where(mda.Years > t + 1)
-                        mda.Years[k] = np.array([maxTime + 10])
+                        mda.Coverage[k] = np.array([0])
                     #assert params.Vacc is not None
                     #for vacc in params.Vacc:
                     #    vacc.Years = np.array([maxTime + 10])
                         
-                    tSurvey = maxTime + 10
-                else:
-                    tSurvey = t + params.timeToNextSurvey
+                    #tSurvey = maxTime + 10
+                    params.sampleSizeOne = 0
+                #else:
+                tSurvey = t + params.timeToNextSurvey
 
                 (
                     chemoTiming,    

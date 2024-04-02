@@ -782,13 +782,30 @@ def conductSurvey(
     SD: SDEquilibrium, params: Parameters, t: float, sampleSize: int, nSamples: int, surveyType: str, writeSurvey: bool
 ) -> Tuple[SDEquilibrium, float]:
     # get min and max age for survey
-    if (surveyType == 'KK1') | (surveyType == 'KK2'):
-        SD, positivity = conductKKSurvey(SD, params, t, sampleSize, nSamples, surveyType, writeSurvey)
-    if surveyType == 'POC-CCA':
-        SD, positivity = conductPOCCCASurvey(SD, params, t, sampleSize, writeSurvey)
-    if surveyType == 'PCR':
-        positivity = conductPCRSurvey(SD, params, t, sampleSize)
-    SD.numSurvey += 1
+    if sampleSize > 0:
+        if (surveyType == 'KK1') | (surveyType == 'KK2'):
+            SD, positivity = conductKKSurvey(SD, params, t, sampleSize, nSamples, surveyType, writeSurvey)
+        if surveyType == 'POC-CCA':
+            SD, positivity = conductPOCCCASurvey(SD, params, t, sampleSize, writeSurvey)
+        if surveyType == 'PCR':
+            positivity = conductPCRSurvey(SD, params, t, sampleSize)
+        SD.numSurvey += 1
+    else:
+        ages = -(SD.demography.birthDate - t)
+        
+        # get the number of people in each age group
+        n_people_by_age, _ = np.histogram(
+                ages,
+                bins=np.arange(0, params.maxHostAge + 1),
+            )
+        # add this to the SD n survey population dict
+        SD.n_surveys_population[
+                str(t) + "," + str("surveys")
+            ] = n_people_by_age
+        SD.n_surveys[
+                str(t) + "," + str("surveys")
+            ] = np.zeros(len(n_people_by_age))
+        positivity = 0
     # return the prevalence
     return SD, positivity
 
