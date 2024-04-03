@@ -180,6 +180,7 @@ class Result:
     freeLiving: float
     adherenceFactors: ndarray
     compliers: ndarray
+    prevalence: float
     si: NDArray[np.float_]
     sv: ndarray
     contactAgeGroupIndices: ndarray
@@ -197,6 +198,7 @@ class Result:
     
     
     
+    
 
 @dataclass
 class ProcResult:
@@ -205,4 +207,5 @@ class ProcResult:
     femaleWormsOverTime: ndarray
     ages: ndarray
     timePoints: ndarray
+    prevalence: ndarray
     

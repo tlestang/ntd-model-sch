@@ -647,18 +647,20 @@ def conductKKSurvey(
     # get Kato-Katz eggs for each individual
     # if nSamples < 1:
     #     raise ValueError("nSamples < 1")
+
+
+
     if surveyType == 'KK1':
         nSamples = 1
-        eggCounts = KKsampleGammaGammaPois(
-            SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
-            )
-    if surveyType == 'KK2':
+    else: 
         nSamples = 2
-        eggCounts = KKsampleGammaGammaPois(
-            SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
-            )
-            
-        eggCounts = eggCounts / nSamples
+        # eggCounts = KKsampleGammaGammaPois(
+        #     SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples
+        #     )
+    eggCounts = getSetOfEggCounts(SD.worms.total, SD.worms.female, SD.sv, params,  params.Unfertilized, nSamples, surveyType)
+    
+        
+    eggCounts = eggCounts / nSamples
 
     # get individuals in chosen survey age group
     ages = -(SD.demography.birthDate - t)

@@ -38,6 +38,8 @@ from sch_simulation.helsim_FUNC_KK import (
     overWritePostMDA,
     overWritePostVacc,
     overWritePostVecControl,
+    getSetOfEggCounts,
+    getPrevalenceWholePop,
     parse_coverage_input,
     readCoverageFile,
     readParams,
@@ -433,14 +435,14 @@ def doRealizationSurveyCoveragePickle(
             if timeBarrier >= nextOutTime:
 
 
-                simData, truePrev = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType, False)
+                simData, _ = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType, False)
                 wormsTotal = sum(simData.worms.total) 
                 if wormsTotal == 0:
                     trueElim = 1
                 else:
                     trueElim = 0
-
-                
+                eggCounts = getSetOfEggCounts(simData.worms.total, simData.worms.female, simData.sv, params,  params.Unfertilized, params.nSamples, surveyType)
+                prev = len(np.where(eggCounts > 0)[0])/len(eggCounts)
                 results.append(
                     Result(
                         iteration=1,
@@ -462,7 +464,8 @@ def doRealizationSurveyCoveragePickle(
                         elimination=trueElim,
                         propChemo1=propChemo1,
                         propChemo2=propChemo2,
-                        propVacc = propVacc
+                        propVacc = propVacc,
+                        prevalence = prev
                     )
                 )
                 prevNChemo1 = simData.nChemo1 
@@ -848,7 +851,7 @@ def singleSimulationDALYCoverage(
         output, params, numReps, params.Unfertilized,  'KK1', 1
     )
          
-     
+    wholePopPrev = getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
     numAgeGroup = outputNumberInAgeGroup(results, params)
     costData = getCostData(results, params)
     allTimes = np.unique(numAgeGroup.Time)
@@ -856,7 +859,8 @@ def singleSimulationDALYCoverage(
     surveyData = outputNumberSurveyedAgeGroup(SD, params)
     treatmentData = outputNumberTreatmentAgeGroup(SD, params)
 
-    df1 = pd.concat([df, numAgeGroup], ignore_index=True)
+    df1 = pd.concat([wholePopPrev, df], ignore_index= True)
+    df1 = pd.concat([df1, numAgeGroup], ignore_index=True)
     df1 = pd.concat([df1, costData], ignore_index=True)
     df1 = pd.concat([df1, trueCoverageData], ignore_index=True)
     df1 = pd.concat([df1, surveyData], ignore_index=True)

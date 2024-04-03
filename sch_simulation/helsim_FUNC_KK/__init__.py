@@ -38,6 +38,7 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
     extractHostData,
     getPrevalence,
     getPrevalenceDALYsAll,
+    getPrevalenceWholePop,
     outputNumberInAgeGroup,
     outputNumberSurveyedAgeGroup,
     outputNumberTreatmentAgeGroup
@@ -47,6 +48,7 @@ from sch_simulation.helsim_FUNC_KK.utils import (
     getPsi, 
     KKsampleGammaGammaPois,
     POC_CCA_test,
-    PCR_test
+    PCR_test,
+    getSetOfEggCounts
 )
 

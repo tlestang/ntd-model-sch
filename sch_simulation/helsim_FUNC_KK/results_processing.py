@@ -61,6 +61,9 @@ def extractHostData(results: List[List[Result]]) -> List[ProcResult]:
                 timePoints=np.array(
                     [np.array(result[i].time) for i in range(len(result) )]
                 ),
+                prevalence = np.array(
+                    [np.array(result[i].prevalence) for i in range(len(result) )]
+                ),
                 # attendanceRecord=result[-1]['attendanceRecord'],
                 # ageAtChemo=result[-1]['ageAtChemo'],
                 # finalFreeLiving=result[-2]['freeLiving'],
@@ -1071,6 +1074,67 @@ def getPrevalenceDALYsAll(
             )
         df = pd.concat([df, newrows], ignore_index = True)
 
+     
+
+    return df
+
+
+def getPrevalenceWholePop(
+    hostData: List[ProcResult],
+    params: Parameters,
+    numReps: int,
+    Unfertilized: bool,
+    surveyType: str,
+    nSamples: int = 2,
+    villageSampleSize: int = 100,
+) -> pd.DataFrame:
+    """
+    This function provides the average SAC and adult prevalence at each time point,
+    where the average is calculated across all iterations.
+    Parameters
+    ----------
+    hostData: List[ProcResult]
+        processed simulation output;
+    params: Parameters
+        dataclass containing the parameter names and values;
+    numReps: int
+        number of simulations;
+    nSamples: int
+        number of samples;
+    Unfertilized: bool
+        True / False flag for whether unfertilized worms generate eggs;
+    villageSampleSize: int;
+        village sample size fraction;
+    Returns
+    -------
+    data frame with SAC and adult prevalence at each time point;
+    """
+
+
+    df = None
+    prevalence, _, _, _, _ = getBurdens(
+                hostData,
+                params,
+                numReps,
+                np.array([0, int(params.maxHostAge) + 1]),
+                Unfertilized,
+                surveyType, 
+                nSamples=nSamples,
+                villageSampleSize=100,
+            )
+
+
+    df = pd.DataFrame(
+                {
+                    "Time": hostData[0].timePoints,
+                    "age_start": np.repeat("None", len(prevalence)),
+                    "age_end": np.repeat("None", len(prevalence)),
+                    "intensity": np.repeat("All", len(prevalence)),
+                    "species": np.repeat(params.species, len(prevalence)),
+                    "measure": np.repeat("Estimated population prevalence", len(prevalence)),
+                    "draw_1": prevalence,
+                }
+            )
      
 
     return df
