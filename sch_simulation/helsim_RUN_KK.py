@@ -480,7 +480,8 @@ def doRealizationSurveyCoveragePickle(
                 simData, prevOne = conductSurvey(
                     simData, params, t, params.sampleSizeOne, params.nSamples, surveyType, True
                 )
-                nSurvey += 1
+                if params.sampleSizeOne > 0:
+                    nSurvey += 1
                 
                 # if we pass the survey, then don't continue with MDA
                 if prevOne < params.surveyThreshold:
