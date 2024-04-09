@@ -34,11 +34,13 @@ class Coverage:
     Age: ndarray
     Years: ndarray  # 1-D array lower/upper
     Coverage: ndarray  # 1-D array
+    Label: ndarray  # 1-D array
 
 @dataclass
 class VecControl:
     Years: ndarray  # 1-D array lower/upper
     Coverage: ndarray  # 1-D array
+    
 
 @dataclass
 class Parameters:
@@ -158,6 +160,7 @@ class SDEquilibrium:
     adherenceFactorAtChemo: List
     vaccCount: int
     numSurvey: int
+    id: ndarray
     n_treatments: Optional[dict[str, np.ndarray[np.float_]]]
     n_treatments_population: Optional[dict[str, np.ndarray[np.float_]]] 
     n_surveys: Optional[dict[str, np.ndarray[np.float_]]] 
@@ -184,6 +187,9 @@ class Result:
     si: NDArray[np.float_]
     sv: ndarray
     contactAgeGroupIndices: ndarray
+    id: ndarray
+    incidenceAges: Optional[ndarray] = None
+    eggCounts: Optional[ndarray] = None
     nVacc: Optional[int] = None
     nChemo: Optional[int] = None
     nChemo1: Optional[int] = None

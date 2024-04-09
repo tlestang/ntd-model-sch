@@ -396,6 +396,7 @@ def readCoverageFile(
             Age=coverage["MDA_age" + str(i + 1)],
             Years=coverage["MDA_Years" + str(i + 1)] - coverage["start_year"],
             Coverage=coverage["MDA_Coverage" + str(i + 1)],
+            Label=i + 1,
         )
         mda_covs.append(cov)
     params.MDA = mda_covs
@@ -405,6 +406,7 @@ def readCoverageFile(
             Age=coverage["Vacc_age" + str(i + 1)],
             Years=coverage["Vacc_Years" + str(i + 1)] - coverage["start_year"],
             Coverage=coverage["Vacc_Coverage" + str(i + 1)],
+            Label=i + 1,
         )
         vacc_covs.append(cov)
     params.Vacc = vacc_covs

@@ -436,13 +436,28 @@ def doRealizationSurveyCoveragePickle(
 
 
                 simData, _ = conductSurvey(simData, params, t, params.N, params.nSamples, surveyType, False)
+                SD = copy.deepcopy(simData)
                 wormsTotal = sum(simData.worms.total) 
                 if wormsTotal == 0:
                     trueElim = 1
                 else:
                     trueElim = 0
-                eggCounts = getSetOfEggCounts(simData.worms.total, simData.worms.female, simData.sv, params,  params.Unfertilized, params.nSamples, surveyType)
+                eggCounts = getSetOfEggCounts(SD.worms.total, SD.worms.female, SD.sv, params,  
+                                              params.Unfertilized, params.nSamples, surveyType)
+                # get approximate prevalence of the population
                 prev = len(np.where(eggCounts > 0)[0])/len(eggCounts)
+                if len(results) > 0:
+                    l = len(results)
+                    # get ids of people who had 0 eggs last time step
+                    previousZeros = results[l-1].id[np.where(results[l-1].eggCounts == 0)]
+                    # get ids of people who have non-zero eggs this time step
+                    nonZeros = SD.id[np.where(eggCounts > 0)]
+                    # get the intersection of these ids, as this is the incidence in this timestep
+                    pp = np.intersect1d(nonZeros, previousZeros)
+                    # get the ages of these people
+                    incidenceAges = t - SD.demography.birthDate[np.where(np.isin(SD.id, pp))]
+                else:
+                    incidenceAges = []
                 results.append(
                     Result(
                         iteration=1,
@@ -465,7 +480,10 @@ def doRealizationSurveyCoveragePickle(
                         propChemo1=propChemo1,
                         propChemo2=propChemo2,
                         propVacc = propVacc,
-                        prevalence = prev
+                        prevalence = prev,
+                        id = simData.id,
+                        eggCounts = eggCounts,
+                        incidenceAges = incidenceAges
                     )
                 )
                 prevNChemo1 = simData.nChemo1 
@@ -524,7 +542,8 @@ def doRealizationSurveyCoveragePickle(
                     cov = params.MDA[k].Coverage[index]
                     minAge = params.MDA[k].Age[0]
                     maxAge = params.MDA[k].Age[1]
-                    simData, propTreated1, propTreated2 = doChemoAgeRange(params, simData, t, minAge, maxAge, cov)
+                    label = params.MDA[k].Label
+                    simData, propTreated1, propTreated2 = doChemoAgeRange(params, simData, t, minAge, maxAge, cov, label)
                     if propTreated1 > 0:
                         propChemo1.append([t, minAge, maxAge, "C1", round(propTreated1,4)])
                     if propTreated2 > 0:
@@ -562,7 +581,8 @@ def doRealizationSurveyCoveragePickle(
                     cov = params.Vacc[k].Coverage[index]
                     minAge = params.Vacc[k].Age[0]
                     maxAge = params.Vacc[k].Age[1]
-                    simData, pVacc = doVaccineAgeRange(params, simData, t, minAge, maxAge, cov)
+                    label = params.Vacc[k].Label
+                    simData, pVacc = doVaccineAgeRange(params, simData, t, minAge, maxAge, cov, label)
                     propVacc.append([t, minAge, maxAge, round(pVacc,4)])
                     
                 nVacc += 1
@@ -973,6 +993,7 @@ def multiple_simulations(
         birthDate=raw_data["demography"]["birthDate"],
         deathDate=raw_data["demography"]["deathDate"],
     )
+    ids = np.arange(params.N)
     simData = SDEquilibrium(
         si=raw_data["si"],
         worms=worms,
@@ -995,6 +1016,7 @@ def multiple_simulations(
         compliers=np.random.uniform(low=0, high=1, size=len(raw_data["si"]))
         > params.propNeverCompliers,
         adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data["si"])),
+        id = ids
     )
     pickleNumIndivs = len(simData.si)
     #print("starting  j =",j)
@@ -1032,7 +1054,7 @@ def multiple_simulations(
         deathDate=np.array(deathDate),
         )
         worms = Worms(total=np.array(wormsT), female=np.array(wormsF))
-
+        ids = np.arange(params.N)
         SD = SDEquilibrium(
         si=np.array(si),
         worms=worms,
@@ -1055,6 +1077,7 @@ def multiple_simulations(
         compliers=np.random.uniform(low=0, high=1, size=wantedPopSize)
         > params.propNeverCompliers,
         adherenceFactors=np.random.uniform(low=0, high=1, size=wantedPopSize),
+        id = ids
         )
         simData = copy.deepcopy(SD)
         

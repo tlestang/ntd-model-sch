@@ -130,7 +130,7 @@ def setupSD(params: Parameters) -> SDEquilibrium:
     trialDeathDates = trialBirthDates + lifeSpans
     sex_id = np.round(np.random.uniform(low=1, high=2, size=params.N))
     communityBurnIn = 1000
-
+    ids = np.arange(params.N)
     while np.min(trialDeathDates) < communityBurnIn:
 
         earlyDeath = np.where(trialDeathDates < communityBurnIn)[0]
@@ -197,6 +197,7 @@ def setupSD(params: Parameters) -> SDEquilibrium:
         numSurvey=0,
         nChemo1 = 0,
         nChemo2 = 0, 
+        id = ids
     )
 
 

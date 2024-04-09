@@ -277,6 +277,9 @@ def doDeath(params: Parameters, SD: SDEquilibrium, t: float) -> SDEquilibrium:
             np.random.uniform(low=0, high=1, size=len(theDead))
             > params.propNeverCompliers
         )
+        maxID = max(SD.id)
+        new_ids = np.arange(maxID + 1, maxID + len(theDead) + 1)
+        SD.id[theDead] = new_ids
     assert params.contactAgeGroupBreaks is not None
     # update the contact age categories
     SD.contactAgeGroupIndices = (
@@ -356,6 +359,7 @@ def doChemoAgeRange(
     minAge: int,
     maxAge: int,
     coverage: ndarray,
+    label:int,
 ) -> SDEquilibrium:
 
     """
@@ -380,7 +384,7 @@ def doChemoAgeRange(
         dataclass containing the updated equilibrium parameter values;
     """
 
-    mda_t = t + np.random.rand() * 0.0001
+    mda_t = t + label * 0.0001
     numChemo1 = 0
     numChemo2 = 0
     # decide which individuals are treated, treatment is random
@@ -453,14 +457,16 @@ def doChemoAgeRange(
         SD.nChemo1 += len(k)
         numChemo1 += len(k)
         SD.n_treatments[
-            str(mda_t) + ", MDA drug 1 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            #str(mda_t) + ", MDA drug 1 (campaign " + str(label) + str(int(minAge)) + "-" + str(int(maxAge)) + ", )"
+            str(mda_t) + ", MDA drug 1 (campaign " + str(label) + ")"
         ] = counts1
         n_people_by_age, _ = np.histogram(
             ages,
             bins=np.arange(0, params.maxHostAge + 1),
         )
         SD.n_treatments_population[
-            str(mda_t) + ", MDA drug 1 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            #str(mda_t) + ", MDA drug 1 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            str(mda_t) + ", MDA drug 1 (campaign " + str(label) + ")"
         ] = n_people_by_age
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
@@ -487,7 +493,8 @@ def doChemoAgeRange(
         SD.nChemo2 += len(k)
         numChemo2 += len(k)
         SD.n_treatments[
-            str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            #str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            str(mda_t) + ", MDA drug 2 (campaign " + str(label) + ")"
             
         ] = counts2
 
@@ -496,7 +503,8 @@ def doChemoAgeRange(
             bins=np.arange(0, params.maxHostAge + 1),
         )
         SD.n_treatments_population[
-            str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            #str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            str(mda_t) + ", MDA drug 2 (campaign " + str(label) + ")"
         ] = n_people_by_age
 
     
@@ -509,7 +517,11 @@ def doChemoAgeRange(
 
 
 def doVaccine(
-    params: Parameters, SD: SDEquilibrium, t: int, VaccCoverage: ndarray
+    params: Parameters, 
+    SD: SDEquilibrium, 
+    t: int, 
+    VaccCoverage: ndarray,
+    label: int,
 ) -> SDEquilibrium:
     """
     Vaccine function.
@@ -528,7 +540,7 @@ def doVaccine(
     SD: SDEquilibrium
         dataclass containing the updated equilibrium parameter values;
     """
-    vacc_t = t + np.random.rand() * 0.0001
+    vacc_t = t + label * 0.0001
     assert SD.VaccTreatmentAgeGroupIndices is not None
     temp = ((SD.VaccTreatmentAgeGroupIndices + 1) // 2) - 1
     vaccinate = np.random.uniform(low=0, high=1, size=params.N) < VaccCoverage[temp]
@@ -546,7 +558,8 @@ def doVaccine(
     ages = t - SD.demography.birthDate
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
     SD.n_treatments[
-            str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = vaccs
         
     n_people_by_age, _ = np.histogram(
@@ -554,7 +567,8 @@ def doVaccine(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     SD.n_treatments_population[
-            str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = n_people_by_age
     return SD
 
@@ -566,6 +580,7 @@ def doVaccineAgeRange(
     minAge: float,
     maxAge: float,
     coverage: ndarray,
+    label: int,
 ) -> SDEquilibrium:
     """
     Vaccine function.
@@ -588,7 +603,7 @@ def doVaccineAgeRange(
     SD: SDEquilibrium
         dataclass containing the updated equilibrium parameter values;
     """
-    vacc_t = t + np.random.rand() * 0.0001
+    vacc_t = t + label * 0.0001
     vaccinate = np.random.uniform(low=0, high=1, size=params.N) < coverage
     ages = t - SD.demography.birthDate
     correctAges = np.logical_and(ages <= maxAge, ages >= minAge)
@@ -600,7 +615,8 @@ def doVaccineAgeRange(
     propVacc = sum(vaccNow)/sum(correctAges)
     vaccs, _ = np.histogram(ages[vaccNow], bins=np.arange(params.maxHostAge + 1))
     SD.n_treatments[
-            str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = vaccs
         
     n_people_by_age, _ = np.histogram(
@@ -608,7 +624,8 @@ def doVaccineAgeRange(
             bins=np.arange(0, params.maxHostAge + 1),
         )
     SD.n_treatments_population[
-            str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            #str(vacc_t) + ", Vaccination (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
+            str(vacc_t) + ", Vaccination (campaign " + str(label) + ")"
         ] = n_people_by_age
     return SD, propVacc
 
