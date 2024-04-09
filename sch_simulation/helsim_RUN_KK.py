@@ -40,6 +40,7 @@ from sch_simulation.helsim_FUNC_KK import (
     overWritePostVecControl,
     getSetOfEggCounts,
     getPrevalenceWholePop,
+    getIncidence,
     parse_coverage_input,
     readCoverageFile,
     readParams,
@@ -454,7 +455,7 @@ def doRealizationSurveyCoveragePickle(
                     nonZeros = SD.id[np.where(eggCounts > 0)]
                     # get the intersection of these ids, as this is the incidence in this timestep
                     pp = np.intersect1d(nonZeros, previousZeros)
-                    # get the ages of these people
+                    # get the ages of these people to add to the results
                     incidenceAges = t - SD.demography.birthDate[np.where(np.isin(SD.id, pp))]
                 else:
                     incidenceAges = []
@@ -874,6 +875,7 @@ def singleSimulationDALYCoverage(
          
     wholePopPrev = getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
     numAgeGroup = outputNumberInAgeGroup(results, params)
+    incidence = getIncidence(results, params)
     costData = getCostData(results, params)
     allTimes = np.unique(numAgeGroup.Time)
     trueCoverageData = getActualCoverages(results, params, allTimes)
@@ -882,6 +884,7 @@ def singleSimulationDALYCoverage(
 
     df1 = pd.concat([wholePopPrev, df], ignore_index= True)
     df1 = pd.concat([df1, numAgeGroup], ignore_index=True)
+    df1 = pd.concat([df1, incidence], ignore_index=True)
     df1 = pd.concat([df1, costData], ignore_index=True)
     df1 = pd.concat([df1, trueCoverageData], ignore_index=True)
     df1 = pd.concat([df1, surveyData], ignore_index=True)

@@ -384,7 +384,7 @@ def getAgeCatSampledPrevByVillageAll(
             heavy = np.sum(currentAgeGroupMeanEggCounts > params.POC_CCA_thresholds[2]) / len(currentAgeGroupMeanEggCounts)
     
             low = infected - (medium + heavy)
-            meanPOCmeasure = round(np.mean(currentAgeGroupMeanEggCounts))    
+            meanPOCmeasure = np.round(np.mean(currentAgeGroupMeanEggCounts))    
     
     
         return (
@@ -1015,7 +1015,7 @@ def getPrevalenceDALYsAll(
                     "intensity": np.repeat("light", len(low_prevalence)),
                     "species": np.repeat(params.species, len(low_prevalence)),
                     "measure": np.repeat("prevalence", len(low_prevalence)),
-                    "draw_1": low_prevalence,
+                    "draw_1": np.round(low_prevalence,4),
                 }
             )
 
@@ -1029,7 +1029,7 @@ def getPrevalenceDALYsAll(
                         "intensity": np.repeat("light", len(low_prevalence)),
                         "species": np.repeat(params.species, len(low_prevalence)),
                         "measure": np.repeat("prevalence", len(low_prevalence)),
-                        "draw_1": low_prevalence,
+                        "draw_1": np.round(low_prevalence,4),
                     }
                 )
             df = pd.concat([df, newrows], ignore_index = True)
@@ -1043,7 +1043,7 @@ def getPrevalenceDALYsAll(
                     "intensity": np.repeat("moderate", len(low_prevalence)),
                     "species": np.repeat(params.species, len(low_prevalence)),
                     "measure": np.repeat("prevalence", len(low_prevalence)),
-                    "draw_1": moderate_prevalence,
+                    "draw_1": np.round(moderate_prevalence,4),
                 }
             )
         df = pd.concat([df, newrows], ignore_index = True)
@@ -1056,7 +1056,7 @@ def getPrevalenceDALYsAll(
                     "intensity": np.repeat("heavy", len(low_prevalence)),
                     "species": np.repeat(params.species, len(low_prevalence)),
                     "measure": np.repeat("prevalence", len(low_prevalence)),
-                    "draw_1": heavy_prevalence,
+                    "draw_1": np.round(heavy_prevalence,4),
                 }
             )
         df = pd.concat([df, newrows], ignore_index = True)
@@ -1069,7 +1069,7 @@ def getPrevalenceDALYsAll(
                     "intensity": np.repeat("None", len(low_prevalence)),
                     "species": np.repeat(params.species, len(low_prevalence)),
                     "measure": np.repeat("meanEggs", len(low_prevalence)),
-                    "draw_1": meanEggs,
+                    "draw_1": np.round(meanEggs,4),
                 }
             )
         df = pd.concat([df, newrows], ignore_index = True)
@@ -1077,6 +1077,38 @@ def getPrevalenceDALYsAll(
      
 
     return df
+
+
+def getIncidence(results: List[List[Result]], params: Parameters) -> pd.DataFrame:
+
+    for i in range(len(results[0])):
+        d = results[0][i]
+        value, _ = np.histogram(
+                d.incidenceAges,
+                bins=np.arange(0, params.maxHostAge + 1),
+            )
+        
+        newrows = pd.DataFrame(
+                {
+                    "Time": np.repeat(d.time, len(value)),
+                    "age_start": range(int(params.maxHostAge)),
+                    "age_end": range(1, 1 + int(params.maxHostAge)),
+                    "intensity": np.repeat("None", len(value)),
+                    "species": np.repeat(params.species, len(value)),
+                    "measure": np.repeat("Incidence", len(value)),
+                    "draw_1": value,
+                }
+            )
+        if i == 0:
+            incidence = newrows
+        else:
+            assert incidence is not None
+            
+            incidence = pd.concat([incidence, newrows], ignore_index = True)
+
+    return incidence
+
+
 
 
 def getPrevalenceWholePop(
@@ -1132,7 +1164,7 @@ def getPrevalenceWholePop(
                     "intensity": np.repeat("All", len(prevalence)),
                     "species": np.repeat(params.species, len(prevalence)),
                     "measure": np.repeat("Estimated population prevalence", len(prevalence)),
-                    "draw_1": prevalence,
+                    "draw_1": np.round(prevalence,4),
                 }
             )
      

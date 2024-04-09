@@ -38,6 +38,7 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
     extractHostData,
     getPrevalence,
     getPrevalenceDALYsAll,
+    getIncidence,
     getPrevalenceWholePop,
     outputNumberInAgeGroup,
     outputNumberSurveyedAgeGroup,
