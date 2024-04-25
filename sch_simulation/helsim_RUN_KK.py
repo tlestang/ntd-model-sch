@@ -1169,6 +1169,7 @@ def multiple_simulations_after_burnin(
         compliers=np.random.uniform(low=0, high=1, size=len(raw_data.si))
         > params.propNeverCompliers,
         adherenceFactors=np.random.uniform(low=0, high=1, size=len(raw_data.si)),
+        id = np.arange(len(raw_data.si))
     )
     
     # Convert all layers to correct data format
