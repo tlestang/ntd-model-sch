@@ -996,7 +996,7 @@ def multiple_simulations(
         birthDate=raw_data["demography"]["birthDate"],
         deathDate=raw_data["demography"]["deathDate"],
     )
-    ids = np.arange(params.N)
+    ids = np.arange(len(raw_data["si"]))
     simData = SDEquilibrium(
         si=raw_data["si"],
         worms=worms,
@@ -1057,7 +1057,7 @@ def multiple_simulations(
         deathDate=np.array(deathDate),
         )
         worms = Worms(total=np.array(wormsT), female=np.array(wormsF))
-        ids = np.arange(params.N)
+        ids = np.arange(wantedPopSize)
         SD = SDEquilibrium(
         si=np.array(si),
         worms=worms,
