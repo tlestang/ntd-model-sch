@@ -61,23 +61,15 @@ def getSetOfEggCounts(
         #eggProducers = np.where(total == female, 0, female)
         #meanCount = eggProducers * params.lambda_egg * params.z**eggProducers * params.v2[vaccState]
     meanCount = productivefemaleworms * params.lambda_egg * params.z**productivefemaleworms * params.v2[vaccState]
+    eggs = np.random.negative_binomial(size=len(meanCount), 
+                                           p=params.k_epg / (meanCount + params.k_epg), 
+                                           n=params.k_epg)
         
-    if surveyType == "KK1":
-        eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
-        for i in range(nSamples):
-            eggs +=  np.random.negative_binomial(
-                size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg
-                )
-        
-        return eggs
     if surveyType == "KK2":
-        
-        eggs = np.random.negative_binomial(size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg)
-        for i in range(nSamples):
-            eggs +=  np.random.negative_binomial(
-                size=len(meanCount), p=params.k_epg / (meanCount + params.k_epg), n=params.k_epg
-                )
-        return eggs
+        eggs +=  np.random.negative_binomial(size=len(meanCount), 
+                                             p=params.k_epg / (meanCount + params.k_epg), 
+                                             n=params.k_epg)
+    return eggs
         
         
 def getSetOfEggCountsv2(
