@@ -747,59 +747,18 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
     for i, list_res in enumerate(results):
         df = pd.DataFrame(list_res)
         if i == 0:
-            newrows = pd.DataFrame(
-                {
-                    "Time": df["time"],
-                    "age_start": np.repeat("None", df.shape[0]),
-                    "age_end": np.repeat("None", df.shape[0]),
-                    "intensity": np.repeat("None", df.shape[0]),
-                    "species": np.repeat(params.species, df.shape[0]),
-                    "measure": np.repeat("nChemo1", df.shape[0]),
-                    "draw_1": df["nChemo1"],
-                })
-            df1 = newrows
-        else:
-            assert df1 is not None
-            newrows = pd.DataFrame(
-                    {
-                        "Time": df["time"],
-                        "age_start": np.repeat("None", df.shape[0]),
-                        "age_end": np.repeat("None", df.shape[0]),
-                        "intensity": np.repeat("None", df.shape[0]),
-                        "species": np.repeat(params.species, df.shape[0]),
-                        "measure": np.repeat("nChemo", df.shape[0]),
-                        "draw_1": df["nChemo"],
-                    }
-                )
-            
-            df1 = pd.concat([df1, newrows], ignore_index = True)
-        newrows = pd.DataFrame(
-                {
-                    "Time": df["time"],
-                    "age_start": np.repeat("None", df.shape[0]),
-                    "age_end": np.repeat("None", df.shape[0]),
-                    "intensity": np.repeat("None", df.shape[0]),
-                    "species": np.repeat(params.species, df.shape[0]),
-                    "measure": np.repeat("nChemo2", df.shape[0]),
-                    "draw_1": df["nChemo2"],
-                }
-            )
-        df1 = pd.concat([df1, newrows], ignore_index = True)
-
-        newrows = pd.DataFrame(
-                {
-                    "Time": df["time"],
-                    "age_start": np.repeat("None", df.shape[0]),
-                    "age_end": np.repeat("None", df.shape[0]),
-                    "intensity": np.repeat("None", df.shape[0]),
-                    "species": np.repeat(params.species, df.shape[0]),
-                    "measure": np.repeat("nVacc", df.shape[0]),
-                    "draw_1": df["nVacc"],
-                }
-            )
-        df1 = pd.concat([df1, newrows], ignore_index = True)
-
-        newrows =  pd.DataFrame(
+            # newrows = pd.DataFrame(
+            #     {
+            #         "Time": df["time"],
+            #         "age_start": np.repeat("None", df.shape[0]),
+            #         "age_end": np.repeat("None", df.shape[0]),
+            #         "intensity": np.repeat("None", df.shape[0]),
+            #         "species": np.repeat(params.species, df.shape[0]),
+            #         "measure": np.repeat("nChemo1", df.shape[0]),
+            #         "draw_1": df["nChemo1"],
+            #     })
+            # df1 = newrows
+            newrows =  pd.DataFrame(
                 {
                     "Time": df["time"],
                     "age_start": np.repeat("None", df.shape[0]),
@@ -810,7 +769,60 @@ def getCostData(results: List[List[Result]], params: Parameters) -> pd.DataFrame
                     "draw_1": df["nSurvey"],
                 }
             )
-        df1 = pd.concat([df1, newrows], ignore_index = True)
+            df1 = newrows
+        else:
+            assert df1 is not None
+        #     newrows = pd.DataFrame(
+        #             {
+        #                 "Time": df["time"],
+        #                 "age_start": np.repeat("None", df.shape[0]),
+        #                 "age_end": np.repeat("None", df.shape[0]),
+        #                 "intensity": np.repeat("None", df.shape[0]),
+        #                 "species": np.repeat(params.species, df.shape[0]),
+        #                 "measure": np.repeat("nChemo1", df.shape[0]),
+        #                 "draw_1": df["nChemo1"],
+        #             }
+        #         )
+            
+        #     df1 = pd.concat([df1, newrows], ignore_index = True)
+        # newrows = pd.DataFrame(
+        #         {
+        #             "Time": df["time"],
+        #             "age_start": np.repeat("None", df.shape[0]),
+        #             "age_end": np.repeat("None", df.shape[0]),
+        #             "intensity": np.repeat("None", df.shape[0]),
+        #             "species": np.repeat(params.species, df.shape[0]),
+        #             "measure": np.repeat("nChemo2", df.shape[0]),
+        #             "draw_1": df["nChemo2"],
+        #         }
+        #     )
+        # df1 = pd.concat([df1, newrows], ignore_index = True)
+
+        # newrows = pd.DataFrame(
+        #         {
+        #             "Time": df["time"],
+        #             "age_start": np.repeat("None", df.shape[0]),
+        #             "age_end": np.repeat("None", df.shape[0]),
+        #             "intensity": np.repeat("None", df.shape[0]),
+        #             "species": np.repeat(params.species, df.shape[0]),
+        #             "measure": np.repeat("nVacc", df.shape[0]),
+        #             "draw_1": df["nVacc"],
+        #         }
+        #     )
+        # df1 = pd.concat([df1, newrows], ignore_index = True)
+
+            newrows =  pd.DataFrame(
+                    {
+                        "Time": df["time"],
+                        "age_start": np.repeat("None", df.shape[0]),
+                        "age_end": np.repeat("None", df.shape[0]),
+                        "intensity": np.repeat("None", df.shape[0]),
+                        "species": np.repeat(params.species, df.shape[0]),
+                        "measure": np.repeat("nSurvey", df.shape[0]),
+                        "draw_1": df["nSurvey"],
+                    }
+                )
+            df1 = pd.concat([df1, newrows], ignore_index = True)
 
         newrows = pd.DataFrame(
                 {
@@ -873,7 +885,7 @@ def singleSimulationDALYCoverage(
         output, params, numReps, params.Unfertilized,  'KK1', 1
     )
          
-    wholePopPrev = getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
+    # wholePopPrev = getPrevalenceWholePop(output, params, numReps, params.Unfertilized,  'KK1', 1)
     numAgeGroup = outputNumberInAgeGroup(results, params)
     incidence = getIncidence(results, params)
     costData = getCostData(results, params)
@@ -882,7 +894,7 @@ def singleSimulationDALYCoverage(
     surveyData = outputNumberSurveyedAgeGroup(SD, params)
     treatmentData = outputNumberTreatmentAgeGroup(SD, params)
 
-    df1 = pd.concat([wholePopPrev, df], ignore_index= True)
+    # df1 = pd.concat([wholePopPrev, df], ignore_index= True)
     df1 = pd.concat([df1, numAgeGroup], ignore_index=True)
     df1 = pd.concat([df1, incidence], ignore_index=True)
     df1 = pd.concat([df1, costData], ignore_index=True)

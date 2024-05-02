@@ -1061,18 +1061,18 @@ def getPrevalenceDALYsAll(
             )
         df = pd.concat([df, newrows], ignore_index = True)
         
-        newrows = pd.DataFrame(
-                {
-                    "Time": hostData[0].timePoints,
-                    "age_start": np.repeat(age_start, len(low_prevalence)),
-                    "age_end": np.repeat(age_end, len(low_prevalence)),
-                    "intensity": np.repeat("None", len(low_prevalence)),
-                    "species": np.repeat(params.species, len(low_prevalence)),
-                    "measure": np.repeat("meanEggs", len(low_prevalence)),
-                    "draw_1": np.round(meanEggs,4),
-                }
-            )
-        df = pd.concat([df, newrows], ignore_index = True)
+        # newrows = pd.DataFrame(
+        #         {
+        #             "Time": hostData[0].timePoints,
+        #             "age_start": np.repeat(age_start, len(low_prevalence)),
+        #             "age_end": np.repeat(age_end, len(low_prevalence)),
+        #             "intensity": np.repeat("None", len(low_prevalence)),
+        #             "species": np.repeat(params.species, len(low_prevalence)),
+        #             "measure": np.repeat("meanEggs", len(low_prevalence)),
+        #             "draw_1": np.round(meanEggs,4),
+        #         }
+        #     )
+        # df = pd.concat([df, newrows], ignore_index = True)
 
      
 
