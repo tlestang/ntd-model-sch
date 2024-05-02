@@ -1,1 +1,1 @@
-mansoni_scenario_1.txt
+mansoni_params.txt
