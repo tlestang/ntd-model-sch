@@ -895,7 +895,7 @@ def singleSimulationDALYCoverage(
     treatmentData = outputNumberTreatmentAgeGroup(SD, params)
 
     # df1 = pd.concat([wholePopPrev, df], ignore_index= True)
-    df1 = pd.concat([df1, numAgeGroup], ignore_index=True)
+    df1 = pd.concat([df, numAgeGroup], ignore_index=True)
     df1 = pd.concat([df1, incidence], ignore_index=True)
     df1 = pd.concat([df1, costData], ignore_index=True)
     df1 = pd.concat([df1, trueCoverageData], ignore_index=True)
