@@ -116,6 +116,7 @@ def parse_coverage_input(
     MDAAges = np.zeros([len(MDARows), 2])
     MDAYears = []
     MDACoverages = []
+    MDADrugs = []
     VaccAges = np.zeros([len(VaccRows), 2])
     VaccYears = []
     VaccCoverages = []
@@ -181,6 +182,9 @@ def parse_coverage_input(
         # re initilize the coverage and years data
         MDAYears = []
         MDACoverages = []
+        
+        #drugIndex = np.where(PlatCov.columns == "Drug")
+
         # loop over the yearly data for this row
         for j in range(fy_index, len(PlatCov.columns)):
             # get the column name of specified column
@@ -189,7 +193,7 @@ def parse_coverage_input(
             if w[cname] > 0:
                 MDAYears.append(cname)
                 MDACoverages.append(w[cname])
-
+                
         MDA_txt = (
             MDA_txt
             + "MDA_age"
@@ -213,6 +217,8 @@ def parse_coverage_input(
             else:
                 MDA_txt = MDA_txt + str(MDACoverages[k]) + " "
 
+
+    
     # loop over Vaccination coverage rows
     for i in range(len(VaccRows)):
         # get row number of each MDA entry
@@ -397,6 +403,7 @@ def readCoverageFile(
             Years=coverage["MDA_Years" + str(i + 1)] - coverage["start_year"],
             Coverage=coverage["MDA_Coverage" + str(i + 1)],
             Label=i + 1,
+
         )
         mda_covs.append(cov)
     params.MDA = mda_covs
@@ -407,6 +414,7 @@ def readCoverageFile(
             Years=coverage["Vacc_Years" + str(i + 1)] - coverage["start_year"],
             Coverage=coverage["Vacc_Coverage" + str(i + 1)],
             Label=i + 1,
+
         )
         vacc_covs.append(cov)
     params.Vacc = vacc_covs
@@ -605,6 +613,8 @@ def readParams(
         DrugEfficacy=parameters["drugEff"],
         DrugEfficacy1=parameters["drugEff1"],
         DrugEfficacy2=parameters["drugEff2"],
+        DrugName1 = parameters["drugName1"],
+        DrugName2 = parameters["drugName2"],
         contactAgeBreaks=parameters["contactAgeBreaks"],
         contactRates=parameters["betaValues"],
         v3=parameters["v3betaValues"],

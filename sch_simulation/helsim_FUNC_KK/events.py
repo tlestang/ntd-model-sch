@@ -360,6 +360,7 @@ def doChemoAgeRange(
     maxAge: int,
     coverage: ndarray,
     label:int,
+    
 ) -> SDEquilibrium:
 
     """
@@ -458,7 +459,7 @@ def doChemoAgeRange(
         numChemo1 += len(k)
         SD.n_treatments[
             #str(mda_t) + ", MDA drug 1 (campaign " + str(label) + str(int(minAge)) + "-" + str(int(maxAge)) + ", )"
-            str(mda_t) + ", MDA drug 1 (campaign " + str(label) + ")"
+            str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName1 + ")"
         ] = counts1
         n_people_by_age, _ = np.histogram(
             ages,
@@ -466,7 +467,7 @@ def doChemoAgeRange(
         )
         SD.n_treatments_population[
             #str(mda_t) + ", MDA drug 1 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
-            str(mda_t) + ", MDA drug 1 (campaign " + str(label) + ")"
+            str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName1 + ")"
         ] = n_people_by_age
     # if drug 2 share is > 0, then treat the appropriate individuals with drug 2
     if d2Share > 0:
@@ -494,7 +495,7 @@ def doChemoAgeRange(
         numChemo2 += len(k)
         SD.n_treatments[
             #str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
-            str(mda_t) + ", MDA drug 2 (campaign " + str(label) + ")"
+            str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName2 + ")"
             
         ] = counts2
 
@@ -504,7 +505,7 @@ def doChemoAgeRange(
         )
         SD.n_treatments_population[
             #str(mda_t) + ", MDA drug 2 (" + str(int(minAge)) + "-" + str(int(maxAge)) + ")"
-            str(mda_t) + ", MDA drug 2 (campaign " + str(label) + ")"
+            str(mda_t) + ", MDA campaign " + str(label) + " (" + params.DrugName2 + ")"
         ] = n_people_by_age
 
     

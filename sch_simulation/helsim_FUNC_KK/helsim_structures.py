@@ -35,6 +35,7 @@ class Coverage:
     Years: ndarray  # 1-D array lower/upper
     Coverage: ndarray  # 1-D array
     Label: ndarray  # 1-D array
+    
 
 @dataclass
 class VecControl:
@@ -60,6 +61,8 @@ class Parameters:
     DrugEfficacy: float
     DrugEfficacy1: float
     DrugEfficacy2: float
+    DrugName1: str
+    DrugName2: str
     contactAgeBreaks: ndarray  # 1-D array - Contact age group breaks (minus sign necessary to include zero age)
     contactRates: ndarray  # 1-D array - BetaValues: Relative contact rates
     v3: ndarray  # 1-D array, v3 beta values: impact of vaccine on contact rates  Assume contact rate under vaccination is times v3. KK
