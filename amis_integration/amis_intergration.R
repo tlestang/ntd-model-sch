@@ -39,8 +39,7 @@ amis_output <- amis(
   prior
 )
 
-# Currently errors - I think because it is not expecting to
-# find a fit on the first iteration, but possibly because I
+# Currently errors - I think because I
 # don't know where the weights need to be set
-
-# print(amis_output)
+# "No weight on any particles for locations in the active set."
+print(amis_output)
