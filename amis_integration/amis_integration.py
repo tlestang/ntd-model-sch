@@ -49,7 +49,10 @@ def returnYearlyPrevalenceEstimate(
     # cset the survey type to Kato Katz with duplicate slide
     surveyType = "KK2"
 
-    # TODO - what is going on here
+    # the following number dictates the number of events (e.g. worm deaths) we allow to happen before updating other parts of the model
+    # the higher this number the faster the simulation (though there is a check so that there can't be too many events at once)
+    # the higher this number the greater the potential for errors in the model accruing.
+    # 5 is a reasonable level of compromise for speed and errors, but using a lower value such as 3 is also quite good
     mult = 5
     # run a single realization
     results, SD = sch_simulation.helsim_RUN_KK.doRealizationSurveyCoveragePickle(
