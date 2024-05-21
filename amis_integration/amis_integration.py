@@ -27,6 +27,12 @@ def adapt_parameters_to_shape(parameters:tuple[list[float], list[float]]) -> pan
     return pandas.DataFrame(data={'R0': parameters[0], 'k': parameters[1]})
 
 
+def extract_relevant_results(results: pandas.DataFrame) -> float:
+    num_years = len(results)
+    # TODO: for now we assume we are interested in fitting the last year
+    return results['draw_1'][num_years - 1]
+
+
 def run_model_with_parameters(seeds, parameters):
     if len(seeds) != len(parameters):
         raise ValueError(f'Must have same number of seeds as parameters {len(seeds)} != {len(parameters)}')
