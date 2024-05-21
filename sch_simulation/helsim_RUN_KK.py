@@ -94,8 +94,8 @@ def doRealization(params, i, mult):
     results: List[Result]
         list with simulation results;
     """
-    np.random.seed(i) 
-    random.seed(i)
+    #np.random.seed(i) 
+    #random.seed(i)
     params.equiData = getEquilibrium(params)
     # setup simulation data
     simData = setupSD(params)
@@ -152,11 +152,14 @@ def doRealization(params, i, mult):
     multiplier = math.floor(
         params.N / 50
     )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
-    
+    print_t_interval = 0.5
+    print_t = 0
     # run stochastic algorithm
     while t < maxTime:
        # if (t * 1000 % 10) == 0:
-       #     print(t)
+        # if t > print_t:
+        #     print_t += print_t_interval
+        #     print(t)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)
@@ -236,7 +239,11 @@ def doRealization(params, i, mult):
                 nextVaccineTime = currentVaccineTimings[nextVaccineIndex]
 
             if timeBarrier >= nextOutTime:
-
+                SD = copy.deepcopy(simData)
+                eggCounts = getSetOfEggCounts(SD.worms.total, SD.worms.female, SD.sv, params,  
+                                              params.Unfertilized, params.nSamples, "KK2")
+                # get approximate prevalence of the population
+                prev = len(np.where(eggCounts > 0)[0])/len(eggCounts)
                 results.append(
                     Result(
                         iteration=1,
@@ -258,7 +265,9 @@ def doRealization(params, i, mult):
                         elimination=0,
                         propChemo1=0,
                         propChemo2=0,
-                        propVacc = 0
+                        propVacc = 0,
+                        id = simData.id,
+                        prevalence = prev
                     )
                 )
                 outTimes[nextOutIndex] = maxTime + 10
@@ -381,10 +390,10 @@ def doRealizationSurveyCoveragePickle(
         params.N / 50
     )  # This appears to be the optimal value for all tests I've run - more or less than this takes longer!
     while t < maxTime:
-        
-        if t > print_t:
-            print_t += print_t_interval
-            #print(t)
+
+        # if t > print_t:
+        #     print_t += print_t_interval
+        #     print(t)
         rates = calcRates2(params, simData)
         sumRates = np.sum(rates)
         cumsumRates = np.cumsum(rates)

@@ -14,7 +14,7 @@ from sch_simulation.helsim_FUNC_KK.helsim_structures import (
     SDEquilibrium,
     Worms,
 )
-from sch_simulation.helsim_FUNC_KK.utils import getLifeSpans
+from sch_simulation.helsim_FUNC_KK.utils import (getLifeSpans, getPsi)
 
 warnings.filterwarnings("ignore")
 
@@ -122,7 +122,11 @@ def setupSD(params: Parameters) -> SDEquilibrium:
     SD: SDEquilibrium
         dataclass containing the equilibrium parameter settings;
     """
-
+    # setup the initial simData
+    params = configure(params)
+    # update the parameters
+    params.psi = getPsi(params)
+    params.equiData = getEquilibrium(params)
     si = np.random.gamma(size=params.N, scale=1 / params.k, shape=params.k)
     sv = np.zeros(params.N, dtype=int)
     lifeSpans = getLifeSpans(params.N, params)
@@ -260,7 +264,7 @@ def getEquilibrium(params: Parameters) -> Equilibrium:
         * (params.R0**R_power - 1)
         / (params.R0 * MeanLifespan * params.LDecayRate * (1 - params.z))
     )
-
+ 
     # now evaluate the function K across a series of L values and find point near breakpoint;
     # L_minus is the value that gives an age-averaged worm burden of 1; negative growth should
     # exist somewhere below this
