@@ -1,3 +1,4 @@
+from functools import cache
 import pandas
 import sch_simulation
 import numpy as np
@@ -15,13 +16,11 @@ import sch_simulation.helsim_RUN_KK
 
 ParameterSet = tuple[float, float]
 
-cache: dict[(float, float), pandas.DataFrame] = {}
 
+@cache
 def returnYearlyPrevalenceEstimate(
     coverageFileName, coverageTextFileStorageName, paramFileName, demogName, R0, k, N
 ):
-    if (R0, k) in cache:
-        return cache[(R0, k)]
     print(f"starting run for {R0} {k}")
     cov = parse_coverage_input(coverageFileName, coverageTextFileStorageName)
     # initialize the parameters
@@ -62,7 +61,6 @@ def returnYearlyPrevalenceEstimate(
     PrevalenceEstimate = getPrevalenceWholePop(
         output, params, numReps, params.Unfertilized, "KK2", 1
     )
-    cache[(R0, k)] = PrevalenceEstimate
     return PrevalenceEstimate
 
 
@@ -77,8 +75,6 @@ def run_model_with_parameters(seeds, parameters):
         raise ValueError(
             f"Must have same number of seeds as parameters {len(seeds)} != {len(parameters)}"
         )
-    print(parameters)
-    num_runs = len(seeds)
 
     coverageFileName = "mansoni_coverage_scenario_0.xlsx"  # no intervention
     # coverageFileName = 'mansoni_coverage_scenario_1.xlsx' # annual MDA with original drug and ~65% coverage
@@ -116,8 +112,5 @@ def run_model_with_parameters(seeds, parameters):
         prevalence = extract_relevant_results(results)
         final_prevalence_for_each_run.append(prevalence)
 
-    # TODO: Extract the relevant prevalence info from the results
-    print(final_prevalence_for_each_run)
     results_np_array = np.array(final_prevalence_for_each_run).reshape(500, 1)
-    print(results_np_array.shape)
     return results_np_array
