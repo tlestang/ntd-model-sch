@@ -21,9 +21,13 @@ from sch_simulation.helsim_FUNC_KK.helsim_structures import Parameters, SDEquili
 
 ParameterSet = tuple[float, float]
 
+cache: dict[(float, float), pandas.DataFrame] = {}
+
 def returnYearlyPrevalenceEstimate(
     coverageFileName, coverageTextFileStorageName, paramFileName, demogName, R0, k, N
 ):
+    if (R0, k) in cache:
+        return cache[(R0, k)]
     print(f"starting run for {R0} {k}")
     cov = parse_coverage_input(coverageFileName, coverageTextFileStorageName)
     # initialize the parameters
@@ -61,6 +65,7 @@ def returnYearlyPrevalenceEstimate(
     PrevalenceEstimate = getPrevalenceWholePop(
         output, params, numReps, params.Unfertilized, "KK2", 1
     )
+    cache[(R0, k)] = PrevalenceEstimate
     return PrevalenceEstimate
 
 
