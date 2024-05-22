@@ -25,3 +25,17 @@ sch_simulation package (see main [README](../../README.md)).
 ```bash
 $ Rscript amis_integration.R
 ```
+
+## Upgrading AMIS
+
+AMIS is locked to specific commit in the renv.lock file. 
+
+If the version on the repo is unchanged, then using `renv::update` won't work. 
+
+Instead, you must remove and re-add it:
+
+```
+> renv::remove("AMISforInfectiousDiseases")
+> renv::install("evandrokonzen/AMISforInfectiousDiseases-dev")
+> renv::snapshot()
+```
