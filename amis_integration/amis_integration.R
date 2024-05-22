@@ -23,11 +23,23 @@ importlib <- import("importlib")
 sch_simulation <- import("amis_integration")
 importlib$reload(sch_simulation)
 
+fixed_parameters <- sch_simulation$FixedParameters(
+  number_hosts = 10,
+  # no intervention
+  coverage_file_name = "mansoni_coverage_scenario_0.xlsx",
+  demography_name = "UgandaRural",
+  survey_type = "KK2",
+  parameter_file_name = "mansoni_params.txt",
+  coverage_text_file_storage_name = "Man_MDA_vacc.txt"
+)
+
 # Example prevalence map, with two locations, both with prevalence of 0.5
 prevalence_map <- matrix(c(0.5, 0.5), ncol = 1)
 
 transmission_model <- function(seeds, params, n_tims = length(prevalence_map)) {
-  output <- sch_simulation$run_model_with_parameters(seeds, params)
+  output <- sch_simulation$run_model_with_parameters(
+    seeds, params, fixed_parameters
+  )
   print("Output:")
   print(output)
   return(output)

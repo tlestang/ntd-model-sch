@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 from functools import cache
+from typing import Literal
 import pandas
 import sch_simulation
 import numpy as np
@@ -15,6 +17,19 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
 import sch_simulation.helsim_RUN_KK
 
 ParameterSet = tuple[float, float]
+
+
+@dataclass
+class FixedParameters:
+    number_hosts: int
+    coverage_file_name: str
+    # which demography to use
+    demography_name: str
+    survey_type: Literal["KK1", "KK2", "POC-CCA", "PCR"]
+    # file name to store coverage information in
+    coverage_text_file_storage_name: str
+    # standard parameter file path (in sch_simulation/data folder)
+    parameter_file_name: str
 
 
 @cache
@@ -70,22 +85,11 @@ def extract_relevant_results(results: pandas.DataFrame) -> float:
     return results["draw_1"][num_years - 1]
 
 
-def run_model_with_parameters(seeds, parameters):
+def run_model_with_parameters(seeds, parameters, fixed_parameters: FixedParameters):
     if len(seeds) != len(parameters):
         raise ValueError(
             f"Must have same number of seeds as parameters {len(seeds)} != {len(parameters)}"
         )
-
-    coverageFileName = "mansoni_coverage_scenario_0.xlsx"  # no intervention
-    # coverageFileName = 'mansoni_coverage_scenario_1.xlsx' # annual MDA with original drug and ~65% coverage
-    # coverageFileName = 'mansoni_coverage_scenario_3a_1.xlsx' # higher coverage, improved drug and vaccination
-
-    # which demography to use
-    demogName = "UgandaRural"
-    # file name to store coverage information in
-    coverageTextFileStorageName = "Man_MDA_vacc.txt"
-    # standard parameter file path (in sch_simulation/data folder)
-    paramFileName = "mansoni_params.txt"
 
     final_prevalence_for_each_run = []
 
@@ -100,10 +104,10 @@ def run_model_with_parameters(seeds, parameters):
         N = 100
 
         results = returnYearlyPrevalenceEstimate(
-            coverageFileName,
-            coverageTextFileStorageName,
-            paramFileName,
-            demogName,
+            fixed_parameters.coverage_file_name,
+            fixed_parameters.coverage_text_file_storage_name,
+            fixed_parameters.parameter_file_name,
+            fixed_parameters.demography_name,
             R0,
             k,
             N,
