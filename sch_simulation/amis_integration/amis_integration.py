@@ -105,6 +105,8 @@ def run_model_with_parameters(seeds, parameters, fixed_parameters: FixedParamete
             f"Must have same number of seeds as parameters {len(seeds)} != {len(parameters)}"
         )
 
+    num_runs = len(seeds)
+
     final_prevalence_for_each_run = []
 
     for seed, parameter_set in zip(seeds, parameters):
@@ -116,5 +118,5 @@ def run_model_with_parameters(seeds, parameters, fixed_parameters: FixedParamete
         prevalence = extract_relevant_results(results)
         final_prevalence_for_each_run.append(prevalence)
 
-    results_np_array = np.array(final_prevalence_for_each_run).reshape(500, 1)
+    results_np_array = np.array(final_prevalence_for_each_run).reshape(num_runs, 1)
     return results_np_array
