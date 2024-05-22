@@ -24,10 +24,13 @@ sch_simulation <- import("amis_integration")
 importlib$reload(sch_simulation)
 
 fixed_parameters <- sch_simulation$FixedParameters(
-  number_hosts = 10,
+  # the higher the value of N, the more consistent the results will be
+  # though the longer the simulation will take
+  number_hosts = 10L,
   # no intervention
   coverage_file_name = "mansoni_coverage_scenario_0.xlsx",
   demography_name = "UgandaRural",
+  # cset the survey type to Kato Katz with duplicate slide
   survey_type = "KK2",
   parameter_file_name = "mansoni_params.txt",
   coverage_text_file_storage_name = "Man_MDA_vacc.txt"

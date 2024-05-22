@@ -19,7 +19,7 @@ import sch_simulation.helsim_RUN_KK
 ParameterSet = tuple[float, float]
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class FixedParameters:
     number_hosts: int
     coverage_file_name: str
@@ -33,29 +33,29 @@ class FixedParameters:
 
 
 @cache
-def returnYearlyPrevalenceEstimate(
-    coverageFileName, coverageTextFileStorageName, paramFileName, demogName, R0, k, N
-):
+def returnYearlyPrevalenceEstimate(R0, k, fixed_parameters: FixedParameters):
     print(f"starting run for {R0} {k}")
-    cov = parse_coverage_input(coverageFileName, coverageTextFileStorageName)
+    cov = parse_coverage_input(
+        fixed_parameters.coverage_file_name,
+        fixed_parameters.coverage_text_file_storage_name,
+    )
     # initialize the parameters
-    params = sch_simulation.helsim_RUN_KK.loadParameters(paramFileName, demogName)
+    params = sch_simulation.helsim_RUN_KK.loadParameters(
+        fixed_parameters.parameter_file_name, fixed_parameters.demography_name
+    )
     # add coverage data to parameters file
-    params = readCoverageFile(coverageTextFileStorageName, params)
+    params = readCoverageFile(fixed_parameters.coverage_text_file_storage_name, params)
     # add vector control data to parameters
-    params = parse_vector_control_input(coverageFileName, params)
+    params = parse_vector_control_input(fixed_parameters.coverage_file_name, params)
 
     # update R0, k and population size as desired
     params.R0 = R0
     params.k = k
-    params.N = N
+    params.N = fixed_parameters.number_hosts
 
     # setup the initial simData
 
     simData = setupSD(params)
-
-    # cset the survey type to Kato Katz with duplicate slide
-    surveyType = "KK2"
 
     # the following number dictates the number of events (e.g. worm deaths) we allow to happen before updating other parts of the model
     # the higher this number the faster the simulation (though there is a check so that there can't be too many events at once)
@@ -64,7 +64,7 @@ def returnYearlyPrevalenceEstimate(
     mult = 5
     # run a single realization
     results, SD = sch_simulation.helsim_RUN_KK.doRealizationSurveyCoveragePickle(
-        params, surveyType, simData, mult
+        params, fixed_parameters.survey_type, simData, mult
     )
 
     results = [results]
@@ -74,7 +74,7 @@ def returnYearlyPrevalenceEstimate(
     # do a single simulation
     numReps = 1
     PrevalenceEstimate = getPrevalenceWholePop(
-        output, params, numReps, params.Unfertilized, "KK2", 1
+        output, params, numReps, params.Unfertilized, fixed_parameters.survey_type, 1
     )
     return PrevalenceEstimate
 
@@ -94,24 +94,10 @@ def run_model_with_parameters(seeds, parameters, fixed_parameters: FixedParamete
     final_prevalence_for_each_run = []
 
     for seed, parameter_set in zip(seeds, parameters):
-
-        # change parameters here to examine the impact of R0 and k.
         R0 = parameter_set[0]
         k = parameter_set[1]
 
-        # the higher the value of N, the more consistent the results will be
-        # though the longer the simulation will take
-        N = 100
-
-        results = returnYearlyPrevalenceEstimate(
-            fixed_parameters.coverage_file_name,
-            fixed_parameters.coverage_text_file_storage_name,
-            fixed_parameters.parameter_file_name,
-            fixed_parameters.demography_name,
-            R0,
-            k,
-            N,
-        )
+        results = returnYearlyPrevalenceEstimate(R0, k, fixed_parameters)
 
         prevalence = extract_relevant_results(results)
         final_prevalence_for_each_run.append(prevalence)
