@@ -13,6 +13,9 @@ the AMIS loop to compute fitted parameters.
 
 ## Installation
 
+Make sure you've set up the Python virtual environment for the
+sch_simulation package (see main [README](../../README.md)).
+
 1. Launch a R session `R`
 2. Create a R virtual environment `renv::init()`
 3. Install dependencies `renv::restore()`
