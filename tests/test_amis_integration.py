@@ -1,4 +1,4 @@
-from amis_integration import extract_relevant_results
+from sch_simulation.amis_integration.amis_integration import extract_relevant_results
 import pandas as pd
 
 
