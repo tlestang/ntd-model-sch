@@ -19,7 +19,7 @@
       "RemoteUsername": "evandrokonzen",
       "RemoteRepo": "AMISforInfectiousDiseases-dev",
       "RemoteRef": "main",
-      "RemoteSha": "8f05e226d0dee240b623fd6ad41ab9b3f895fbb8",
+      "RemoteSha": "82e5d546cdf884612b1392eaa7b90f2306393a02",
       "Requirements": [
         "Hmisc",
         "R",
@@ -29,7 +29,7 @@
         "mnormt",
         "weights"
       ],
-      "Hash": "f26bd4f361ed02d4a2617abf7dd7491f"
+      "Hash": "b3c37bcf3d8518c4e033ddee34584d79"
     },
     "Formula": {
       "Package": "Formula",
