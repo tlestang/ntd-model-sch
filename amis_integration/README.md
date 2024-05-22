@@ -20,5 +20,5 @@ the AMIS loop to compute fitted parameters.
 ## Running
 
 ```bash
-$ Rscript amis_integration.r
+$ Rscript amis_integration.R
 ```
