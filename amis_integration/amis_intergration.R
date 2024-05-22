@@ -1,8 +1,24 @@
 library(reticulate)
 library(AMISforInfectiousDiseases)
 
-# TODO: Get the virtual enviroment programatically
-use_virtualenv("/home/thomas/.local/share/virtualenvs/ntd-model-sch-an6K7Edb")
+get_venv <- function() {
+  result <- system2(
+    command = "pipenv",
+    args = "--venv",
+    stdout = TRUE,
+    stderr = FALSE
+  )
+  if (length(result) == 0) {
+    # See the main README under How to run for instructions
+    # on how to setup the virtual environment
+    stop("No Python virtual enviroment found,
+      install amis_intergration before running this script
+      and ensure the working directory is inside the project")
+  }
+  return(result)
+}
+
+use_virtualenv(get_venv())
 importlib <- import("importlib")
 sch_simulation <- import("amis_integration")
 importlib$reload(sch_simulation)
