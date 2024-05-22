@@ -30,6 +30,7 @@ class FixedParameters:
     coverage_text_file_storage_name: str
     # standard parameter file path (in sch_simulation/data folder)
     parameter_file_name: str
+    min_multiplier: int
 
 
 @cache
@@ -57,14 +58,12 @@ def returnYearlyPrevalenceEstimate(R0, k, fixed_parameters: FixedParameters):
 
     simData = setupSD(params)
 
-    # the following number dictates the number of events (e.g. worm deaths) we allow to happen before updating other parts of the model
-    # the higher this number the faster the simulation (though there is a check so that there can't be too many events at once)
-    # the higher this number the greater the potential for errors in the model accruing.
-    # 5 is a reasonable level of compromise for speed and errors, but using a lower value such as 3 is also quite good
-    mult = 5
     # run a single realization
     results, SD = sch_simulation.helsim_RUN_KK.doRealizationSurveyCoveragePickle(
-        params, fixed_parameters.survey_type, simData, mult
+        params,
+        fixed_parameters.survey_type,
+        simData,
+        fixed_parameters.min_multiplier,
     )
 
     results = [results]

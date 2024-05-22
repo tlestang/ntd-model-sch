@@ -33,7 +33,16 @@ fixed_parameters <- sch_simulation$FixedParameters(
   # cset the survey type to Kato Katz with duplicate slide
   survey_type = "KK2",
   parameter_file_name = "mansoni_params.txt",
-  coverage_text_file_storage_name = "Man_MDA_vacc.txt"
+  coverage_text_file_storage_name = "Man_MDA_vacc.txt",
+  # the following number dictates the number of events (e.g. worm deaths)
+  # we allow to happen before updating other parts of the model
+  # the higher this number the faster the simulation
+  # (though there is a check so that there can't be too many events at once)
+  # the higher the number the greater the potential for
+  # errors in the model accruing.
+  # 5 is a reasonable level of compromise for speed and errors, but using
+  # a lower value such as 3 is also quite good
+  min_multiplier = 5L
 )
 
 # Example prevalence map, with two locations, both with prevalence of 0.5
