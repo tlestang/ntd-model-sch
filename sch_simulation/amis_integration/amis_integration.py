@@ -22,30 +22,30 @@ ParameterSet = tuple[float, float]
 @dataclass(eq=True, frozen=True)
 class FixedParameters:
     number_hosts: int
-    '''Number of people to model
+    """Number of people to model
 
     The higher the value of N, the more consistent the results will be
-    though the longer the simulation will take.'''
+    though the longer the simulation will take."""
 
     coverage_file_name: str
     demography_name: str
-    '''Which demography to use'''
+    """Which demography to use"""
 
     survey_type: Literal["KK1", "KK2", "POC-CCA", "PCR"]
-    '''Which suvery type to use
+    """Which suvery type to use
     
-    Must be one KK1, KK2, POC-CCA or PCR'''
+    Must be one KK1, KK2, POC-CCA or PCR"""
 
     coverage_text_file_storage_name: str
-    '''File name to store coverage information in'''
+    """File name to store coverage information in"""
 
     parameter_file_name: str
-    '''Standard parameter file path (in sch_simulation/data folder)'''
+    """Standard parameter file path (in sch_simulation/data folder)"""
 
     min_multiplier: int
-    '''Used to speed up running the model
+    """Used to speed up running the model
     
-    A higher number will result in faster but less accurate simulation.'''
+    A higher number will result in faster but less accurate simulation."""
 
 
 @cache
