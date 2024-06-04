@@ -28,6 +28,13 @@ From this directory (sch_simulation/amis_integration), run:
 $ Rscript sth_fitting.R
 ```
 
+This should sensibly pick the correct virtual environment. 
+If there are any problems, the path to the virtual enviroment can be manually specified:
+
+```
+export RETICULATE_PYTHON_ENV=/path/to/virtual/env/ 
+```
+
 ## Upgrading AMIS
 
 AMIS is locked to specific commit in the renv.lock file. 

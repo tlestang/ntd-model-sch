@@ -1,7 +1,4 @@
-source("reticulate_util.R")
-
 get_amis_integration_package <- function() {
-  reticulate::use_virtualenv(get_venv())
   importlib <- reticulate::import("importlib")
   sch_simulation <- reticulate::import("sch_simulation.amis_integration.amis_integration")
   importlib$reload(sch_simulation)
