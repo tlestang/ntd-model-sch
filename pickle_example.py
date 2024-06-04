@@ -72,7 +72,7 @@ start_time = time.time()
 res = Parallel(n_jobs=num_cores)(
          delayed(multiple_simulations)(params, pickleData, simparams, indices, i) for i in range(numSims))
 results=[item[0] for item in res]
-simData:list[SDEquilibrium]=[item[1] for item in res]
+simData=[item[1] for item in res]
 #results = Parallel(n_jobs=1)(
  #        delayed(multiple_simulations)(params, pickleData, simparams, indices, i) for i in range(numSims))
 newOutputSimDataFilePath = 'SDPickles.pkl'
