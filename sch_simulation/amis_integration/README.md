@@ -22,6 +22,8 @@ sch_simulation package (see main [README](../../README.md)).
 
 ## Running
 
+From this directory (sch_simulation/amis_integration), run:
+
 ```bash
 $ Rscript sth_fitting.R
 ```
