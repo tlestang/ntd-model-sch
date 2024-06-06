@@ -10,10 +10,7 @@ from sch_simulation.helsim_FUNC_KK.file_parsing import (
     parse_vector_control_input,
     readCoverageFile,
 )
-from sch_simulation.helsim_FUNC_KK.results_processing import (
-    extractHostData,
-    getPrevalenceWholePop,
-)
+
 import sch_simulation.helsim_FUNC_KK.results_processing as results_processing
 
 @dataclass(eq=True, frozen=True)
@@ -79,11 +76,11 @@ def returnYearlyPrevalenceEstimate(R0, k, fixed_parameters: FixedParameters):
     )
 
     # process the output
-    output = extractHostData([results])
+    output = results_processing.extractHostData([results])
 
     # do a single simulation
     numReps = 1
-    PrevalenceEstimate = getPrevalenceWholePop(
+    PrevalenceEstimate = results_processing.getPrevalenceWholePop(
         output, params, numReps, params.Unfertilized, fixed_parameters.survey_type, 1
     )
     return PrevalenceEstimate
