@@ -81,9 +81,8 @@ def returnYearlyPrevalenceEstimate(R0, k, fixed_parameters: FixedParameters):
         fixed_parameters.min_multiplier,
     )
 
-    results = [results]
     # process the output
-    output = extractHostData(results)
+    output = extractHostData([results])
 
     # do a single simulation
     numReps = 1
