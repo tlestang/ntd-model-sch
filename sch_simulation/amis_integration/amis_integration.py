@@ -16,9 +16,6 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
 )
 import sch_simulation.helsim_RUN_KK
 
-ParameterSet = tuple[float, float]
-
-
 @dataclass(eq=True, frozen=True)
 class FixedParameters:
     number_hosts: int
