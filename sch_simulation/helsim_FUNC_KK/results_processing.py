@@ -18,6 +18,9 @@ warnings.filterwarnings("ignore")
 
 np.seterr(divide="ignore")
 
+# When running a single simulation the output is always put in a column called
+# draw_1.
+OUTPUT_COLUMN_NAME = "draw_1"
 
 def extractHostData(results: List[List[Result]]) -> List[ProcResult]:
 
@@ -1015,7 +1018,7 @@ def getPrevalenceDALYsAll(
                     "intensity": np.repeat("light", len(low_prevalence)),
                     "species": np.repeat(params.species, len(low_prevalence)),
                     "measure": np.repeat("prevalence", len(low_prevalence)),
-                    "draw_1": np.round(low_prevalence,4),
+                    OUTPUT_COLUMN_NAME: np.round(low_prevalence,4),
                 }
             )
 
@@ -1029,7 +1032,7 @@ def getPrevalenceDALYsAll(
                         "intensity": np.repeat("light", len(low_prevalence)),
                         "species": np.repeat(params.species, len(low_prevalence)),
                         "measure": np.repeat("prevalence", len(low_prevalence)),
-                        "draw_1": np.round(low_prevalence,4),
+                        OUTPUT_COLUMN_NAME: np.round(low_prevalence,4),
                     }
                 )
             df = pd.concat([df, newrows], ignore_index = True)
@@ -1043,7 +1046,7 @@ def getPrevalenceDALYsAll(
                     "intensity": np.repeat("moderate", len(low_prevalence)),
                     "species": np.repeat(params.species, len(low_prevalence)),
                     "measure": np.repeat("prevalence", len(low_prevalence)),
-                    "draw_1": np.round(moderate_prevalence,4),
+                    OUTPUT_COLUMN_NAME: np.round(moderate_prevalence,4),
                 }
             )
         df = pd.concat([df, newrows], ignore_index = True)
@@ -1056,7 +1059,7 @@ def getPrevalenceDALYsAll(
                     "intensity": np.repeat("heavy", len(low_prevalence)),
                     "species": np.repeat(params.species, len(low_prevalence)),
                     "measure": np.repeat("prevalence", len(low_prevalence)),
-                    "draw_1": np.round(heavy_prevalence,4),
+                    OUTPUT_COLUMN_NAME: np.round(heavy_prevalence,4),
                 }
             )
         df = pd.concat([df, newrows], ignore_index = True)
@@ -1069,7 +1072,7 @@ def getPrevalenceDALYsAll(
         #             "intensity": np.repeat("None", len(low_prevalence)),
         #             "species": np.repeat(params.species, len(low_prevalence)),
         #             "measure": np.repeat("meanEggs", len(low_prevalence)),
-        #             "draw_1": np.round(meanEggs,4),
+        #             OUTPUT_COLUMN_NAME: np.round(meanEggs,4),
         #         }
         #     )
         # df = pd.concat([df, newrows], ignore_index = True)
@@ -1096,7 +1099,7 @@ def getIncidence(results: List[List[Result]], params: Parameters) -> pd.DataFram
                     "intensity": np.repeat("None", len(value)),
                     "species": np.repeat(params.species, len(value)),
                     "measure": np.repeat("Incidence", len(value)),
-                    "draw_1": value,
+                    OUTPUT_COLUMN_NAME: value,
                 }
             )
         if i == 0:
@@ -1164,7 +1167,7 @@ def getPrevalenceWholePop(
                     "intensity": np.repeat("All", len(prevalence)),
                     "species": np.repeat(params.species, len(prevalence)),
                     "measure": np.repeat("Estimated population prevalence", len(prevalence)),
-                    "draw_1": np.round(prevalence,4),
+                    OUTPUT_COLUMN_NAME: np.round(prevalence,4),
                 }
             )
      
@@ -1192,7 +1195,7 @@ def outputNumberInAgeGroup(
                     "intensity": np.repeat("None", len(age_counts)),
                     "species": np.repeat(params.species, len(age_counts)),
                     "measure": np.repeat("number", len(age_counts)),
-                    "draw_1": age_counts,
+                    OUTPUT_COLUMN_NAME: age_counts,
                 }
             )
         if i == 0:
@@ -1222,7 +1225,7 @@ def outputNumberSurveyedAgeGroup(
                     "intensity": np.repeat("None", len(value)),
                     "species": np.repeat(params.species, len(value)),
                     "measure": np.repeat(measure, len(value)),
-                    "draw_1": value,
+                    OUTPUT_COLUMN_NAME: value,
                 }
             )
         if count == 0:
@@ -1241,7 +1244,7 @@ def outputNumberSurveyedAgeGroup(
                     "intensity": np.repeat("None", len(value)),
                     "species": np.repeat(params.species, len(value)),
                     "measure": np.repeat("survey coverage", len(value)),
-                    "draw_1": v2,
+                    OUTPUT_COLUMN_NAME: v2,
                 }
             )
         
@@ -1269,7 +1272,7 @@ def outputNumberTreatmentAgeGroup(
                     "intensity": np.repeat("None", len(value)),
                     "species": np.repeat(params.species, len(value)),
                     "measure": np.repeat(measure, len(value)),
-                    "draw_1": value,
+                    OUTPUT_COLUMN_NAME: value,
                 }
             )
         if count == 0:
@@ -1289,7 +1292,7 @@ def outputNumberTreatmentAgeGroup(
                     "intensity": np.repeat("None", len(value)),
                     "species": np.repeat(params.species, len(value)),
                     "measure": np.repeat(m1, len(value)),
-                    "draw_1": v2,
+                    OUTPUT_COLUMN_NAME: v2,
                 }
             )
         
