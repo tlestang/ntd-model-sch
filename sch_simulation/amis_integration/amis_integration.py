@@ -16,6 +16,10 @@ from sch_simulation.helsim_FUNC_KK.results_processing import (
 )
 import sch_simulation.helsim_RUN_KK
 
+# When running a single simulation the output is always put in a column called
+# draw_1.
+OUTPUT_COLUMN_NAME = "draw_1"
+
 @dataclass(eq=True, frozen=True)
 class FixedParameters:
     number_hosts: int
@@ -92,7 +96,7 @@ def returnYearlyPrevalenceEstimate(R0, k, fixed_parameters: FixedParameters):
 def extract_relevant_results(results: pandas.DataFrame) -> float:
     num_years = len(results)
     # TODO: for now we assume we are interested in fitting the last year
-    return results["draw_1"][num_years - 1]
+    return results[OUTPUT_COLUMN_NAME][num_years - 1]
 
 
 def run_model_with_parameters(seeds, parameters, fixed_parameters: FixedParameters):
