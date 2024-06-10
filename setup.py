@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='sch_simulation',
-    version='0.0.1',
+    version='1.0.0',
     url='https://www.artrabbit.com/',
     maintainer='ArtRabbit',
     maintainer_email='support@artrabbit.com',
