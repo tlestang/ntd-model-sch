@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='sch_simulation',
-    version='0.0.1',
+    version='2.0.0',
     url='https://www.ntdmodelling.org',
     maintainer='ArtRabbit',
     maintainer_email='support@artrabbit.com',
