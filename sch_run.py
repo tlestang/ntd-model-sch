@@ -1,6 +1,6 @@
 from sch_simulation.helsim_RUN_KK import SCH_Simulation
 
-df = SCH_Simulation(paramFileName='SCH-high_adult_burden.txt', demogName='UgandaRural', numReps=10)
+df = SCH_Simulation(paramFileName='SCH_paramsKKvacc.txt', demogName='UgandaRural', numReps=10)
 
 df.to_json('sch_results.json')
 

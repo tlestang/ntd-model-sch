@@ -123,3 +123,5 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+sch_vaccine_branch_no_vaccine.csv
+sch_vaccine_branch_vaccine.csv
