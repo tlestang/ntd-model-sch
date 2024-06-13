@@ -11,8 +11,6 @@ build_transmission_model <- function(prevalence_map, fixed_parameters) {
     output <- sch_simulation$run_model_with_parameters(
       seeds, params, fixed_parameters
     )
-    print("Output:")
-    print(output)
     return(output)
   }
 
